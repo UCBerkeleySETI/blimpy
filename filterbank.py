@@ -149,7 +149,7 @@ def grab_header(filename):
     Returns:
         header_str (str): filterbank header as a binary string
     """
-    f = open(filename, 'r')
+    f = open(filename, 'rb')
     eoh_found = False
     
     header_str = ''
@@ -179,7 +179,7 @@ def len_header(filename):
     Returns:
         idx_end (int): length of header, in bytes    
     """
-    f = open(filename, 'r')
+    f = open(filename, 'rb')
     
     header_sub_count = 0
     eoh_found = False
@@ -318,7 +318,7 @@ class Filterbank(object):
         
         # Load binary data 
         self.idx_data = len_header(filename)
-        f = open(filename, 'r')
+        f = open(filename, 'rb')
         f.seek(self.idx_data)
         
         n_bytes  = self.header['nbits'] / 8
