@@ -141,16 +141,17 @@ header_keyword_types = {
     }
 
 def grab_header(filename):
-    """ Extract the filterbank header from the file 
-    
+    """ Extract the filterbank header from the file
+
     Args:
         filename (str): name of file to open
-    
+
     Returns:
         header_str (str): filterbank header as a binary string
     """
     f = open(filename, 'rb')
     eoh_found = False
+    MAX_HEADER_BLOCKS = 100
     
     header_str = ''
     header_sub_count = 0
@@ -160,11 +161,13 @@ def grab_header(filename):
         if 'HEADER_START' in header_sub:
             idx_start = header_sub.index('HEADER_START') + len('HEADER_START')
             header_sub = header_sub[idx_start:]
-        
         if 'HEADER_END' in header_sub:
             eoh_found = True
             idx_end = header_sub.index('HEADER_END')
             header_sub = header_sub[:idx_end]
+            
+        if header_sub_count >= MAX_HEADER_BLOCKS:
+            raise RuntimeError("MAX HEADER LENGTH REACHED. THIS FILE IS FUBARRED.")
         header_str += header_sub
         
     f.close()
