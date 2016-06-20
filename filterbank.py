@@ -34,6 +34,7 @@ from astropy.coordinates import Angle
 MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
 MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
+MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
 
 ###
 # useful helper functions
@@ -141,17 +142,16 @@ header_keyword_types = {
     }
 
 def grab_header(filename):
-    """ Extract the filterbank header from the file
-
+    """ Extract the filterbank header from the file 
+    
     Args:
         filename (str): name of file to open
-
+    
     Returns:
         header_str (str): filterbank header as a binary string
     """
     f = open(filename, 'rb')
     eoh_found = False
-    MAX_HEADER_BLOCKS = 100
     
     header_str = ''
     header_sub_count = 0
@@ -161,6 +161,7 @@ def grab_header(filename):
         if 'HEADER_START' in header_sub:
             idx_start = header_sub.index('HEADER_START') + len('HEADER_START')
             header_sub = header_sub[idx_start:]
+        
         if 'HEADER_END' in header_sub:
             eoh_found = True
             idx_end = header_sub.index('HEADER_END')
@@ -543,7 +544,8 @@ if __name__ == "__main__":
                         help='Show info only')
     parser.add_argument('-a', action='store_true', default=False, dest='average',
                        help='average along time axis (plot spectrum only)')
-    
+    parser.add_argument('-s', action='store', default='', dest='plt_filename', type=str,
+                       help='save plot graphic to file (give filename as argument)')
     args = parser.parse_args()
     
     # Open filterbank data
@@ -597,5 +599,8 @@ if __name__ == "__main__":
             plt.figure("waterfall", figsize=(8, 6))
             fil.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop)
             #plt.clim(75, 85)
+        
+        if args.plt_filename != '':
+            plt.savefig(args.plt_filename)
         
         plt.show()    
