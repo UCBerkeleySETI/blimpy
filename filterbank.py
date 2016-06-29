@@ -553,6 +553,8 @@ if __name__ == "__main__":
                        help='average along time axis (plot spectrum only)')
     parser.add_argument('-s', action='store', default='', dest='plt_filename', type=str,
                        help='save plot graphic to file (give filename as argument)')
+    parser.add_argument('-S', action='store_true', default=False, dest='save_only',
+                       help='Turn off plotting of data and only save to file.')
     args = parser.parse_args()
     
     # Open filterbank data
@@ -610,5 +612,6 @@ if __name__ == "__main__":
         if args.plt_filename != '':
             plt.savefig(args.plt_filename)
         
-        if os.environ.has_key('DISPLAY'):
-            plt.show()
+        if not args.save_only:
+            if os.environ.has_key('DISPLAY'):
+                plt.show()
