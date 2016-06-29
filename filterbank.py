@@ -25,11 +25,18 @@ import os
 import sys
 import struct
 import numpy as np
-import pylab as plt
 from pprint import pprint
 
 from astropy import units as u
 from astropy.coordinates import Angle
+
+# Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
+if os.environ.has_key('DISPLAY'):
+    import pylab as plt
+else:
+    import matplotlib
+    matplotlib.use('Agg')
+    import pylab as plt
 
 MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
@@ -603,4 +610,5 @@ if __name__ == "__main__":
         if args.plt_filename != '':
             plt.savefig(args.plt_filename)
         
-        plt.show()    
+        if os.environ.has_key('DISPLAY'):
+            plt.show()
