@@ -25,6 +25,7 @@ import os
 import sys
 import struct
 import numpy as np
+import pylab as plt
 from pprint import pprint
 
 from astropy import units as u
@@ -190,20 +191,18 @@ def len_header(filename):
     Returns:
         idx_end (int): length of header, in bytes    
     """
-    f = open(filename, 'rb')
-    
-    header_sub_count = 0
-    eoh_found = False
-    while not eoh_found:
-        header_sub = f.read(512)
-        header_sub_count += 1
-        if 'HEADER_END' in header_sub:
-            idx_end = header_sub.index('HEADER_END') + len('HEADER_END')
-            eoh_found = True
-            break
+    with  open(filename, 'rb') as f:
+        header_sub_count = 0
+        eoh_found = False
+        while not eoh_found:
+            header_sub = f.read(512)
+            header_sub_count += 1
+            if 'HEADER_END' in header_sub:
+                idx_end = header_sub.index('HEADER_END') + len('HEADER_END')
+                eoh_found = True
+                break
         
-    idx_end = (header_sub_count -1) * 512 + idx_end 
-    f.close()
+        idx_end = (header_sub_count -1) * 512 + idx_end 
     return idx_end
 
 def parse_header(filename):
@@ -248,6 +247,128 @@ def parse_header(filename):
     
     return header_dict
 
+def read_next_header_keyword(fh):
+    """ 
+    
+    Args:
+        fh (file): file handler
+    
+    Returns: 
+    """
+    n_bytes = np.fromstring(fh.read(4), dtype='uint32')[0]
+    #print n_bytes
+    
+    if n_bytes > 255:
+        n_bytes = 16
+    
+    keyword = fh.read(n_bytes)
+    
+    #print keyword
+    
+    if keyword == 'HEADER_START' or keyword == 'HEADER_END':
+        return keyword, 0, fh.tell()
+    else:
+        dtype = header_keyword_types[keyword]
+        #print dtype
+        idx = fh.tell()
+        if dtype == '<l':
+            val = struct.unpack(dtype, fh.read(4))[0]
+        if dtype == '<d':
+            val = struct.unpack(dtype, fh.read(8))[0]
+        if dtype == 'str':
+            str_len = np.fromstring(fh.read(4), dtype='int32')[0]
+            val = fh.read(str_len)
+        if dtype == 'angle':
+            val = struct.unpack('<d', fh.read(8))[0]
+            val = fil_double_to_angle(val)
+            if keyword == 'src_raj':
+                val = Angle(val, unit=u.hour)
+            else:
+                val = Angle(val, unit=u.deg)  
+        return keyword, val, idx  
+
+def read_header(filename, return_idxs=False):
+    """ Read filterbank header and return a Python dictionary of key:value pairs
+    
+    Args:
+        filename (str): name of file to open
+    
+    Optional args:
+        return_idxs (bool): Default False. If true, returns the file offset indexes
+                            for values 
+        
+    returns
+    
+    """
+    with open(filename, 'rb') as fh:
+        header_dict = {}
+        header_idxs = {}
+        
+        # Check this is a filterbank file
+        keyword, value, idx = read_next_header_keyword(fh)
+        
+        try:
+            assert keyword == 'HEADER_START'
+        except AssertionError:
+            raise RuntimeError("Not a valid filterbank file.")
+        
+        while True:
+            keyword, value, idx = read_next_header_keyword(fh)
+            if keyword == 'HEADER_END':
+                break
+            else:
+                header_dict[keyword] = value
+                header_idxs[keyword] = idx
+        
+    if return_idxs:
+        return header_idxs
+    else:
+        return header_dict
+    
+def fix_header(filename, keyword, new_value):
+    """ Apply a quick patch-up to a Filterbank header by overwriting a header value
+    
+    
+    Args:
+        filename (str): name of file to open and fix. WILL BE MODIFIED.
+        keyword (stt):  header keyword to update
+        new_value (long, double, angle or string): New value to write. 
+    
+    Notes:
+        This will overwrite the current value of the filterbank with a desired
+        'fixed' version. Note that this has limited support for patching 
+        string-type values - if the length of the string changes, all hell will
+        break loose.
+    
+    """  
+    
+    # Read header data and return indexes of data offsets in file
+    hd = read_header(filename)
+    hi = read_header(filename, return_idxs=True)
+    idx = hi[keyword]
+    
+    # Find out the datatype for the given keyword
+    dtype = header_keyword_types[keyword]
+    dtype_to_type = {'<l'  : np.int32,
+                     'str' : str, 
+                     '<d'  : np.float64,
+                     'angle' : to_sigproc_angle}
+    value_dtype = dtype_to_type[dtype]
+    
+    # Generate the new string
+    if value_dtype is str:
+        if len(hd[keyword]) == len(new_value):
+            val_str = np.int32(len(new_value)).tostring() + new_value
+        else:
+            raise RuntimeError("String size mismatch. Cannot update without rewriting entire file.")
+    else:
+        val_str = value_dtype(new_value).tostring()
+    
+    # Write the new string to file
+    with open(filename, 'rb+') as fh:
+        fh.seek(idx)
+        fh.write(val_str)    
+
 def fil_double_to_angle(angle):
       """ Reads a little-endian double in ddmmss.s (or hhmmss.s) format and then
       converts to Float degrees (or hours).  This is primarily used to read
@@ -267,6 +388,76 @@ def fil_double_to_angle(angle):
       
       return dd
 
+###
+# sigproc writing functions
+###
+
+def to_sigproc_keyword(keyword, value=None):
+    """ Generate a serialized string for a sigproc keyword:value pair
+    
+    If value=None, just the keyword will be written with no payload.
+    Data type is inferred by keyword name (via a lookup table)
+    
+    Args: 
+        keyword (str): Keyword to write
+        value (None, float, str, double or angle): value to write to file
+    
+    Returns:
+        value_str (str): serialized string to write to file.
+    """
+    if not value:
+        return np.int32(len(keyword)).tostring() + keyword
+    else:
+        dtype = header_keyword_types[keyword]
+    
+        dtype_to_type = {'<l'  : np.int32,
+                         'str' : str, 
+                         '<d'  : np.float64,
+                         'angle' : to_sigproc_angle}
+    
+        value_dtype = dtype_to_type[dtype]
+        
+        if value_dtype is str:
+            return np.int32(len(keyword)).tostring() + keyword + np.int32(len(value)).tostring() + value
+        else:
+            return np.int32(len(keyword)).tostring() + keyword + value_dtype(value).tostring()
+
+def generate_sigproc_header(f):
+    """ Generate a serialzed sigproc header which can be written to disk.
+    
+    Args:
+        f (Filterbank object): Filterbank object for which to generate header
+    
+    Returns:
+        header_str (str): Serialized string corresponding to header
+    """
+     
+    header_string = ''
+    header_string += to_sigproc_keyword('HEADER_START')
+    
+    for keyword in f.header.keys():  
+            if keyword == 'src_raj':
+                header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
+            elif keyword == 'src_dej':    
+                header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
+            else:    
+                header_string += to_sigproc_keyword(keyword, f.header[keyword])
+
+    header_string += to_sigproc_keyword('HEADER_END')
+    return header_string
+
+def to_sigproc_angle(angle_val):
+    """ Convert an astropy.Angle to the ridiculous sigproc angle format string. """
+    x = str(angle_val)
+
+    if 'h' in x:
+        d, m, s, ss = int(x[0:x.index('h')]), int(x[x.index('h')+1:x.index('m')]), \
+        int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
+    if 'd' in x:
+        d, m, s, ss = int(x[0:x.index('d')]), int(x[x.index('d')+1:x.index('m')]), \
+        int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
+    num = str(d).zfill(2) + str(m).zfill(2) + str(s).zfill(2)+ '.' + str(ss).split(".")[-1]
+    return np.float64(num).tostring()
 
 ###
 # Main filterbank class
@@ -298,34 +489,40 @@ class Filterbank(object):
         """
         
         self.filename = filename
-        self.header = parse_header(filename)
+        self.header = read_header(filename)
  
         ## Setup frequency axis
         f0 = self.header['fch1'] 
         f_delt = self.header['foff']
-        self.freqs = np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
+        
         
         # keep this seperate!
-        file_freq_mapping =  np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
+        # file_freq_mapping =  np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
         
-            
-        # Slice out frequency start & stop if required
-        chan_start_idx, chan_stop_idx = 0, self.header['nchans']
-        if f_delt < 0:
-            chan_start_idx, chan_stop_idx = self.header['nchans'], 0
-            
-            
+        #convert input frequencies into what their corresponding index would be
+        
+        i_start, i_stop = 0, self.header['nchans']
         if f_start:
-            chan_start_idx = closest(file_freq_mapping, f_start)
+            i_start = (f_start - f0) / f_delt
         if f_stop:
-            chan_stop_idx = closest(file_freq_mapping, f_stop)
-        
-        if chan_start_idx > chan_stop_idx:
-            self.freqs    = self.freqs[chan_stop_idx:chan_start_idx]
-            self.freqs    = self.freqs[::-1]
-        else:
-            self.freqs    = self.freqs[chan_start_idx:chan_stop_idx]
+            i_stop  = (f_stop - f0)  / f_delt
 
+        #calculate closest true index value
+        chan_start_idx = np.int(i_start)
+        chan_stop_idx  = np.int(i_stop)
+                
+        #create freq array
+        
+        if i_start < i_stop:
+            i_vals = np.arange(chan_start_idx, chan_stop_idx)
+        else:
+            i_vals = np.arange(chan_stop_idx, chan_start_idx)
+        
+        
+        self.freqs = f_delt * i_vals + f0
+        
+        if i_start > i_stop:
+            self.freqs = self.freqs[::-1]
         
         # Load binary data 
         self.idx_data = len_header(filename)
@@ -349,7 +546,9 @@ class Filterbank(object):
         if t_stop:
             ii_stop = t_stop
         n_ints = ii_stop - ii_start
-        
+
+        # Seek to first integration
+        f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
         
         # Set up indexes used in file read (taken out of loop for speed)
         i0 = np.min((chan_start_idx, chan_stop_idx))
@@ -361,44 +560,47 @@ class Filterbank(object):
                 print "Error: data array is too large to load. Either select fewer"
                 print "points or manually increase MAX_DATA_ARRAY_SIZE."
                 exit()
-                
+
             self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
-            
+
             for ii in range(n_ints):
-                """d = f.read(n_bytes * n_chans * n_ifs)  
+                """d = f.read(n_bytes * n_chans * n_ifs)
                 """
-                
+
                 for jj in range(n_ifs):
-       
+
                     f.seek(n_bytes * i0, 1) # 1 = from current location
-                    d = f.read(n_bytes * n_chans_selected)          
-                    f.seek(n_bytes * (n_chans - i1), 1)
-                
+                    d = f.read(n_bytes * n_chans_selected)
+
+
                     if n_bytes == 4:
                         dd = np.fromstring(d, dtype='float32')
                     elif n_bytes == 2:
                         dd = np.fromstring(d, dtype='int16')
                     elif n_bytes == 1:
                         dd = np.fromstring(d, dtype='int8')
-                    
+
                     # Reverse array if frequency axis is flipped
                     if f_delt < 0:
                         dd = dd[::-1]
-                    
-                    self.data[ii, jj] = dd        
+
+                    self.data[ii, jj] = dd
+
+                    f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
         else:
+            print "Skipping data load..."
             self.data = np.array([0])
             
         ## Setup time axis
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
-        self.timestamps = np.arange(0, n_ints) * t_delt + t0
+        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
         
         # Finally add some other info to the class as objects
         self.n_ints_in_file  = n_ints_in_file
         self.file_size_bytes = filesize
-        
-    
+
+
     def info(self):
         """ Print header information """
         
@@ -413,6 +615,28 @@ class Filterbank(object):
         print "%16s : %32s" % ("Data shape", self.data.shape)
         print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
         print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
+
+    def generate_freqs(self, f_start, f_stop): 
+        """
+        returns frequency array [f_start...f_stop]
+        """
+        
+        fch1 = self.header['fch1']
+        foff = self.header['foff']
+        
+        #convert input frequencies into what their corresponding index would be
+        i_start = (f_start - fch1) / foff
+        i_stop  = (f_stop - fch1)  / foff
+
+        #calculate closest true index value
+        chan_start_idx = np.int(i_start)
+        chan_stop_idx  = np.int(i_stop)
+
+        #create freq array
+        i_vals = np.arange(chan_stop_idx, chan_start_idx, 1)
+        
+        freqs = foff * i_vals + fch1
+        return freqs[::-1]
 
     def grab_data(self, f_start=None, f_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
@@ -528,7 +752,26 @@ class Filterbank(object):
         plt.colorbar()
         plt.xlabel("Frequency [MHz]")
         plt.ylabel("Time [MJD]")
+
+    def write_to_filterbank(self, filename_out=None):
+        #calibrate data
+        #self.data = calibrate(mask(self.data.mean(axis=0)[0]))
+        #rewrite header to be consistent with modified data
+        self.header['fch1']   = self.freqs[0]
+        self.header['foff']   = self.freqs[1] - self.freqs[0]
+        self.header['nchans'] = self.freqs.shape[0]
+        #self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
         
+        n_bytes  = self.header['nbits'] / 8
+        with open(filename_out, "w") as fileh:
+            fileh.write(generate_sigproc_header(self))
+            j = self.data
+            if n_bytes == 4:
+                np.float32(j[:, ::-1].ravel()).tofile(fileh)
+            elif n_bytes == 2:
+                np.int16(j[:, ::-1].ravel()).tofile(fileh)
+            elif n_bytes == 1:
+                np.int8(j[:, ::-1].ravel()).tofile(fileh)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
