@@ -440,6 +440,8 @@ def generate_sigproc_header(f):
                 header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
             elif keyword == 'src_dej':    
                 header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
+            elif keyword == 'az_start' or keyword == 'za_start':    
+                header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
             else:    
                 header_string += to_sigproc_keyword(keyword, f.header[keyword])
 
