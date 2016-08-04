@@ -521,7 +521,7 @@ class Filterbank(object):
         
         self.freqs = f_delt * i_vals + f0
         
-        if i_start > i_stop:
+        if f_delt < 0:
             self.freqs = self.freqs[::-1]
         
         # Load binary data 
