@@ -25,7 +25,6 @@ import os
 import sys
 import struct
 import numpy as np
-import pylab as plt
 from pprint import pprint
 
 from astropy import units as u
