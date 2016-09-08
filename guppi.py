@@ -118,9 +118,9 @@ class GuppiRaw(object):
 		if self._d.shape != d.shape:
 			self._d = np.zeros(d.shape, dtype='float32')
 
-		self._d[:] = d
+		self._d = (d.view('complex64'))[:]
 
-		return header, self._d.view('complex64')
+		return header, self._d
 
 	def find_n_data_blocks(self):
 		""" Seek through the file to find how many data blocks there are in the file
