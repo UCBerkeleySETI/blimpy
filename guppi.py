@@ -82,16 +82,15 @@ class GuppiRaw(object):
 
 				header_dict[key] = val
 		except ValueError:
-			print line
-			print key, val
 			raise EndOfFileError
 
 		data_idx = self.file_obj.tell()
 
-		#print data_idx % 256
-
-		if data_idx % 256:
-			data_idx += (256 - data_idx % 256)
+		# Seek past padding if DIRECTIO is being used
+		if "DIRECTIO" in header_dict.keys():
+			if header_dict["DIRECTIO"] == 1:
+				if data_idx % 256:
+					data_idx += (256 - data_idx % 256)
 
 		self.file_obj.seek(start_idx)
 		return header_dict, data_idx
