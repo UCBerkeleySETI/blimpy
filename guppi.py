@@ -12,6 +12,37 @@ import os
 import time
 from pprint import pprint
 
+def unpack(data, nbit):
+	"""upgrade data from nbits to 8bits"""
+	if nbit > 8:
+		raise ValueError("unpack: nbit must be <= 8")
+	if 8 % nbit != 0:
+		raise ValueError("unpack: nbit must divide into 8")
+	if data.dtype not in (np.uint8, np.int8):
+		raise TypeError("unpack: dtype must be 8-bit")
+	if nbit == 8:
+		return data
+	elif nbit == 4:
+		# Note: This technique assumes LSB-first ordering
+		tmpdata = data.astype(np.int16)#np.empty(upshape, dtype=np.int16)
+		tmpdata = (tmpdata | (tmpdata <<  8)) & 0x0F0F
+		tmpdata = tmpdata << 4 # Shift into high bits to avoid needing to sign extend
+		updata = tmpdata
+	elif nbit == 2:
+		tmpdata = data.astype(np.int32)#np.empty(upshape, dtype=np.int16)
+		tmpdata = (tmpdata | (tmpdata << 16)) & 0x000F000F
+		tmpdata = (tmpdata | (tmpdata <<  8)) & 0x03030303
+		tmpdata = tmpdata << 6 # Shift into high bits to avoid needing to sign extend
+		updata = tmpdata
+	elif nbit == 1:
+		tmpdata = data.astype(np.int64)#np.empty(upshape, dtype=np.int16)
+		tmpdata = (tmpdata | (tmpdata << 32)) & 0x0000000F0000000F
+		tmpdata = (tmpdata | (tmpdata << 16)) & 0x0003000300030003
+		tmpdata = (tmpdata | (tmpdata <<  8)) & 0x0101010101010101
+		tmpdata = tmpdata << 7 # Shift into high bits to avoid needing to sign extend
+		updata = tmpdata
+	return updata.view(data.dtype)
+
 class EndOfFileError(Exception):
 	pass
 
@@ -23,8 +54,8 @@ class GuppiRaw(object):
 
 	Optional args:
 		n_blocks (int): if number of blocks to read is known, set it here.
-		                This saves seeking through the file to check how many
-		                integrations there are in the file.
+						This saves seeking through the file to check how many
+						integrations there are in the file.
 	"""
 	def __init__(self, filename, n_blocks=None):
 		self.filename = filename
@@ -63,7 +94,7 @@ class GuppiRaw(object):
 			while keep_reading:
 				line = self.file_obj.read(80)
 				#print line
-				if 'END     ' in line:
+				if 'END	 ' in line:
 					keep_reading = False
 					break
 				else:
@@ -89,8 +120,8 @@ class GuppiRaw(object):
 		# Seek past padding if DIRECTIO is being used
 		if "DIRECTIO" in header_dict.keys():
 			if header_dict["DIRECTIO"] == 1:
-				if data_idx % 256:
-					data_idx += (256 - data_idx % 256)
+				if data_idx % 512:
+					data_idx += (512 - data_idx % 512)
 
 		self.file_obj.seek(start_idx)
 		return header_dict, data_idx
@@ -117,12 +148,20 @@ class GuppiRaw(object):
 		self.file_obj.seek(data_idx)
 
 		# Read data and reshape
-		d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
+
 		n_chan = header['OBSNCHAN']
 		n_pol  = header['NPOL']
 		n_samples = header['BLOCSIZE'] / n_chan / n_pol
+		n_bit = header['NBITS']
 
-		d = d.reshape((n_chan, n_samples, n_pol))    # Real, imag
+
+		d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
+
+		# Handle 2-bit and 4-bit data
+		if n_bit != 8:
+			d = unpack(d, n_bit)
+
+		d = d.reshape((n_chan, n_samples, n_pol))	# Real, imag
 
 		if self._d.shape != d.shape:
 			self._d = np.zeros(d.shape, dtype='float32')
