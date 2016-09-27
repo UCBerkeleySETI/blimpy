@@ -60,6 +60,7 @@ class GuppiRaw(object):
 	def __init__(self, filename, n_blocks=None):
 		self.filename = filename
 		self.file_obj = open(filename, 'r')
+		self.filesize = os.path.getsize(filename)
 
 		if not n_blocks:
 			self.n_blocks = self.find_n_data_blocks()
@@ -88,13 +89,20 @@ class GuppiRaw(object):
 		start_idx = self.file_obj.tell()
 		key, val = '', ''
 
+		header_dict = {}
+		keep_reading = True
+
+		first_line = self.file_obj
+
+
 		try:
-			header_dict = {}
-			keep_reading = True
 			while keep_reading:
+				if start_idx + 80 > self.filesize:
+					keep_reading = False
+					raise EndOfFileError
 				line = self.file_obj.read(80)
 				#print line
-				if 'END	 ' in line:
+				if line.startswith('END'):
 					keep_reading = False
 					break
 				else:
@@ -113,7 +121,8 @@ class GuppiRaw(object):
 
 				header_dict[key] = val
 		except ValueError:
-			raise EndOfFileError
+			print line, start_idx, self.filesize
+			raise
 
 		data_idx = self.file_obj.tell()
 
