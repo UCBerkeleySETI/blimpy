@@ -262,9 +262,9 @@ if __name__ == "__main__":
 
 	parser.add_argument('filename', type=str,
 						help='Name of file to read')
+	args = parser.parse_args()
 
-
-	r = guppi.GuppiRaw(filename)
+	r = GuppiRaw(args.filename)
 
 	r.print_stats()
 	r.plot_histogram(filename="%s_hist.png" % args.filename)
