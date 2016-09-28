@@ -12,36 +12,30 @@ import os
 import time
 from pprint import pprint
 
-def unpack(data, nbit):
-	"""upgrade data from nbits to 8bits"""
-	if nbit > 8:
-		raise ValueError("unpack: nbit must be <= 8")
-	if 8 % nbit != 0:
-		raise ValueError("unpack: nbit must divide into 8")
-	if data.dtype not in (np.uint8, np.int8):
-		raise TypeError("unpack: dtype must be 8-bit")
-	if nbit == 8:
-		return data
-	elif nbit == 4:
-		# Note: This technique assumes LSB-first ordering
-		tmpdata = data.astype(np.int16)#np.empty(upshape, dtype=np.int16)
-		tmpdata = (tmpdata | (tmpdata <<  8)) & 0x0F0F
-		tmpdata = tmpdata << 4 # Shift into high bits to avoid needing to sign extend
-		updata = tmpdata
-	elif nbit == 2:
-		tmpdata = data.astype(np.int32)#np.empty(upshape, dtype=np.int16)
-		tmpdata = (tmpdata | (tmpdata << 16)) & 0x000F000F
-		tmpdata = (tmpdata | (tmpdata <<  8)) & 0x03030303
-		tmpdata = tmpdata << 6 # Shift into high bits to avoid needing to sign extend
-		updata = tmpdata
-	elif nbit == 1:
-		tmpdata = data.astype(np.int64)#np.empty(upshape, dtype=np.int16)
-		tmpdata = (tmpdata | (tmpdata << 32)) & 0x0000000F0000000F
-		tmpdata = (tmpdata | (tmpdata << 16)) & 0x0003000300030003
-		tmpdata = (tmpdata | (tmpdata <<  8)) & 0x0101010101010101
-		tmpdata = tmpdata << 7 # Shift into high bits to avoid needing to sign extend
-		updata = tmpdata
-	return updata.view(data.dtype)
+from utils import unpack, rebin
+
+# Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
+if os.environ.has_key('DISPLAY'):
+
+	try:
+		import matplotlib
+		#matplotlib.use('Qt5Agg')
+	except ImportError:
+		pass
+	import pylab as plt
+else:
+	import matplotlib
+	matplotlib.use('Agg')
+	import pylab as plt
+
+###
+# Config values
+###
+
+MAX_PLT_POINTS      = 65536 * 4              # Max number of points in matplotlib plot
+MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
+
 
 class EndOfFileError(Exception):
 	pass
@@ -223,17 +217,18 @@ class GuppiRaw(object):
 
 		import pylab as plt
 
-	def plot_histogram(self):
+	def plot_histogram(self, filename=None):
 		""" Plot a histogram of data values """
-		import pylab as plt
 		header, data = self.read_next_data_block()
 		data = data.view('float32')
 
 		plt.figure("Histogram")
-		plt.hist(data.flatten(), 33, facecolor='#cc0000')
+		plt.hist(data.flatten(), 65, facecolor='#cc0000')
+		if filename:
+			plt.savefig(filename)
 		plt.show()
 
-	def plot_spectrum(self):
+	def plot_spectrum(self, filename=None):
 		""" Do a (slow) numpy FFT and take power of data """
 		header, data = self.read_next_data_block()
 
@@ -241,7 +236,18 @@ class GuppiRaw(object):
 		d_xx_fft = np.abs(np.fft.fft(data[..., 0]))
 		d_xx_fft = d_xx_fft.flatten()
 
+		# Rebin to max number of points
+		dec_fac_x = 1
+		if d_xx_fft.shape[0] > MAX_PLT_POINTS:
+			dec_fac_x = d_xx_fft.shape[0] / MAX_PLT_POINTS
+
+		d_xx_fft  = rebin(d_xx_fft, dec_fac_x, 1)
+
 		print "Plotting..."
-		import pylab as plt
 		plt.plot(10 * np.log10(d_xx_fft))
+		plt.xlabel("Channel")
+		plt.ylabel("Power [dB]")
+		plt.title(self.filename)
+		if filename:
+			plt.savefig(filename)
 		plt.show()
