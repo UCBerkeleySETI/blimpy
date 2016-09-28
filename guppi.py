@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 # guppi.py
 
@@ -251,3 +252,20 @@ class GuppiRaw(object):
 		if filename:
 			plt.savefig(filename)
 		plt.show()
+
+if __name__ == "__main__":
+
+	from argparse import ArgumentParser
+
+	parser = ArgumentParser(description="Command line utility for creating \
+										 spectra from GuppiRaw files.")
+
+	parser.add_argument('filename', type=str,
+						help='Name of file to read')
+
+
+	r = guppi.GuppiRaw(filename)
+
+	r.print_stats()
+	r.plot_histogram(filename="%s_hist.png" % args.filename)
+	r.plot_spectrum(filename="%s_spec.png" % args.filename)
