@@ -2,7 +2,7 @@
 # utils.py
 useful helper functions for common data manipulation tasks
 """
-
+import numpy as np
 
 def db(x):
     """ Convert linear to dB """
