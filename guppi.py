@@ -235,7 +235,7 @@ class GuppiRaw(object):
 			plt.savefig(filename)
 		plt.show()
 
-	def plot_spectrum(self, filename=None):
+	def plot_spectrum(self, filename=None, plot_db=True):
 		""" Do a (slow) numpy FFT and take power of data """
 		header, data = self.read_next_data_block()
 
@@ -248,12 +248,16 @@ class GuppiRaw(object):
 		if d_xx_fft.shape[0] > MAX_PLT_POINTS:
 			dec_fac_x = d_xx_fft.shape[0] / MAX_PLT_POINTS
 
-		d_xx_fft  = rebin(d_xx_fft, dec_fac_x, 1)
+		d_xx_fft  = rebin(d_xx_fft, dec_fac_x)
 
 		print "Plotting..."
-		plt.plot(10 * np.log10(d_xx_fft))
-		plt.xlabel("Channel")
-		plt.ylabel("Power [dB]")
+                if plot_db:
+			plt.plot(10 * np.log10(d_xx_fft))
+			plt.ylabel("Power [dB]")
+		else:
+			plt.plot(d_xx_fft)
+			plt.ylabel("Power")                    
+                plt.xlabel("Channel")
 		plt.title(self.filename)
 		if filename:
 			plt.savefig(filename)
@@ -263,15 +267,16 @@ if __name__ == "__main__":
 
 	from argparse import ArgumentParser
 
-	parser = ArgumentParser(description="Command line utility for creating \
-										 spectra from GuppiRaw files.")
+	parser = ArgumentParser(description="Command line utility for creating spectra from GuppiRaw files.")
 
-	parser.add_argument('filename', type=str,
-						help='Name of file to read')
+	parser.add_argument('filename', type=str, help='Name of file to read')
+        parser.add_argument('-o', dest='outdir', type=str, default='./', help='output directory for PNG files')
 	args = parser.parse_args()
 
 	r = GuppiRaw(args.filename)
 
 	r.print_stats()
-	r.plot_histogram(filename="%s_hist.png" % args.filename)
-	r.plot_spectrum(filename="%s_spec.png" % args.filename)
+        bname = os.path.splitext(os.path.basename(args.filename))[0]
+        bname = os.path.join(args.outdir, bname)
+	r.plot_histogram(filename="%s_hist.png" % bname)
+	r.plot_spectrum(filename="%s_spec.png" % bname)
