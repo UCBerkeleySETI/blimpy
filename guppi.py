@@ -116,14 +116,18 @@ class GuppiRaw(object):
 
 				header_dict[key] = val
 		except ValueError:
-			print line, start_idx, self.filesize
+			print "CURRENT LINE: ", line
+ 			print "BLOCK START IDX: ",  start_idx
+			print "FILE SIZE: ",  self.filesize
+			print "NEXT 512 BYTES: \n"
+			print self.file_obj.read(512)
 			raise
 
 		data_idx = self.file_obj.tell()
 
 		# Seek past padding if DIRECTIO is being used
 		if "DIRECTIO" in header_dict.keys():
-			if header_dict["DIRECTIO"] == 1:
+			if int(header_dict["DIRECTIO"]) == 1:
 				if data_idx % 512:
 					data_idx += (512 - data_idx % 512)
 
@@ -153,10 +157,10 @@ class GuppiRaw(object):
 
 		# Read data and reshape
 
-		n_chan = header['OBSNCHAN']
-		n_pol  = header['NPOL']
-		n_samples = header['BLOCSIZE'] / n_chan / n_pol
-		n_bit = header['NBITS']
+		n_chan = int(header['OBSNCHAN'])
+		n_pol  = int(header['NPOL'])
+		n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
+		n_bit = int(header['NBITS'])
 
 
 		d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
@@ -184,7 +188,9 @@ class GuppiRaw(object):
 		header0, data_idx0 = self.read_header()
 
 		self.file_obj.seek(data_idx0)
-		self.file_obj.seek(header0['BLOCSIZE'], 1)
+                block_size = int(header0['BLOCSIZE'])
+                n_bits     = int(header0['NBITS'])
+		self.file_obj.seek(int(header0['BLOCSIZE']), 1)
 		n_blocks = 1
 		end_found = False
 		while not end_found:
