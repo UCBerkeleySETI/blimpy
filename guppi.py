@@ -12,6 +12,7 @@ import numpy as np
 import os
 import time
 from pprint import pprint
+from astropy.coordinates import Angle
 
 from utils import unpack, rebin
 
@@ -36,6 +37,7 @@ else:
 MAX_PLT_POINTS      = 65536 * 4              # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
 MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
+
 
 
 class EndOfFileError(Exception):
@@ -256,12 +258,56 @@ class GuppiRaw(object):
 			plt.ylabel("Power [dB]")
 		else:
 			plt.plot(d_xx_fft)
-			plt.ylabel("Power")                    
+			plt.ylabel("Power")
                 plt.xlabel("Channel")
 		plt.title(self.filename)
 		if filename:
 			plt.savefig(filename)
 		plt.show()
+
+	def generate_filterbank_header(self, nchans=1, ):
+		""" Generate a filterbank header dictionary """
+		gp_head = self.read_first_header()
+		fb_head = {}
+
+		telescope_str = gp_head.get("TELESCOP", "unknown")
+		if telescope_str in ('GBT', 'GREENBANK'):
+			fb_head["telescope_id"] = 6
+		elif telescope_str in ('PKS', 'PARKES'):
+			fb_head["telescop_id"] = 7
+		else:
+			fb_head["telescop_id"] = 0
+
+		# Using .get() method allows us to fill in default values if not present
+		fb_head["source_name"] = gp_head.get("SRC_NAME", "unknown")
+		fb_head["az_start"]    = gp_head.get("AZ", 0)
+		fb_head["za_start"]    = gp_head.get("ZA", 0)
+
+		fb_head["src_raj"]     = Angle(str(gp_head.get("RA", 0.0)) + "hr")
+		fb_head["src_dej"]     = Angle(str(gp_head.get("DEC", 0.0)) + "deg")
+		fb_head["rawdatafile"] = self.filename
+
+		# hardcoded
+		fb_head["machine_id"]    = 20
+		fb_head["data_type"]     = 1      # filterbank datatype
+		fb_head["barycentric"] 	 = 0
+		fb_head["pulsarcentric"] = 0
+		fb_head["nbits"]         = 32
+
+		# TODO - compute these values. Need to figure out the correct calcs
+		fb_head["tstart"]        = 0.0
+		fb_head["tsamp"]         = 1.0
+		fb_head["fch1"]          = 0.0
+		fb_head["foff"]          = 187.5 / nchans
+
+		# Need to be updated based on output specs
+		fb_head["nchans"]        = nchans
+		fb_head["nifs"]          = 1
+		fb_head["nbeams"]        = 1
+
+		return fb_head
+
+
 
 if __name__ == "__main__":
 

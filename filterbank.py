@@ -40,6 +40,12 @@ else:
     matplotlib.use('Agg')
     import pylab as plt
 
+try:
+    import h5py
+    HAS_HDF5 = True
+except ImportError:
+    HAS_HDF5 = False
+
 ###
 # Config values
 ###
@@ -435,7 +441,8 @@ class Filterbank(object):
         return "Filterbank data: %s" % self.filename
 
     def __init__(self, filename, f_start=None, f_stop=None,
-                 t_start=None, t_stop=None, load_data=True):
+                 t_start=None, t_stop=None, load_data=True,
+                 header_dict=None, data_array=None):
         """ Class for loading and plotting filterbank data.
 
         This class parses the filterbank file and stores the header and data
@@ -451,10 +458,16 @@ class Filterbank(object):
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
+            header_dict (dict): Create filterbank from header dictionary + data array
+            data_array (np.array): Create filterbank from header dict + data array
         """
 
         self.filename = filename
-        self.header = read_header(filename)
+
+        if header_dict is None:
+            self.header = read_header(filename)
+        else:
+            self.header = header_dict
 
         ## Setup frequency axis
         f0 = self.header['fch1']
@@ -489,82 +502,87 @@ class Filterbank(object):
         if f_delt < 0:
             self.freqs = self.freqs[::-1]
 
-        # Load binary data
-        self.idx_data = len_header(filename)
-        f = open(filename, 'rb')
-        f.seek(self.idx_data)
-
         n_bytes  = self.header['nbits'] / 8
         n_chans = self.header['nchans']
         n_chans_selected = self.freqs.shape[0]
         n_ifs   = self.header['nifs']
 
-        # only read first integration of large file (for now, later more flexible)
-        filesize = os.path.getsize(self.filename)
-        n_bytes_data = filesize - self.idx_data
-        n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
 
-        # now check to see how many integrations requested
-        ii_start, ii_stop = 0, n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
+        # Load binary data
+        if data_array is None:
+            self.idx_data = len_header(filename)
+            f = open(filename, 'rb')
+            f.seek(self.idx_data)
+            filesize = os.path.getsize(self.filename)
+            n_bytes_data = filesize - self.idx_data
+            n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
 
-        # Seek to first integration
-        f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
+            # now check to see how many integrations requested
+            ii_start, ii_stop = 0, n_ints_in_file
+            if t_start:
+                ii_start = t_start
+            if t_stop:
+                ii_stop = t_stop
+            n_ints = ii_stop - ii_start
 
-        # Set up indexes used in file read (taken out of loop for speed)
-        i0 = np.min((chan_start_idx, chan_stop_idx))
-        i1 = np.max((chan_start_idx, chan_stop_idx))
+            # Seek to first integration
+            f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
 
-        if load_data:
+            # Set up indexes used in file read (taken out of loop for speed)
+            i0 = np.min((chan_start_idx, chan_stop_idx))
+            i1 = np.max((chan_start_idx, chan_stop_idx))
 
-            if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
-                print "Error: data array is too large to load. Either select fewer"
-                print "points or manually increase MAX_DATA_ARRAY_SIZE."
-                exit()
+            if load_data:
 
-            self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
+                if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
+                    print "Error: data array is too large to load. Either select fewer"
+                    print "points or manually increase MAX_DATA_ARRAY_SIZE."
+                    exit()
 
-            for ii in range(n_ints):
-                """d = f.read(n_bytes * n_chans * n_ifs)
-                """
+                self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
 
-                for jj in range(n_ifs):
+                for ii in range(n_ints):
+                    """d = f.read(n_bytes * n_chans * n_ifs)
+                    """
 
-                    f.seek(n_bytes * i0, 1) # 1 = from current location
-                    d = f.read(n_bytes * n_chans_selected)
+                    for jj in range(n_ifs):
+
+                        f.seek(n_bytes * i0, 1) # 1 = from current location
+                        d = f.read(n_bytes * n_chans_selected)
 
 
-                    if n_bytes == 4:
-                        dd = np.fromstring(d, dtype='float32')
-                    elif n_bytes == 2:
-                        dd = np.fromstring(d, dtype='int16')
-                    elif n_bytes == 1:
-                        dd = np.fromstring(d, dtype='int8')
+                        if n_bytes == 4:
+                            dd = np.fromstring(d, dtype='float32')
+                        elif n_bytes == 2:
+                            dd = np.fromstring(d, dtype='int16')
+                        elif n_bytes == 1:
+                            dd = np.fromstring(d, dtype='int8')
 
-                    # Reverse array if frequency axis is flipped
-                    if f_delt < 0:
-                        dd = dd[::-1]
+                        # Reverse array if frequency axis is flipped
+                        if f_delt < 0:
+                            dd = dd[::-1]
 
-                    self.data[ii, jj] = dd
+                        self.data[ii, jj] = dd
 
-                    f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
-        else:
-            print "Skipping data load..."
-            self.data = np.array([0])
+                        f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
+            else:
+                print "Skipping data load..."
+                self.data = np.array([0])
+
+            # Finally add some other info to the class as objects
+            self.n_ints_in_file  = n_ints_in_file
+            self.file_size_bytes = filesize
+
+        else:        #data array was presented
+            self.data = data_array
+            self.n_ints_in_file = data_array.shape[0]
+            self.file_size_bytes = 0
+            n_ints = data_array.shape[0]
 
         ## Setup time axis
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
-
-        # Finally add some other info to the class as objects
-        self.n_ints_in_file  = n_ints_in_file
-        self.file_size_bytes = filesize
-
 
     def info(self):
         """ Print header information """
@@ -718,7 +736,13 @@ class Filterbank(object):
         plt.xlabel("Frequency [MHz]")
         plt.ylabel("Time [MJD]")
 
-    def write_to_filterbank(self, filename_out=None):
+    def write_to_filterbank(self, filename_out):
+        """ Write data to filterbank file.
+
+        Args:
+            filename_out (str): Name of output file
+        """
+
         #calibrate data
         #self.data = calibrate(mask(self.data.mean(axis=0)[0]))
         #rewrite header to be consistent with modified data
@@ -737,6 +761,40 @@ class Filterbank(object):
                 np.int16(j[:, ::-1].ravel()).tofile(fileh)
             elif n_bytes == 1:
                 np.int8(j[:, ::-1].ravel()).tofile(fileh)
+
+    def write_to_hdf5(self, filename_out, *args, **kwargs):
+        """ Write data to HDF5 file.
+
+        Args:
+            filename_out (str): Name of output file
+        """
+        if not HAS_HDF5:
+            raise RuntimeError("h5py package required for HDF5 output.")
+
+        with h5py.File(filename_out, 'w') as h5:
+
+            dset = h5.create_dataset('data',
+                              data=self.data,
+                              compression='lzf')
+
+            dset_mask = h5.create_dataset('mask',
+                                     shape=self.data.shape,
+                                     compression='lzf',
+                                     dtype='uint8')
+
+            dset.dims[0].label = "frequency"
+            dset.dims[1].label = "feed_id"
+            dset.dims[2].label = "time"
+
+            dset_mask.dims[0].label = "frequency"
+            dset_mask.dims[1].label = "feed_id"
+            dset_mask.dims[2].label = "time"
+
+            # Copy over header information as attributes
+            for key, value in self.header.items():
+                dset.attrs[key] = value
+
+
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

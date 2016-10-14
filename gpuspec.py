@@ -13,6 +13,8 @@ import numpy as np
 import os
 import sys
 
+import h5py
+
 try:
 	import pycuda.driver as cuda
 	import pycuda.autoinit
@@ -31,10 +33,13 @@ import pylab as plt
 import time
 
 from guppi import GuppiRaw
+from filterbank import Filterbank
 
 def gpuspec(raw, n_int, f_avg, blank_dc_bin):
 	header = raw.read_first_header()
-	d_avg = np.zeros(header["BLOCSIZE"] / dec_fac / 4)
+	f_xx_avg = np.zeros(header["BLOCSIZE"] / dec_fac / 4)
+	f_yy_avg = np.zeros(header["BLOCSIZE"] / dec_fac / 4)
+	f_xy_avg = np.zeros(header["BLOCSIZE"] / dec_fac / 4, dtype='complex64')
 
 	fft_plan = None
 	df_gpu   = None
@@ -81,13 +86,24 @@ def gpuspec(raw, n_int, f_avg, blank_dc_bin):
 		print "cuFFT:			  %2.2fs" % (t2 - t1)
 
 		t1 = time.time()
-		d_pow = np.abs(d_xx_fft)  + np.abs(d_yy_fft)
+
+		f_xx = np.abs(d_xx_fft)
+		f_yy = np.abs(d_yy_fft)
+		f_xy = d_xx_fft * d_yy_fft.conj()
 
 		if blank_dc_bin:
-			d_pow[:, 0] = (d_pow[:, 1] + d_pow[:, -1]) / 2   # Blank DC bin
+			f_xx[:, 0] = (f_xx[:, 1] + f_xx[:, -1]) / 2
+			f_yy[:, 0] = (f_yy[:, 1] + f_yy[:, -1]) / 2
+			f_xy[:, 0] = (f_xy[:, 1] + f_xy[:, -1]) / 2
 
-		d_pow = np.fft.fftshift(d_pow)
-		d_avg += d_pow.flatten()
+		f_xx = np.fft.fftshift(f_xx)
+		f_xx_avg += f_xx.flatten()
+
+		f_yy = np.fft.fftshift(f_yy)
+		f_yy_avg += f_yy.flatten()
+
+		f_xy = np.fft.fftshift(f_xy)
+		f_xy_avg += f_xy.flatten()
 
 		t2 = time.time()
 		print "Square + integrate: %2.2fs" % (t2 - t1)
@@ -95,11 +111,16 @@ def gpuspec(raw, n_int, f_avg, blank_dc_bin):
 	t01 = time.time()
 	print "\nTotal time:		 %2.2fs" % (t01 - t00)
 
-	d_avg = d_avg.reshape(d_avg.shape[0] / f_avg, f_avg).mean(axis=1)
+	f_xx_avg = f_xx_avg.reshape(f_xx_avg.shape[0] / f_avg, f_avg).mean(axis=1)
+	f_yy_avg = f_yy_avg.reshape(f_yy_avg.shape[0] / f_avg, f_avg).mean(axis=1)
+	f_xy_avg = f_xy_avg.reshape(f_xy_avg.shape[0] / f_avg, f_avg).mean(axis=1)
 
 	# A roll is required for some reason, probably to do with the FFTshift
-	d_avg = np.roll(d_avg, d_avg.shape[0]/2)
-	return d_avg
+	f_xx_avg = np.roll(f_xx_avg, f_xx_avg.shape[0]/2)
+	f_yy_avg = np.roll(f_yy_avg, f_yy_avg.shape[0]/2)
+	f_xy_avg = np.roll(f_xy_avg, f_xy_avg.shape[0]/2)
+	return (f_xx_avg, f_yy_avg, f_xy_avg)
+
 
 if __name__ == "__main__":
 
@@ -145,9 +166,21 @@ if __name__ == "__main__":
 	print "Num. integrations: %i" % n_int
 
 	# Compute spectrum from raw file
-	d_spec = gpuspec(raw, n_int, f_avg, blank_dc_bin)
+	(xx, yy, xy) = gpuspec(raw, n_int, f_avg, blank_dc_bin)
+	print xx.shape, yy.shape, xy.shape
+
+	fil_header = raw.generate_filterbank_header(nchans=xx.shape[0])
+	fil_data = np.row_stack((xx, yy)).reshape(2, 1, xx.shape[0])
+
+	print fil_data.shape
+
+	fb = Filterbank(filename='test.h5', header_dict=fil_header, data_array=fil_data)
+	fb.write_to_hdf5('test_gpuspec.h5')
 
 	# plot data
 	print "Plotting..."
-	plt.plot(10*np.log10(d_spec))
+	plt.subplot(2,1,1)
+	plt.plot(10*np.log10(xx))
+	plt.plot(10*np.log10(yy))
+
 	plt.show()
