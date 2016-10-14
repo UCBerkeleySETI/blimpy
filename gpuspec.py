@@ -172,14 +172,11 @@ if __name__ == "__main__":
 	fil_header = raw.generate_filterbank_header(nchans=xx.shape[0])
 	fil_data = np.row_stack((xx, yy)).reshape(2, 1, xx.shape[0])
 
-	print fil_data.shape
-
 	fb = Filterbank(filename='test.h5', header_dict=fil_header, data_array=fil_data)
 	fb.write_to_hdf5('test_gpuspec.h5')
 
 	# plot data
 	print "Plotting..."
-	plt.subplot(2,1,1)
 	plt.plot(10*np.log10(xx))
 	plt.plot(10*np.log10(yy))
 

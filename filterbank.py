@@ -440,7 +440,7 @@ class Filterbank(object):
     def __repr__(self):
         return "Filterbank data: %s" % self.filename
 
-    def __init__(self, filename, f_start=None, f_stop=None,
+    def __init__(self, filename=None, f_start=None, f_stop=None,
                  t_start=None, t_stop=None, load_data=True,
                  header_dict=None, data_array=None):
         """ Class for loading and plotting filterbank data.
@@ -462,22 +462,33 @@ class Filterbank(object):
             data_array (np.array): Create filterbank from header dict + data array
         """
 
-        self.filename = filename
-
-        if header_dict is None:
-            self.header = read_header(filename)
+        if filename:
+            self.filename = filename
+            if HAS_HDF5:
+                if h5py.is_hdf5(filename):
+                    self.read_hdf5(filename)
+            self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
+        elif header_dict is not None and data_array is not None:
+            self.gen_from_header(header_dict, data_array)
         else:
-            self.header = header_dict
+            pass
 
+    def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,
+                        t_start=None, t_stop=None, load_data=True):
+        self.filename = ''
+        self.header = header_dict
+        self.data = data_array
+        self.n_ints_in_file = 0
+
+
+
+    def read_hdf5(self, filename):
+        pass
+
+    def _setup_freqs(self):
         ## Setup frequency axis
         f0 = self.header['fch1']
         f_delt = self.header['foff']
-
-
-        # keep this seperate!
-        # file_freq_mapping =  np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
-
-        #convert input frequencies into what their corresponding index would be
 
         i_start, i_stop = 0, self.header['nchans']
         if f_start:
@@ -490,17 +501,38 @@ class Filterbank(object):
         chan_stop_idx  = np.int(i_stop)
 
         #create freq array
-
         if i_start < i_stop:
             i_vals = np.arange(chan_start_idx, chan_stop_idx)
         else:
             i_vals = np.arange(chan_stop_idx, chan_start_idx)
 
-
         self.freqs = f_delt * i_vals + f0
 
         if f_delt < 0:
             self.freqs = self.freqs[::-1]
+
+        return i_start, i_stop, chan_start_idx, chan_stop_idx
+
+
+    def read_filterbank(self, filename=None, f_start=None, f_stop=None,
+                        t_start=None, t_stop=None, load_data=True):
+
+        if filename is None:
+            filename = self.filename
+
+        self.header = read_header(filename)
+
+        ## Setup frequency axis
+        f0 = self.header['fch1']
+        f_delt = self.header['foff']
+
+        # keep this seperate!
+        # file_freq_mapping =  np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
+
+        #convert input frequencies into what their corresponding index would be
+
+        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs()
+
 
         n_bytes  = self.header['nbits'] / 8
         n_chans = self.header['nchans']
@@ -509,75 +541,68 @@ class Filterbank(object):
 
 
         # Load binary data
-        if data_array is None:
-            self.idx_data = len_header(filename)
-            f = open(filename, 'rb')
-            f.seek(self.idx_data)
-            filesize = os.path.getsize(self.filename)
-            n_bytes_data = filesize - self.idx_data
-            n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
+        self.idx_data = len_header(filename)
+        f = open(filename, 'rb')
+        f.seek(self.idx_data)
+        filesize = os.path.getsize(self.filename)
+        n_bytes_data = filesize - self.idx_data
+        n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
 
-            # now check to see how many integrations requested
-            ii_start, ii_stop = 0, n_ints_in_file
-            if t_start:
-                ii_start = t_start
-            if t_stop:
-                ii_stop = t_stop
-            n_ints = ii_stop - ii_start
+        # now check to see how many integrations requested
+        ii_start, ii_stop = 0, n_ints_in_file
+        if t_start:
+            ii_start = t_start
+        if t_stop:
+            ii_stop = t_stop
+        n_ints = ii_stop - ii_start
 
-            # Seek to first integration
-            f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
+        # Seek to first integration
+        f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
 
-            # Set up indexes used in file read (taken out of loop for speed)
-            i0 = np.min((chan_start_idx, chan_stop_idx))
-            i1 = np.max((chan_start_idx, chan_stop_idx))
+        # Set up indexes used in file read (taken out of loop for speed)
+        i0 = np.min((chan_start_idx, chan_stop_idx))
+        i1 = np.max((chan_start_idx, chan_stop_idx))
 
-            if load_data:
+        if load_data:
 
-                if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
-                    print "Error: data array is too large to load. Either select fewer"
-                    print "points or manually increase MAX_DATA_ARRAY_SIZE."
-                    exit()
+            if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
+                print "Error: data array is too large to load. Either select fewer"
+                print "points or manually increase MAX_DATA_ARRAY_SIZE."
+                exit()
 
-                self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
+            self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
 
-                for ii in range(n_ints):
-                    """d = f.read(n_bytes * n_chans * n_ifs)
-                    """
+            for ii in range(n_ints):
+                """d = f.read(n_bytes * n_chans * n_ifs)
+                """
 
-                    for jj in range(n_ifs):
+                for jj in range(n_ifs):
 
-                        f.seek(n_bytes * i0, 1) # 1 = from current location
-                        d = f.read(n_bytes * n_chans_selected)
+                    f.seek(n_bytes * i0, 1) # 1 = from current location
+                    d = f.read(n_bytes * n_chans_selected)
 
 
-                        if n_bytes == 4:
-                            dd = np.fromstring(d, dtype='float32')
-                        elif n_bytes == 2:
-                            dd = np.fromstring(d, dtype='int16')
-                        elif n_bytes == 1:
-                            dd = np.fromstring(d, dtype='int8')
+                    if n_bytes == 4:
+                        dd = np.fromstring(d, dtype='float32')
+                    elif n_bytes == 2:
+                        dd = np.fromstring(d, dtype='int16')
+                    elif n_bytes == 1:
+                        dd = np.fromstring(d, dtype='int8')
 
-                        # Reverse array if frequency axis is flipped
-                        if f_delt < 0:
-                            dd = dd[::-1]
+                    # Reverse array if frequency axis is flipped
+                    if f_delt < 0:
+                        dd = dd[::-1]
 
-                        self.data[ii, jj] = dd
+                    self.data[ii, jj] = dd
 
-                        f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
-            else:
-                print "Skipping data load..."
-                self.data = np.array([0])
+                    f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
+        else:
+            print "Skipping data load..."
+            self.data = np.array([0])
 
-            # Finally add some other info to the class as objects
-            self.n_ints_in_file  = n_ints_in_file
-            self.file_size_bytes = filesize
-
-        else:        #data array was presented
-            self.data = data_array
-            self.n_ints_in_file = data_array.shape[0]
-            self.file_size_bytes = 0
-            n_ints = data_array.shape[0]
+        # Finally add some other info to the class as objects
+        self.n_ints_in_file  = n_ints_in_file
+        self.file_size_bytes = filesize
 
         ## Setup time axis
         t0 = self.header['tstart']
