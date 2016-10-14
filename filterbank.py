@@ -466,8 +466,9 @@ class Filterbank(object):
             self.filename = filename
             if HAS_HDF5:
                 if h5py.is_hdf5(filename):
-                    self.read_hdf5(filename)
-            self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
+                    self.read_hdf5(filename, f_start, f_stop, t_start, t_stop, load_data)
+                else:
+                    self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
         elif header_dict is not None and data_array is not None:
             self.gen_from_header(header_dict, data_array)
         else:
@@ -480,12 +481,30 @@ class Filterbank(object):
         self.data = data_array
         self.n_ints_in_file = 0
 
+        self._setup_freqs()
 
 
-    def read_hdf5(self, filename):
-        pass
 
-    def _setup_freqs(self):
+    def read_hdf5(self, filename, f_start=None, f_stop=None,
+                        t_start=None, t_stop=None, load_data=True):
+        self.header = {}
+        self.filename = filename
+        self.h5 = h5py.File(filename)
+        for key, val in self.h5['data'].attrs.items():
+            if key == 'src_raj':
+                self.header[key] = Angle(val, unit='hr')
+            elif key == 'src_dej':
+                self.header[key] = Angle(val, unit='deg')
+            else:
+                self.header[key] = val
+
+        self.data = self.h5["data"][:]
+        self._setup_freqs()
+
+        self.n_ints_in_file  = self.data.shape[0]
+        self.file_size_bytes = os.path.getsize(self.filename)
+
+    def _setup_freqs(self, f_start=None, f_stop=None):
         ## Setup frequency axis
         f0 = self.header['fch1']
         f_delt = self.header['foff']
@@ -531,8 +550,7 @@ class Filterbank(object):
 
         #convert input frequencies into what their corresponding index would be
 
-        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs()
-
+        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start, f_stop)
 
         n_bytes  = self.header['nbits'] / 8
         n_chans = self.header['nchans']
@@ -608,6 +626,7 @@ class Filterbank(object):
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+
 
     def info(self):
         """ Print header information """
