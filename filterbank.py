@@ -469,6 +469,8 @@ class Filterbank(object):
                     self.read_hdf5(filename, f_start, f_stop, t_start, t_stop, load_data)
                 else:
                     self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
+            else:
+                self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
         elif header_dict is not None and data_array is not None:
             self.gen_from_header(header_dict, data_array)
         else:
