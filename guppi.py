@@ -147,6 +147,14 @@ class GuppiRaw(object):
 		self.file_obj.seek(0)
 		return header_dict
 
+	def read_next_data_block_shape(self):
+		header = self.read_first_header()
+		n_chan = int(header['OBSNCHAN'])
+		n_pol  = int(header['NPOL'])
+		n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
+		dshape = (n_chan, n_samples, n_pol)
+		return dshape
+
 	def read_next_data_block(self):
 		""" Read the next block of data and its header
 
@@ -179,6 +187,9 @@ class GuppiRaw(object):
 		self._d[:] = d
 
 		return header, self._d[:].view('complex64')
+    
+
+        
 
 	def find_n_data_blocks(self):
 		""" Seek through the file to find how many data blocks there are in the file

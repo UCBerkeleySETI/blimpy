@@ -1,42 +1,71 @@
+#!/usr/bin/env python
+
 from guppi import GuppiRaw
 import h5py
 import bitshuffle.h5
 import time
 import os
 import glob
+import numpy as np
+from argparse import ArgumentParser
 
 parser = ArgumentParser(description="Command line utility for creating HDF5 Raw files.")
-parser.add_argument('dirname', type=str, help='Name of directory to read')
+parser.add_argument('filename', type=str, help='Name of filename to read')
 args = parser.parse_args()
 
-filelist = glob.glob(os.path.join(args.dirname, '*.raw'))
+fileroot = args.filename.split('.0000.raw')[0]
 
+filelist = glob.glob(fileroot + '*.raw')
+filelist = sorted(filelist)
+
+
+# Read first file
+r = GuppiRaw(filelist[0])
+header, data = r.read_next_data_block()
+dshape = data.shape #r.read_next_data_block_shape()
+print dshape
+
+n_blocks_total = 0
 for filename in filelist:
-    if not os.path.exists(filename + '.h5'):
+    print filename
+    r = GuppiRaw(filename)
+    n_blocks_total += r.n_blocks
+print n_blocks_total
+
+full_dshape = np.concatenate(((n_blocks_total,), dshape))
+
+
+# Create h5py file
+h5 = h5py.File(fileroot + '.h5', 'w')
+h5.attrs['CLASS'] = 'GUPPIRAW'
+block_size = 0      # This is chunk block size
+dset = h5.create_dataset('data',
+              shape=full_dshape,
+              compression=bitshuffle.h5.H5FILTER,
+              compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+              dtype=data.dtype) 
+
+
+h5_idx = 0
+for filename in filelist:
+    t0 = time.time()
+    print "\nReading %s header..." % filename
+    r = GuppiRaw(filename)
+    h5 = h5py.File(filename + '.h5', 'w')
+    
+    header, data = r.read_next_data_block()
         
-        t0 = time.time()
-        print "\nReading %s header..." % filename
-        r = GuppiRaw(filename)
-        h5 = h5py.File(filename + '.h5', 'w')
-        h5.attrs['CLASS'] = 'GUPPIRAW'
+    for ii in range(0, r.n_blocks):
+        header, data = r.read_next_data_block()
+        print "Writing block %i of %i" % (h5_idx+1, full_dshape[0])
+        dset[h5_idx] = data
+        h5_idx += 1
 
-        for ii in range(r.n_blocks):
-            header, data = r.read_next_data_block()
+        # Copy over header information as attributes
+        for key, value in header.items():
+            dset.attrs[key] = value
 
-            print "Creating block %i of %i" % (ii+1, r.n_blocks)
-            
-            block_size = 0      # This is chunk block size
-            dset = h5.create_dataset('block_%02i' % ii,
-                          data=data,
-                          compression=bitshuffle.h5.H5FILTER,
-                          compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
-                          dtype=data.dtype)
+    h5.close()
 
-            # Copy over header information as attributes
-            for key, value in header.items():
-                dset.attrs[key] = value
-
-        h5.close()
-
-        t1 = time.time()
-        print "Conversion time: %2.2fs" % (t1- t0)
+    t1 = time.time()
+    print "Conversion time: %2.2fs" % (t1- t0)
