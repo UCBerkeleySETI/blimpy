@@ -25,6 +25,7 @@ except ImportError:
 try:
 	from skcuda.fft import Plan
 	from skcuda.fft import fft as cufft
+	from skcuda.misc import multiply as cumultiply
 except ImportError:
 	raise RuntimeError("Could not load scikit-cuda. Please check your install")
 
@@ -76,22 +77,32 @@ def gpuspec(raw, n_int, f_avg, blank_dc_bin):
 		d_gpu  = gpuarray.to_gpu(d_xx)
 		cufft(d_gpu, df_gpu, fft_plan)
 		d_xx_fft  = df_gpu.get()
+		f_xx  = cumultiply(df_gpu, df_gpu).view('float32')[::2].get() 		
 
 		## YY POL
 		d_gpu  = gpuarray.to_gpu(d_yy)
 		cufft(d_gpu, df_gpu, fft_plan)
 		d_yy_fft  = df_gpu.get()
+                f_yy = cumultiply(df_gpu, df_gpu).view('float32')[::2].get()
 
+		## XY CROSS POL	
+		# Reuse d_gpu
+		d_gpu = gpuarray.to_gpu(d_xx_fft)
+		f_xy = cumultiply(d_gpu, df_gpu.conj()).get()
+		
 		t2 = time.time()
 		print "cuFFT:			  %2.2fs" % (t2 - t1)
 
 		t1 = time.time()
 
-		f_xx = np.abs(d_xx_fft)
-		f_yy = np.abs(d_yy_fft)
-		f_xy = d_xx_fft * d_yy_fft.conj()
+	        	
+		#f_xx = np.abs(d_xx_fft)
+		#f_yy = np.abs(d_yy_fft)
+		#f_xy = d_xx_fft * d_yy_fft.conj()
+		#print np.allclose(f_xy, f_xy2)
 
 		if blank_dc_bin:
+			print "BLANKING"
 			f_xx[:, 0] = (f_xx[:, 1] + f_xx[:, -1]) / 2
 			f_yy[:, 0] = (f_yy[:, 1] + f_yy[:, -1]) / 2
 			f_xy[:, 0] = (f_xy[:, 1] + f_xy[:, -1]) / 2
@@ -172,8 +183,8 @@ if __name__ == "__main__":
 	fil_header = raw.generate_filterbank_header(nchans=xx.shape[0])
 	fil_data = np.row_stack((xx, yy)).reshape(2, 1, xx.shape[0])
 
-	fb = Filterbank(filename='test.h5', header_dict=fil_header, data_array=fil_data)
-	fb.write_to_hdf5('test_gpuspec.h5')
+	#fb = Filterbank(filename='test.h5', header_dict=fil_header, data_array=fil_data)
+	#fb.write_to_hdf5('test_gpuspec.h5')
 
 	# plot data
 	print "Plotting..."
