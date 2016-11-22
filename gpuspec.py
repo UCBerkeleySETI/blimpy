@@ -78,11 +78,21 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 				df_gpu = gpuarray.empty((d_xx.shape[0], d_xx.shape[1]), np.complex64)
 
 			## XX POL
+			t00 = time.time()
 			d_gpu  = gpuarray.to_gpu(d_xx)
+			t01 = time.time()
 			cufft(d_gpu, df_gpu, fft_plan)
+			t02 = time.time()
 			d_xx_fft  = df_gpu.get()
+			t03 = time.time()
 			f_xx  = cumultiply(df_gpu, df_gpu.conj()).get().real
-
+			t04 = time.time()
+			
+			print "    ..memcopy to gpu:     %2.2fs" % (t01 - t00)
+			print "    ..cuFFT:              %2.2fs" % (t02 - t01)
+			print "    ..memcopy from gpu:   %2.2fs" % (t03 - t02)
+			print "    ..cuMultiply:         %2.2fs" % (t04 - t03)
+			
 			## YY POL
 			d_gpu  = gpuarray.to_gpu(d_yy)
 			cufft(d_gpu, df_gpu, fft_plan)
@@ -126,11 +136,7 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 		t01 = time.time()
 		print "\nTotal time:		 %2.2fs" % (t01 - t00)
 
-		#f_xx_avg = f_xx_avg.reshape(f_xx_avg.shape[0] / f_avg, f_avg).mean(axis=1)
-		#f_yy_avg = f_yy_avg.reshape(f_yy_avg.shape[0] / f_avg, f_avg).mean(axis=1)
-		#f_xy_avg = f_xy_avg.reshape(f_xy_avg.shape[0] / f_avg, f_avg).mean(axis=1)
 
-		# A roll is required for some reason, probably to do with the FFTshift
 		print f_xx_avg.shape
 	return (f_xx_avg, f_yy_avg, f_xy_avg)
 
@@ -154,6 +160,8 @@ if __name__ == "__main__":
 						help='number of integrations per dump')
 	parser.add_argument('-w', action='store_true', default=False, dest='plot_waterfall',
 						help='Plot waterfall instead of spectrum')
+	parser.add_argument('-s', action='store', default='', dest='outfile', type=str,
+						help='Save data to file with given filename')
 	args = parser.parse_args()
 
 	# Open filterbank data
@@ -184,11 +192,18 @@ if __name__ == "__main__":
 	(xx, yy, xy) = gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin)
 	print xx.shape, yy.shape, xy.shape
 
-	#fil_header = raw.generate_filterbank_header(nchans=xx.shape[0])
-	#fil_data = np.row_stack((xx, yy)).reshape(2, 1, xx.shape[0])
-
-	#fb = Filterbank(filename='test.h5', header_dict=fil_header, data_array=fil_data)
-	#fb.write_to_hdf5('test_gpuspec.h5')
+	if args.outfile != '':
+		print "Saving to %s" % args.outfile
+		fil_header = raw.generate_filterbank_header(nchans=xx.shape[0])
+		fil_data = np.row_stack((xx, yy, xy.real, xy.imag))#.reshape(2, 1, xx.shape[0])
+			
+		import h5py
+		h5 = h5py.File(args.outfile, 'w')
+		h5.create_dataset('data', data=fil_data)
+		for key, val in fil_header.items():
+			h5.attrs[key] = val
+		#fb = Filterbank(filename='test.h5', header_dict=fil_header, data_array=fil_data)
+		#fb.write_to_hdf5('test_gpuspec.h5')
 
 	# plot data
 	print np.max(xx[0]), np.min(xx[0])
