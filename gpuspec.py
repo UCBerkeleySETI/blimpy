@@ -19,6 +19,7 @@ try:
 	import pycuda.driver as cuda
 	import pycuda.autoinit
 	import pycuda.gpuarray as gpuarray
+	import pycuda.cumath as cumath
 except ImportError:
 	raise RuntimeError("could not load pycuda. Please check your install.")
 
@@ -38,16 +39,19 @@ from filterbank import Filterbank
 
 def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 	header = raw.read_first_header()
-	
+
 	n_spec   = n_win / n_int
 	print "Number output spectra: %s" % n_spec
 	f_xx_avg = np.zeros((n_spec, header["BLOCSIZE"] / 4 / f_avg), dtype='float32')
 	f_yy_avg = np.zeros((n_spec, header["BLOCSIZE"] / 4 / f_avg), dtype='float32')
 	f_xy_avg = np.zeros((n_spec, header["BLOCSIZE"] / 4 / f_avg), dtype='complex64')
 
-	fft_plan = None
-	df_gpu   = None
-	
+	fft_plan_init = False
+	df_gpu_init   = False
+	d_gpu_init    = False
+
+	d_xx_init = False
+	d_yy_init = False
 
 	t00 = time.time()
 	for ii in range(n_spec):
@@ -59,11 +63,23 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			t2 = time.time()
 			print "(Data load:		 %2.2fs)" % (t2 - t1)
 
-			d_xx = data[..., 0]
-			d_yy = data[..., 1]
+			if not d_xx_init:
+				d_xx_init = True
+				d_xx = np.ascontiguousarray(data[..., 0])
+				cuda.register_host_memory(d_xx)		# pagelock memory
+			else:
+				d_xx[:] = data[..., 0]
 
-			if not fft_plan:
+			if not d_yy_init:
+				d_yy_init = True
+				d_yy = np.ascontiguousarray(data[..., 1])
+				cuda.register_host_memory(d_yy)		# Pagelock memory
+			else:
+				d_yy[:] = data[..., 1]
+
+			if not fft_plan_init:
 				t1 = time.time()
+				fft_plan_init = True
 				#		  Plan(N_fft,				 input_dtype,  output_dtype, batch_size
 				fft_plan = Plan(d_xx.shape[1], np.complex64, np.complex64, d_xx.shape[0])
 				t2 = time.time()
@@ -74,8 +90,12 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			#print d_xx.dtype, d_xx.shape
 
 			# Malloc on GPU
-			if not df_gpu:
+			if not df_gpu_init:
+				df_gpu_init = True
 				df_gpu = gpuarray.empty((d_xx.shape[0], d_xx.shape[1]), np.complex64)
+
+			d_xx_fft = df_gpu.get()
+
 
 			## XX POL
 			t00 = time.time()
@@ -86,24 +106,25 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			d_xx_fft  = df_gpu.get()
 			t03 = time.time()
 			f_xx  = cumultiply(df_gpu, df_gpu.conj()).get().real
+			#f_xx = cumath.fabs(df_gpu).get().real
 			t04 = time.time()
-			
+
 			print "    ..memcopy to gpu:     %2.2fs" % (t01 - t00)
 			print "    ..cuFFT:              %2.2fs" % (t02 - t01)
 			print "    ..memcopy from gpu:   %2.2fs" % (t03 - t02)
 			print "    ..cuMultiply:         %2.2fs" % (t04 - t03)
-			
+
 			## YY POL
 			d_gpu  = gpuarray.to_gpu(d_yy)
 			cufft(d_gpu, df_gpu, fft_plan)
 			d_yy_fft  = df_gpu.get()
-                	f_yy = cumultiply(df_gpu, df_gpu.conj()).get().real
+			f_yy = cumultiply(df_gpu, df_gpu.conj()).get().real
 
-			## XY CROSS POL	
+			## XY CROSS POL
 			# Reuse d_gpu
 			d_gpu = gpuarray.to_gpu(d_xx_fft)
 			f_xy = cumultiply(d_gpu, df_gpu.conj()).get()
-		
+
 			t2 = time.time()
 			print "cuFFT:			  %2.2fs" % (t2 - t1)
 
@@ -115,7 +136,7 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 				f_xy[:, 0] = (f_xy[:, 1] + f_xy[:, -1]) / 2
 				t2 = time.time()
 				print "DC blanking:              %2.2fs" % (t2 - t1)
-		
+
 			t1 = time.time()
 			f_xx = np.fft.fftshift(f_xx).ravel()
 			f_yy = np.fft.fftshift(f_yy).ravel()
@@ -196,7 +217,7 @@ if __name__ == "__main__":
 		print "Saving to %s" % args.outfile
 		fil_header = raw.generate_filterbank_header(nchans=xx.shape[0])
 		fil_data = np.row_stack((xx, yy, xy.real, xy.imag))#.reshape(2, 1, xx.shape[0])
-			
+
 		import h5py
 		h5 = h5py.File(args.outfile, 'w')
 		h5.create_dataset('data', data=fil_data)
