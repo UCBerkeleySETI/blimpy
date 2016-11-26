@@ -53,6 +53,7 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 	d_xx_init = False
 	d_yy_init = False
 
+
 	t00 = time.time()
 	for ii in range(n_spec):
 		for jj in range(n_int):
@@ -103,7 +104,7 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			t01 = time.time()
 			cufft(d_gpu, df_gpu, fft_plan)
 			t02 = time.time()
-			d_xx_fft  = df_gpu.get()
+			d_xx_fft  = df_gpu.get()		# Needed for x-pol
 			t03 = time.time()
 			f_xx  = cumultiply(df_gpu, df_gpu.conj()).get().real
 			#f_xx = cumath.fabs(df_gpu).get().real
@@ -117,7 +118,7 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			## YY POL
 			d_gpu  = gpuarray.to_gpu(d_yy)
 			cufft(d_gpu, df_gpu, fft_plan)
-			d_yy_fft  = df_gpu.get()
+			#d_yy_fft  = df_gpu.get()		# Not required!
 			f_yy = cumultiply(df_gpu, df_gpu.conj()).get().real
 
 			## XY CROSS POL
@@ -138,17 +139,17 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 				print "DC blanking:              %2.2fs" % (t2 - t1)
 
 			t1 = time.time()
-			f_xx = np.fft.fftshift(f_xx).ravel()
-			f_yy = np.fft.fftshift(f_yy).ravel()
-			f_xy = np.fft.fftshift(f_xy).ravel()
+			f_xx = np.fft.fftshift(f_xx, axes=1).ravel()
+			f_yy = np.fft.fftshift(f_yy, axes=1).ravel()
+			f_xy = np.fft.fftshift(f_xy, axes=1).ravel()
 			t2 = time.time()
 
 			print "FFT shift:                %2.2fs" % (t2 - t1)
 			t1 = time.time()
 			fs0 = f_xx.shape[0] / f_avg
-			f_xx_avg[ii] += np.roll(f_xx.reshape(fs0, f_avg).mean(axis=1), fs0/2)
-			f_yy_avg[ii] += np.roll(f_yy.reshape(fs0, f_avg).mean(axis=1), fs0/2)
-			f_xy_avg[ii] += np.roll(f_xy.reshape(fs0, f_avg).mean(axis=1), fs0/2)
+			f_xx_avg[ii] += f_xx.reshape(fs0, f_avg).mean(axis=1)
+			f_yy_avg[ii] += f_yy.reshape(fs0, f_avg).mean(axis=1)
+			f_xy_avg[ii] += f_xy.reshape(fs0, f_avg).mean(axis=1)
 			t2 = time.time()
 			print "Accumulate:               %2.2fs" % (t2 - t1)
 
