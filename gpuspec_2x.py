@@ -98,15 +98,19 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 				df_gpu_init = True
 				df_gpu = gpuarray.empty((d_xx.shape[0], d_xx.shape[1]), np.complex64)
 				df_gpu2 = gpuarray.empty((d_xx.shape[0], d_xx.shape[1]), np.complex64)
-
+				f_xx_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.float32)
+				f_yy_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.float32)
+				f_xy_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.complex64)
+	
 			## XX POL
+			print "XX POL"
 			t00 = time.time()
 			d_gpu  = gpuarray.to_gpu(d_xx)
 			t01 = time.time()
 			cufft(d_gpu, df_gpu, fft_plan)
 			t02 = time.time()
 			t03 = time.time()
-			f_xx  = cumultiply(df_gpu, df_gpu.conj()).real.get()
+			f_xx  = cumultiply(df_gpu, df_gpu.conj()).real
 			t04 = time.time()
 
 			print "    ..memcopy to gpu:     %2.2fs" % (t01 - t00)
@@ -117,33 +121,33 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			## YY POL
 			d_gpu  = gpuarray.to_gpu(d_yy)
 			cufft(d_gpu, df_gpu2, fft_plan)
-			f_yy = cumultiply(df_gpu2, df_gpu2.conj()).real.get()
+			f_yy = cumultiply(df_gpu2, df_gpu2.conj()).real
 
 			## XY CROSS POL
-			f_xy = cumultiply(df_gpu, df_gpu2.conj()).get()
+			f_xy = cumultiply(df_gpu, df_gpu2.conj())
 
+			t01 = time.time()
+			f_xx_gpu_avg += f_xx
+			f_yy_gpu_avg += f_yy
+			f_xy_gpu_avg += f_xy
+			t02 = time.time()
+			print "Accumulate:               %2.2fs" % (t02 - t01)
+			
 			t2 = time.time()
-			print "GPU:			  %2.2fs" % (t2 - t1)
+			print "GPU total:		  %2.2fs" % (t2 - t1)
 
-			t1 = time.time()
-			if f_avg > 1:
-				fs0, fs1 = f_xx.shape[0], f_xx.shape[1] / f_avg
-				print f_xx_avg.shape, f_xx.shape
-				f_xx_avg[ii] += f_xx.reshape(fs0, fs1, f_avg).mean(axis=2)
-				f_yy_avg[ii] += f_yy.reshape(fs0, fs1, f_avg).mean(axis=2)
-				f_xy_avg[ii] += f_xy.reshape(fs0, fs1, f_avg).mean(axis=2)
-			else:
-				f_xx_avg[ii] += f_xx
-				f_yy_avg[ii] += f_yy
-				f_xy_avg[ii] += f_xy
-			t2 = time.time()
-			print "Accumulate:               %2.2fs" % (t2 - t1)
 
+		t1 = time.time()	
+		f_xx_avg[ii] = f_xx_gpu_avg.get()
+		f_yy_avg[ii] = f_yy_gpu_avg.get()
+		f_xy_avg[ii] = f_xy_gpu_avg.get()
+		t2 = time.time()
+		print "GPU -> CPU memcopy:       %2.2fs" % (t2 - t1)
 		t01 = time.time()
-		print "Block time:		 %2.2fs" % (t01 - t00)
+		print "BLOCK TIME:		 %2.2fs" % (t01 - t00)
 
 
-
+	print "\n### CPU POST PROCESSING ###"
 	if blank_dc_bin:
 		t1 = time.time()
 		f_xx_avg[:, :, 0] = (f_xx_avg[:, :, 1] + f_xx_avg[:, :, -1]) / 2
@@ -160,9 +164,8 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 	t2 = time.time()
 	print "FFT shift:                %2.2fs" % (t2 - t1)
 
-		#print f_xx_avg.shape
 	t001 = time.time()
-	print "Gpuspec time:      %2.2fs" % (t001 - t000)
+	print "\nTotal gpuspec time:        %2.2fs" % (t001 - t000)
 	return (f_xx_avg, f_yy_avg, f_xy_avg)
 
 
@@ -215,7 +218,7 @@ if __name__ == "__main__":
 
 	# Compute spectrum from raw file
 	(xx, yy, xy) = gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin)
-	print xx.shape, yy.shape, xy.shape
+	#print xx.shape, yy.shape, xy.shape
 
 	if args.outfile != '':
 		print "Saving to %s" % args.outfile
