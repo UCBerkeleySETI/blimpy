@@ -42,8 +42,8 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 
 	n_spec   = n_win / n_int
 	print "Number output spectra: %s" % n_spec
-	n_coarse = header["OBSNCHAN"]
-	blk_size = header["BLOCSIZE"]
+	n_coarse = int(header["OBSNCHAN"])
+	blk_size = int(header["BLOCSIZE"])
 	f_xx_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='float32')
 	f_yy_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='float32')
 	f_xy_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='complex64')
@@ -66,6 +66,7 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			t2 = time.time()
 			print "(Data load:		 %2.2fs)" % (t2 - t1)
 
+			# Memcopy to GPU
 			if not d_xx_init:
 				d_xx_init = True
 				d_xx = np.ascontiguousarray(data[..., 0])
