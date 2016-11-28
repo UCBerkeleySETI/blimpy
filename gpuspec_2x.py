@@ -42,9 +42,11 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 
 	n_spec   = n_win / n_int
 	print "Number output spectra: %s" % n_spec
-	f_xx_avg = np.zeros((n_spec, header["BLOCSIZE"] / 4 / f_avg), dtype='float32')
-	f_yy_avg = np.zeros((n_spec, header["BLOCSIZE"] / 4 / f_avg), dtype='float32')
-	f_xy_avg = np.zeros((n_spec, header["BLOCSIZE"] / 4 / f_avg), dtype='complex64')
+	n_coarse = header["OBSNCHAN"]
+	blk_size = header["BLOCSIZE"]
+	f_xx_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='float32')
+	f_yy_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='float32')
+	f_xy_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='complex64')
 
 	fft_plan_init = False
 	df_gpu_init   = False
@@ -122,28 +124,13 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			t2 = time.time()
 			print "GPU:			  %2.2fs" % (t2 - t1)
 
-
-			if blank_dc_bin:
-				t1 = time.time()
-				f_xx[:, 0] = (f_xx[:, 1] + f_xx[:, -1]) / 2
-				f_yy[:, 0] = (f_yy[:, 1] + f_yy[:, -1]) / 2
-				f_xy[:, 0] = (f_xy[:, 1] + f_xy[:, -1]) / 2
-				t2 = time.time()
-				print "DC blanking:              %2.2fs" % (t2 - t1)
-
-			t1 = time.time()
-			f_xx = np.fft.fftshift(f_xx, axes=1).ravel()
-			f_yy = np.fft.fftshift(f_yy, axes=1).ravel()
-			f_xy = np.fft.fftshift(f_xy, axes=1).ravel()
-			t2 = time.time()
-
-			print "FFT shift:                %2.2fs" % (t2 - t1)
 			t1 = time.time()
 			if f_avg > 1:
-				fs0 = f_xx.shape[0] / f_avg
-				f_xx_avg[ii] += f_xx.reshape(fs0, f_avg).mean(axis=1)
-				f_yy_avg[ii] += f_yy.reshape(fs0, f_avg).mean(axis=1)
-				f_xy_avg[ii] += f_xy.reshape(fs0, f_avg).mean(axis=1)
+				fs0, fs1 = f_xx.shape[0], f_xx.shape[1] / f_avg
+				print f_xx_avg.shape, f_xx.shape
+				f_xx_avg[ii] += f_xx.reshape(fs0, fs1, f_avg).mean(axis=2)
+				f_yy_avg[ii] += f_yy.reshape(fs0, fs1, f_avg).mean(axis=2)
+				f_xy_avg[ii] += f_xy.reshape(fs0, fs1, f_avg).mean(axis=2)
 			else:
 				f_xx_avg[ii] += f_xx
 				f_yy_avg[ii] += f_yy
@@ -151,10 +138,26 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			t2 = time.time()
 			print "Accumulate:               %2.2fs" % (t2 - t1)
 
-
-
 		t01 = time.time()
 		print "Block time:		 %2.2fs" % (t01 - t00)
+
+
+
+	if blank_dc_bin:
+		t1 = time.time()
+		f_xx_avg[:, :, 0] = (f_xx_avg[:, :, 1] + f_xx_avg[:, :, -1]) / 2
+		f_yy_avg[:, :, 0] = (f_yy_avg[:, :, 1] + f_yy_avg[:, :, -1]) / 2
+		f_xy_avg[:, :, 0] = (f_xy_avg[:, :, 1] + f_xy_avg[:, :, -1]) / 2
+		t2 = time.time()
+		print "DC blanking:              %2.2fs" % (t2 - t1)
+			
+	t1 = time.time()
+	s0, s1, s2 = f_xx_avg.shape
+	f_xx_avg = np.fft.fftshift(f_xx_avg, axes=2).reshape(s0, s1 * s2)
+	f_yy_avg = np.fft.fftshift(f_yy_avg, axes=2).reshape(s0, s1 * s2)
+	f_xy_avg = np.fft.fftshift(f_xy_avg, axes=2).reshape(s0, s1 * s2)
+	t2 = time.time()
+	print "FFT shift:                %2.2fs" % (t2 - t1)
 
 		#print f_xx_avg.shape
 	t001 = time.time()
