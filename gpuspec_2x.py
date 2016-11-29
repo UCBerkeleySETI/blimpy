@@ -40,7 +40,7 @@ from filterbank import Filterbank
 def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 	header = raw.read_first_header()
 
-	n_spec   = n_win / n_int
+	n_spec   = n_win / n_int / 2
 	print "Number output spectra: %s" % n_spec
 	n_coarse = int(header["OBSNCHAN"])
 	blk_size = int(header["BLOCSIZE"])
