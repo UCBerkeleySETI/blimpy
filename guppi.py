@@ -66,6 +66,8 @@ class GuppiRaw(object):
 			self.n_blocks = n_blocks
 
 		self._d = np.zeros(1, dtype='complex64')
+		self._d_x = np.zeros(1, dtype='int8')
+		self._d_y = np.zeros(1, dtype='int8')
 
  	def __enter__(self):
  		return self
@@ -180,9 +182,14 @@ class GuppiRaw(object):
 			d = unpack(d, n_bit)
 
 		d = d.reshape((n_chan, n_samples, n_pol))	# Real, imag
-		d_x = np.ascontiguousarray(d[..., 0:2])
-		d_y = np.ascontiguousarray(d[..., 2:4])
-		return header, d_x, d_y
+
+                if self._d_x.shape != d[..., 0:2].shape:
+                        self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
+                        self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
+
+		self._d_x[:] = d[..., 0:2]
+		self._d_y[:] = d[..., 2:4]
+		return header, self._d_x, self._d_y
     
 	def read_next_data_block(self):
 		""" Read the next block of data and its header
