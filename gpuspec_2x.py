@@ -89,19 +89,22 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 				t2 = time.time()
 				print "FFT Plan:		   %2.2fs" % (t2 - t1)
 
-			t1 = time.time()
+			t_gpu = time.time()
 
 			#print d_xx.dtype, d_xx.shape
 
 			# Malloc on GPU
 			if not df_gpu_init:
+				t1 = time.time()
 				df_gpu_init = True
 				df_gpu = gpuarray.empty((d_xx.shape[0], d_xx.shape[1]), np.complex64)
 				df_gpu2 = gpuarray.empty((d_xx.shape[0], d_xx.shape[1]), np.complex64)
 				f_xx_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.float32)
 				f_yy_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.float32)
 				f_xy_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.complex64)
-	
+				t2 = time.time()
+				print "MALLOC TIME:                %2.2fs" % (t2 - t1)
+
 			## XX POL
 			print "XX POL"
 			t00 = time.time()
@@ -133,8 +136,8 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			t02 = time.time()
 			print "Accumulate:               %2.2fs" % (t02 - t01)
 			
-			t2 = time.time()
-			print "GPU total:		  %2.2fs" % (t2 - t1)
+			t_gpu2 = time.time()
+			print "GPU total:		  %2.2fs" % (t_gpu2 - t_gpu)
 
 
 		t1 = time.time()	
@@ -165,7 +168,7 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 	print "FFT shift:                %2.2fs" % (t2 - t1)
 
 	t001 = time.time()
-	print "\nTotal gpuspec time:        %2.2fs" % (t001 - t000)
+	print "\nTotal gpuspec time:       %2.2fs" % (t001 - t000)
 	return (f_xx_avg, f_yy_avg, f_xy_avg)
 
 
@@ -173,8 +176,7 @@ if __name__ == "__main__":
 
 	from argparse import ArgumentParser
 
-	parser = ArgumentParser(description="Command line utility for creating \
-										 spectra from GuppiRaw files.")
+	parser = ArgumentParser(description="Command line utility for creating spectra from GuppiRaw files.")
 
 	parser.add_argument('filename', type=str,
 						help='Name of file to read')
