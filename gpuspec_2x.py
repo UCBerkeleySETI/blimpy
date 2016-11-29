@@ -68,6 +68,8 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			print "###  GPU PROCESSING ###"
 			t_gpu = time.time()
 			t1 = time.time()			
+			cuda.register_host_memory(d_x)
+			cuda.register_host_memory(d_y)
 			d_x_gpu = gpuarray.to_gpu(d_x)
 			d_x_gpu = d_x_gpu.astype('float32').view('complex64')
 			d_x_gpu = d_x_gpu.reshape((d_x.shape[0], d_x.shape[1]))
