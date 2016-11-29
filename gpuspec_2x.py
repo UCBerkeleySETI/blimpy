@@ -44,9 +44,9 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 	print "Number output spectra: %s" % n_spec
 	n_coarse = int(header["OBSNCHAN"])
 	blk_size = int(header["BLOCSIZE"])
-	f_xx_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='float32')
-	f_yy_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='float32')
-	f_xy_avg = np.zeros((n_spec, n_coarse, blk_size / 4 / n_coarse / f_avg), dtype='complex64')
+	f_xx_avg = np.zeros((n_spec, n_coarse, 2 * blk_size / 4 / n_coarse / f_avg), dtype='float32')
+	f_yy_avg = np.zeros((n_spec, n_coarse, 2 * blk_size / 4 / n_coarse / f_avg), dtype='float32')
+	f_xy_avg = np.zeros((n_spec, n_coarse, 2 * blk_size / 4 / n_coarse / f_avg), dtype='complex64')
 
 	fft_plan_init = False
 	df_gpu_init   = False
@@ -60,7 +60,7 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			print "\nIntegration ID:	 %i (%i of %i)" % (ii, jj+1, n_int)
 
 			t1 = time.time()
-			header, d_x, d_y = raw.read_next_data_block_int8()
+			header, d_x, d_y = raw.read_next_data_block_int8_2x()
 		        t2 = time.time()
 			print "(Data load:		 %2.2fs)" % (t2 - t1)
 			
@@ -131,10 +131,19 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			print "GPU total:		  %2.2fs" % (t_gpu2 - t_gpu)
 
 
-		t1 = time.time()	
-		f_xx_avg[ii] = f_xx_gpu_avg.get()
-		f_yy_avg[ii] = f_yy_gpu_avg.get()
-		f_xy_avg[ii] = f_xy_gpu_avg.get()
+		t1 = time.time()
+		if args.f_avg == 1:	
+			f_xx_avg[ii] = f_xx_gpu_avg.get()
+			f_yy_avg[ii] = f_yy_gpu_avg.get()
+			f_xy_avg[ii] = f_xy_gpu_avg.get()
+		else:
+			fs = f_xx_gpu_avg.shape
+			print fs
+			print (fs[0], fs[1] / f_avg, f_avg)
+			print f_xx_avg.shape
+			f_xx_avg[ii] = f_xx_gpu_avg.get().reshape(fs[0], fs[1] / f_avg, f_avg).mean(axis=2)
+			f_yy_avg[ii] = f_yy_gpu_avg.get().reshape(fs[0], fs[1] / f_avg, f_avg).mean(axis=2)
+			f_xy_avg[ii] = f_xy_gpu_avg.get().reshape(fs[0], fs[1] / f_avg, f_avg).mean(axis=2)
 		t2 = time.time()
 		print "GPU -> CPU memcopy:       %2.2fs" % (t2 - t1)
 		t_block2 = time.time()
