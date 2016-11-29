@@ -59,14 +59,17 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 	t000 = time.time()
 	for ii in range(n_spec):
 		for jj in range(n_int):
+			print "-------------------------------"
 			print "\nIntegration ID:	 %i (%i of %i)" % (ii, jj+1, n_int)
+			t_block = time.time()
 
 			t1 = time.time()
 			header, data = raw.read_next_data_block()
 			t2 = time.time()
 			print "(Data load:		 %2.2fs)" % (t2 - t1)
-
-			# Memcopy to GPU
+			
+			# Memcopy to pagelocked array
+			t1 = time.time()
 			if not d_xx_init:
 				d_xx_init = True
 				d_xx = np.ascontiguousarray(data[..., 0])
@@ -80,11 +83,14 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 				cuda.register_host_memory(d_yy)		# Pagelock memory
 			else:
 				d_yy[:] = data[..., 1]
-
+			t2 = time.time()
+			print "Pagelock:                %2.2fs" % (t2 - t1)
+			
+			print "###  GPU PROCESSING ###"
 			if not fft_plan_init:
 				t1 = time.time()
 				fft_plan_init = True
-				#		  Plan(N_fft,				 input_dtype,  output_dtype, batch_size
+				#          Plan(N_fft,	       input_dtype,  output_dtype, batch_size
 				fft_plan = Plan(d_xx.shape[1], np.complex64, np.complex64, d_xx.shape[0])
 				t2 = time.time()
 				print "FFT Plan:		   %2.2fs" % (t2 - t1)
@@ -146,9 +152,9 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 		f_xy_avg[ii] = f_xy_gpu_avg.get()
 		t2 = time.time()
 		print "GPU -> CPU memcopy:       %2.2fs" % (t2 - t1)
-		t01 = time.time()
-		print "BLOCK TIME:		 %2.2fs" % (t01 - t00)
-
+		t_block2 = time.time()
+		print "BLOCK TIME:		  %2.2fs" % (t_block2 - t_block)
+		print "-------------------------------"
 
 	print "\n### CPU POST PROCESSING ###"
 	if blank_dc_bin:
