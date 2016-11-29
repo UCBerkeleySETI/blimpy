@@ -52,50 +52,42 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 	df_gpu_init   = False
 	d_gpu_init    = False
 
-	d_xx_init = False
-	d_yy_init = False
-
-
 	t000 = time.time()
 	for ii in range(n_spec):
+		t_block = time.time()
 		for jj in range(n_int):
 			print "-------------------------------"
 			print "\nIntegration ID:	 %i (%i of %i)" % (ii, jj+1, n_int)
-			t_block = time.time()
 
 			t1 = time.time()
-			header, data = raw.read_next_data_block()
-			t2 = time.time()
+			header, d_x, d_y = raw.read_next_data_block_int8()
+		        t2 = time.time()
 			print "(Data load:		 %2.2fs)" % (t2 - t1)
 			
-			# Memcopy to pagelocked array
-			t1 = time.time()
-			if not d_xx_init:
-				d_xx_init = True
-				d_xx = np.ascontiguousarray(data[..., 0])
-				cuda.register_host_memory(d_xx)		# pagelock memory
-			else:
-				d_xx[:] = data[..., 0]
-
-			if not d_yy_init:
-				d_yy_init = True
-				d_yy = np.ascontiguousarray(data[..., 1])
-				cuda.register_host_memory(d_yy)		# Pagelock memory
-			else:
-				d_yy[:] = data[..., 1]
-			t2 = time.time()
-			print "Pagelock:                %2.2fs" % (t2 - t1)
-			
+			# load as 8-bit and promote to 32-bit
 			print "###  GPU PROCESSING ###"
+			t_gpu = time.time()
+			t1 = time.time()			
+			d_x_gpu = gpuarray.to_gpu(d_x)
+			d_x_gpu = d_x_gpu.astype('float32').view('complex64')
+			d_x_gpu = d_x_gpu.reshape((d_x.shape[0], d_x.shape[1]))
+			d_y_gpu = gpuarray.to_gpu(d_y)
+			d_y_gpu = d_y_gpu.astype('float32').view('complex64')
+			d_y_gpu = d_y_gpu.reshape((d_y.shape[0], d_y.shape[1]))
+			t2 = time.time()
+			print "memcopy + recast:         %2.2fs" % (t2 - t1)
+			#data = data.reshape(data.shape[0], data.shape[1] * data.shape[2])
+			#data = np.transpose(data, (2, 0, 1))
+			t2 = time.time()
+			
 			if not fft_plan_init:
 				t1 = time.time()
 				fft_plan_init = True
 				#          Plan(N_fft,	       input_dtype,  output_dtype, batch_size
-				fft_plan = Plan(d_xx.shape[1], np.complex64, np.complex64, d_xx.shape[0])
+				fft_plan = Plan(d_x.shape[1], np.complex64, np.complex64, d_x.shape[0])
 				t2 = time.time()
-				print "FFT Plan:		   %2.2fs" % (t2 - t1)
+				print "FFT Plan:                 %2.2fs" % (t2 - t1)
 
-			t_gpu = time.time()
 
 			#print d_xx.dtype, d_xx.shape
 
@@ -103,38 +95,29 @@ def gpuspec(raw, n_win, n_int, f_avg, blank_dc_bin):
 			if not df_gpu_init:
 				t1 = time.time()
 				df_gpu_init = True
-				df_gpu = gpuarray.empty((d_xx.shape[0], d_xx.shape[1]), np.complex64)
-				df_gpu2 = gpuarray.empty((d_xx.shape[0], d_xx.shape[1]), np.complex64)
-				f_xx_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.float32)
-				f_yy_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.float32)
-				f_xy_gpu_avg = gpuarray.zeros((d_xx.shape[0], d_xx.shape[1]), np.complex64)
+				df_gpu = gpuarray.empty((d_x.shape[0], d_x.shape[1]), np.complex64)
+				df_gpu2 = gpuarray.empty((d_x.shape[0], d_x.shape[1]), np.complex64)
+				f_xx_gpu_avg = gpuarray.zeros((d_x.shape[0], d_x.shape[1]), np.float32)
+				f_yy_gpu_avg = gpuarray.zeros((d_x.shape[0], d_x.shape[1]), np.float32)
+				f_xy_gpu_avg = gpuarray.zeros((d_x.shape[0], d_x.shape[1]), np.complex64)
 				t2 = time.time()
-				print "MALLOC TIME:                %2.2fs" % (t2 - t1)
+				print "MALLOC TIME:              %2.2fs" % (t2 - t1)
 
+			t1 = time.time()
 			## XX POL
-			print "XX POL"
-			t00 = time.time()
-			d_gpu  = gpuarray.to_gpu(d_xx)
-			t01 = time.time()
-			cufft(d_gpu, df_gpu, fft_plan)
-			t02 = time.time()
-			t03 = time.time()
+			cufft(d_x_gpu, df_gpu, fft_plan)
 			f_xx  = cumultiply(df_gpu, df_gpu.conj()).real
-			t04 = time.time()
 
-			print "    ..memcopy to gpu:     %2.2fs" % (t01 - t00)
-			print "    ..cuFFT:              %2.2fs" % (t02 - t01)
-			#print "    ..memcopy from gpu:   %2.2fs" % (t03 - t02)
-			print "    ..cuMultiply:         %2.2fs" % (t04 - t03)
 
 			## YY POL
-			d_gpu  = gpuarray.to_gpu(d_yy)
-			cufft(d_gpu, df_gpu2, fft_plan)
+			cufft(d_y_gpu, df_gpu2, fft_plan)
 			f_yy = cumultiply(df_gpu2, df_gpu2.conj()).real
 
 			## XY CROSS POL
 			f_xy = cumultiply(df_gpu, df_gpu2.conj())
-
+			t2 = time.time()
+			print "cuFFT and detect:         %2.2fs" % (t2 - t1)
+			
 			t01 = time.time()
 			f_xx_gpu_avg += f_xx
 			f_yy_gpu_avg += f_yy
