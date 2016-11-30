@@ -225,11 +225,15 @@ if __name__ == "__main__":
 	if args.outfile != '':
 		print "Saving to %s" % args.outfile
 		fil_header = raw.generate_filterbank_header(nchans=xx.shape[0])
-		fil_data = np.row_stack((xx, yy, xy.real, xy.imag))#.reshape(2, 1, xx.shape[0])
+		#fil_data = np.row_stack((xx, yy, xy.real, xy.imag))#.reshape(2, 1, xx.shape[0])
 
 		import h5py
 		h5 = h5py.File(args.outfile, 'w')
-		h5.create_dataset('data', data=fil_data)
+		h5.create_dataset('xx', data=xx)
+		h5.create_dataset('yy', data=yy)
+		h5.create_dataset('re_xy', data=xy.real)
+		h5.create_dataset('im_xy', data=xy.imag)
+
 		for key, val in fil_header.items():
 			h5.attrs[key] = val
 		#fb = Filterbank(filename='test.h5', header_dict=fil_header, data_array=fil_data)
