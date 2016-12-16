@@ -16,6 +16,12 @@ from astropy.coordinates import Angle
 
 from utils import unpack, rebin
 
+try:
+    import seaborn as sns
+    sns.set_style('dark')
+except:
+    pass
+
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if os.environ.has_key('DISPLAY'):
 
