@@ -32,14 +32,6 @@ from astropy.coordinates import Angle
 
 from utils import db, lin, rebin, closest
 
-# Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
-if os.environ.has_key('DISPLAY'):
-    import pylab as plt
-else:
-    import matplotlib
-    matplotlib.use('Agg')
-    import pylab as plt
-
 try:
     import h5py
     HAS_HDF5 = True
@@ -909,6 +901,19 @@ if __name__ == "__main__":
         #    print "Error: Start and stop frequencies must lie inside file's frequency range."
         #    print "i.e. between %2.2f-%2.2f MHz." % (fil.freqs[0], fil.freqs[-1])
         #    exit()
+
+        if args.save_only:
+                import matplotlib
+                matplotlib.use('Agg')
+                import pylab as plt
+        else:
+            # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
+            if os.environ.has_key('DISPLAY'):
+                import pylab as plt
+            else:
+                import matplotlib
+                matplotlib.use('Agg')
+                import pylab as plt
 
         if not args.waterfall:
             plt.figure("Spectrum", figsize=(8, 6))
