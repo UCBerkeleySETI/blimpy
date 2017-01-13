@@ -1,9 +1,14 @@
+#!/usr/bin/env python
+
 from filterbank import Filterbank
 import h5py
 import bitshuffle.h5
 import time
 import os
 import glob
+
+import numpy as np
+from argparse import ArgumentParser
 
 MAX_SIZE = 4e9
 

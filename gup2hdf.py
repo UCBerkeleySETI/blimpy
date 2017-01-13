@@ -41,14 +41,13 @@ h5.attrs['CLASS'] = 'GUPPIRAW'
 block_size = 0      # This is chunk block size
 dset = h5.create_dataset('data',
               shape=full_dshape,
-              compression=bitshuffle.h5.H5FILTER,
-              compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+              #compression=bitshuffle.h5.H5FILTER,
+              #compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
               dtype=data.dtype) 
 
 
 h5_idx = 0
 for filename in filelist:
-    t0 = time.time()
     print "\nReading %s header..." % filename
     r = GuppiRaw(filename)
     h5 = h5py.File(filename + '.h5', 'w')
@@ -56,9 +55,17 @@ for filename in filelist:
     header, data = r.read_next_data_block()
         
     for ii in range(0, r.n_blocks):
+        t0 = time.time()
+        print "Reading block %i of %i" % (h5_idx+1, full_dshape[0])
         header, data = r.read_next_data_block()
+        t1 = time.time()
+        
+        t2 = time.time()
         print "Writing block %i of %i" % (h5_idx+1, full_dshape[0])
-        dset[h5_idx] = data
+        dset[h5_idx, :] = data
+        t3 = time.time()
+        print "Read: %2.2fs, Write %2.2fs" % ((t1-t0), (t3-t2))
+        
         h5_idx += 1
 
         # Copy over header information as attributes

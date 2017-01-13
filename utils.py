@@ -57,9 +57,9 @@ def unpack(data, nbit):
 		#ABCDEFGH [Bits of one 4+4-bit value]
 		#00000000ABCDEFGH [astype(uint16)]
 		#0000ABCDEFGH0000 [<< 4]
-		#0000ABCDXXXXEFGH [bitwise ‘or’ of previous two lines]
+		#0000ABCDXXXXEFGH [bitwise or of previous two lines]
 		#0000111100001111 [0x0F0F]
-		#0000ABCD0000EFGH [bitwise ‘and’ of previous two lines]
+		#0000ABCD0000EFGH [bitwise and of previous two lines]
 		#ABCD0000EFGH0000 [<< 4]
 		#which effectively pads the two 4-bit values with zeros on the right
 		# Note: This technique assumes LSB-first ordering
