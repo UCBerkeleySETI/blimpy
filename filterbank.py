@@ -591,15 +591,14 @@ class Filterbank(object):
                 for jj in range(n_ifs):
 
                     f.seek(n_bytes * i0, 1) # 1 = from current location
-                    d = f.read(n_bytes * n_chans_selected)
-
-
+                    #d = f.read(n_bytes * n_chans_selected)
+                    bytes_to_read = n_bytes * n_chans_selected
                     if n_bytes == 4:
-                        dd = np.fromstring(d, dtype='float32')
+                        dd = np.fromfile(f, count=bytes_to_read, dtype='float32')
                     elif n_bytes == 2:
-                        dd = np.fromstring(d, dtype='int16')
+                        dd = np.fromfile(f, count=bytes_to_read, dtype='int16')
                     elif n_bytes == 1:
-                        dd = np.fromstring(d, dtype='int8')
+                        dd = np.fromfile(f, count=bytes_to_read, dtype='int8')
 
                     # Reverse array if frequency axis is flipped
                     if f_delt < 0:
