@@ -592,13 +592,13 @@ class Filterbank(object):
 
                     f.seek(n_bytes * i0, 1) # 1 = from current location
                     #d = f.read(n_bytes * n_chans_selected)
-                    bytes_to_read = n_bytes * n_chans_selected
+                    #bytes_to_read = n_bytes * n_chans_selected
                     if n_bytes == 4:
-                        dd = np.fromfile(f, count=bytes_to_read, dtype='float32')
+                        dd = np.fromfile(f, count=n_chans_selected, dtype='float32')
                     elif n_bytes == 2:
-                        dd = np.fromfile(f, count=bytes_to_read, dtype='int16')
+                        dd = np.fromfile(f, count=n_chans_selected, dtype='int16')
                     elif n_bytes == 1:
-                        dd = np.fromfile(f, count=bytes_to_read, dtype='int8')
+                        dd = np.fromfile(f, count=n_chans_selected, dtype='int8')
 
                     # Reverse array if frequency axis is flipped
                     if f_delt < 0:
@@ -788,13 +788,13 @@ class Filterbank(object):
             kwargs: keyword args to be passed to matplotlib plot() and imshow()
         """
 
-        plt.figure("", figsize=(8, 6))
-
         plt.subplot(1,2,1)
         self.plot_spectrum(logged=logged, f_start=args.f_start, f_stop=args.f_stop, t=t)
 
         plt.subplot(1,2,2)
         self.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop)
+        
+        plt.tight_layout()
 
 
     def write_to_filterbank(self, filename_out):
@@ -862,7 +862,7 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
-    parser.add_argument('-p', action='store',  default='', dest='what_to_plot', type=str,
+    parser.add_argument('-p', action='store',  default='b', dest='what_to_plot', type=str,
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, "b" both waterfall and spectrum.')
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
@@ -884,12 +884,26 @@ if __name__ == "__main__":
                        help='Turn off plotting of data and only save to file.')
     args = parser.parse_args()
 
+    if args.save_only:
+            import matplotlib
+            matplotlib.use('Agg')
+            import pylab as plt
+    else:
+        # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
+        if os.environ.has_key('DISPLAY'):
+            import pylab as plt
+        else:
+            import matplotlib
+            matplotlib.use('Agg')
+            import pylab as plt
+
     # Open filterbank data
     filename = args.filename
     load_data = not args.info_only
 
     # only load one integration if looking at spectrum
-    if not args.waterfall:
+    wtp = args.what_to_plot
+    if wtp not in ('b', 'w'):
         if args.t_start == None:
             t_start = 0
         else:
@@ -925,19 +939,6 @@ if __name__ == "__main__":
         #    print "i.e. between %2.2f-%2.2f MHz." % (fil.freqs[0], fil.freqs[-1])
         #    exit()
 
-        if args.save_only:
-                import matplotlib
-                matplotlib.use('Agg')
-                import pylab as plt
-        else:
-            # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
-            if os.environ.has_key('DISPLAY'):
-                import pylab as plt
-            else:
-                import matplotlib
-                matplotlib.use('Agg')
-                import pylab as plt
-
         if "w" in args.what_to_plot:
             plt.figure("waterfall", figsize=(8, 6))
             fil.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop)
@@ -945,12 +946,14 @@ if __name__ == "__main__":
             plt.figure("Spectrum", figsize=(8, 6))
             fil.plot_spectrum(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
         elif "b" in args.what_to_plot:
-            plt.figure("Spectrum", figsize=(8, 6))
+            plt.figure("spectrum and waterfall", figsize=(8, 6))
             fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
 
-        if args.waterfall and args.plt_filename != '':
+        if args.plt_filename != '':
             plt.savefig(args.plt_filename)
 
         if not args.save_only:
             if os.environ.has_key('DISPLAY'):
                 plt.show()
+            else:
+                print "No $DISPLAY available."
