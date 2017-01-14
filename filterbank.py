@@ -620,6 +620,20 @@ class Filterbank(object):
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
+    def blank_dc(self, n_coarse_chan):
+        """ Blank DC bins in coarse channels.
+        
+        Note: currently only works if entire filterbank file is read
+        """
+        n_chan = self.data.shape[2]
+        n_chan_per_coarse = n_chan / n_coarse_chan
+       
+        mid_chan = n_chan_per_coarse / 2
+        
+        for ii in range(0, n_coarse_chan-1):
+            ss = ii*n_chan_per_coarse
+            self.data[..., ss+mid_chan-1] = self.data[..., ss+mid_chan]
+        
 
     def info(self):
         """ Print header information """
@@ -882,6 +896,8 @@ if __name__ == "__main__":
                        help='save plot graphic to file (give filename as argument)')
     parser.add_argument('-S', action='store_true', default=False, dest='save_only',
                        help='Turn off plotting of data and only save to file.')
+    parser.add_argument('-D', action='store', default=None, type=int, dest='blank_dc',
+                       help='Blank DC bin. Need to know number of coarse channels.')
     args = parser.parse_args()
 
     if args.save_only:
@@ -923,6 +939,10 @@ if __name__ == "__main__":
                      load_data=load_data)
     fil.info()
 
+    if args.blank_dc:
+        print "Blanking DC bin"
+        fil.blank_dc(args.blank_dc)
+        
     # And if we want to plot data, then plot data.
     if not args.info_only:
         # check start & stop frequencies make sense
