@@ -969,8 +969,6 @@ class Filterbank(object):
         axTimeseries.yaxis.set_major_formatter(nullfmt)
         axTimeseries.xaxis.set_major_formatter(nullfmt)
 
-        print '>>>>>> self.timestamps'self.timestamps
-
         #--------
         axKurtosis = plt.axes(rect_kurtosis)
         print 'Ploting Kurtosis'
