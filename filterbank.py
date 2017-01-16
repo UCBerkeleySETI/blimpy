@@ -29,6 +29,8 @@ from pprint import pprint
 
 from astropy import units as u
 from astropy.coordinates import Angle
+import scipy.stats
+from matplotlib.ticker import NullFormatter
 
 from utils import db, lin, rebin, closest
 
@@ -46,7 +48,6 @@ MAX_PLT_POINTS      = 65536                  # Max number of points in matplotli
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
 MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
-
 
 ###
 # Header parsing
@@ -622,18 +623,18 @@ class Filterbank(object):
 
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
-        
+
         Note: currently only works if entire filterbank file is read
         """
         n_chan = self.data.shape[2]
         n_chan_per_coarse = n_chan / n_coarse_chan
-       
+
         mid_chan = n_chan_per_coarse / 2
-        
+
         for ii in range(0, n_coarse_chan-1):
             ss = ii*n_chan_per_coarse
             self.data[..., ss+mid_chan-1] = self.data[..., ss+mid_chan]
-        
+
 
     def info(self):
         """ Print header information """
@@ -729,11 +730,64 @@ class Filterbank(object):
             kwargs['c'] = '#333333'
 
         if logged:
-            plt.plot(plot_f, db(plot_data), **kwargs)
+            plt.plot(plot_f, db(plot_data),label='Stokes I', **kwargs)
             plt.ylabel("Power [dB]")
         else:
 
-            plt.plot(plot_f, plot_data, **kwargs)
+            plt.plot(plot_f, plot_data,label='Stokes I', **kwargs)
+            plt.ylabel("Power [counts]")
+        plt.xlabel("Frequency [MHz]")
+        plt.legend()
+
+        try:
+            plt.title(self.header['source_name'])
+        except KeyError:
+            plt.title(self.filename)
+
+        ax.get_xaxis().get_major_formatter().set_useOffset(False)
+        plt.xlim(plot_f[0], plot_f[-1])
+
+    def plot_spectrum_min_max(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
+        """ Plot frequency spectrum of a given file
+
+        Args:
+            logged (bool): Plot in linear (False) or dB units (True)
+            if_id (int): IF identification (if multiple IF signals in file)
+            c: color for line
+            kwargs: keyword args to be passed to matplotlib plot()
+        """
+        ax = plt.gca()
+
+        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
+
+        fig_max = plot_data[0].max()
+        fig_min = plot_data[0].min()
+
+        print "averaging along time axis..."
+        plot_max = plot_data.max(axis=0)
+        plot_min = plot_data.min(axis=0)
+        plot_data = plot_data.mean(axis=0)
+
+        # Rebin to max number of points
+        dec_fac_x = 1
+        MAX_PLT_POINTS = 8*64  # Low resoluition to see the difference.
+        if plot_data.shape[0] > MAX_PLT_POINTS:
+            dec_fac_x = plot_data.shape[0] / MAX_PLT_POINTS
+
+        plot_data = rebin(plot_data, dec_fac_x, 1)
+        plot_min = rebin(plot_min, dec_fac_x, 1)
+        plot_max = rebin(plot_max, dec_fac_x, 1)
+        plot_f    = rebin(plot_f, dec_fac_x, 1)
+
+        if logged:
+            plt.plot(plot_f, db(plot_data),'k', **kwargs)
+            plt.plot(plot_f, db(plot_max),'b', **kwargs)
+            plt.plot(plot_f, db(plot_min),'b', **kwargs)
+            plt.ylabel("Power [dB]")
+        else:
+            plt.plot(plot_f, plot_data,'k', **kwargs)
+            plt.plot(plot_f, plot_max,'b', **kwargs)
+            plt.plot(plot_f, plot_min,'b', **kwargs)
             plt.ylabel("Power [counts]")
         plt.xlabel("Frequency [MHz]")
 
@@ -744,14 +798,16 @@ class Filterbank(object):
 
         ax.get_xaxis().get_major_formatter().set_useOffset(False)
         plt.xlim(plot_f[0], plot_f[-1])
+        plt.ylim(db(fig_min),db(fig_max))
 
-    def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True, **kwargs):
+    def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True,cb=True, **kwargs):
         """ Plot waterfall of data
 
         Args:
             f_start (float): start frequency, in MHz
             f_stop (float): stop frequency, in MHz
             logged (bool): Plot in linear (False) or dB units (True),
+            cb (bool): for plotting the colorbar
             kwargs: keyword args to be passed to matplotlib imshow()
         """
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
@@ -769,7 +825,6 @@ class Filterbank(object):
 
         plot_data = rebin(plot_data, dec_fac_x, dec_fac_y)
 
-
         try:
             plt.title(self.header['source_name'])
         except KeyError:
@@ -783,10 +838,60 @@ class Filterbank(object):
             cmap='viridis',
             **kwargs
         )
-        plt.colorbar()
+        if cb:
+            plt.colorbar()
         plt.xlabel("Frequency [MHz]")
         plt.ylabel("Time [MJD]")
 
+    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None , **kwargs):
+        ''' Plot kurtosis
+
+         Args:
+            f_start (float): start frequency, in MHz
+            f_stop (float): stop frequency, in MHz
+            logged (bool): Plot in linear (False) or dB units (True),
+            kwargs: keyword args to be passed to matplotlib imshow()
+        '''
+
+        ax = plt.gca()
+        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
+
+        if logged:
+            plot_data = db(plot_data)
+
+        plot_data = plot_data.mean(axis=1)
+
+        if 'v' in orientation:
+            plt.plot(plot_data,range(len(plot_data))[::-1], **kwargs)
+        else:
+            plt.plot(plot_data, **kwargs)
+            plt.xlabel("Time [s]")
+
+        ax.autoscale(axis='both',tight=True)
+        ax.get_xaxis().get_major_formatter().set_useOffset(False)
+
+    def plot_kurtosis(self, f_start=None, f_stop=None, if_id=0, **kwargs):
+        ''' Plot kurtosis
+
+         Args:
+            f_start (float): start frequency, in MHz
+            f_stop (float): stop frequency, in MHz
+            kwargs: keyword args to be passed to matplotlib imshow()
+        '''
+        ax = plt.gca()
+
+        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
+        plot_kurtossis = np.zeros(len(plot_f))
+
+        for i in range(len(plot_f)):
+            plot_kurtossis[i] = scipy.stats.kurtosis(plot_data[:,i],nan_policy='omit')
+
+        plt.plot(plot_f, plot_kurtossis, **kwargs)
+        plt.ylabel("Kurtosis")
+        plt.xlabel("Frequency [MHz]")
+
+        ax.get_xaxis().get_major_formatter().set_useOffset(False)
+        plt.xlim(plot_f[0], plot_f[-1])
 
     def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
         """ Plot waterfall of data as well as spectrum; also, placeholder to make even more complicated plots in the future.
@@ -802,14 +907,92 @@ class Filterbank(object):
             kwargs: keyword args to be passed to matplotlib plot() and imshow()
         """
 
-        plt.subplot(1,2,1)
+        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
+
+        nullfmt = NullFormatter()         # no labels
+
+        # definitions for the axes
+        left, width = 0.35, 0.5
+        bottom, height = 0.45, 0.5
+        width2, height2 = 0.1125, 0.15
+        bottom2, left2 = bottom-height2-.025, left-width2-.02
+        bottom3, left3 = bottom2-height2-.025, 0.075
+
+        rect_waterfall = [left, bottom, width, height]
+        rect_colorbar = [left+width, bottom, .025, height]
+        rect_spectrum = [left, bottom2, width, height2]
+        rect_min_max = [left, bottom3, width, height2]
+        rect_timeseries = [left+width, bottom, width2, height]
+        rect_kurtosis = [left3, bottom3, 0.25, height2]
+        rect_header = [left3-.05, bottom, 0.2, height]
+
+        #--------
+        axWaterfall = plt.axes(rect_waterfall)
+        print 'Ploting Waterfall'
+        self.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop,cb=False)
+        plt.xlabel('')
+
+        # no labels
+        axWaterfall.xaxis.set_major_formatter(nullfmt)
+
+        #--------
+#         axColorbar = plt.axes(rect_colorbar)
+#         print 'Ploting Colorbar'
+#         print plot_data.max()
+#         print plot_data.min()
+#
+#         plot_colorbar = range(plot_data.min(),plot_data.max(),int((plot_data.max()-plot_data.min())/plot_data.shape[0]))
+#         plot_colorbar = np.array([[plot_colorbar],[plot_colorbar]])
+#
+#         plt.imshow(plot_colorbar,aspect='auto', rasterized=True, interpolation='nearest',)
+
+#         axColorbar.xaxis.set_major_formatter(nullfmt)
+#         axColorbar.yaxis.set_major_formatter(nullfmt)
+
+#         heatmap = axColorbar.pcolor(plot_data, edgecolors = 'none', picker=True)
+#         plt.colorbar(heatmap, cax = axColorbar)
+
+        #--------
+        axSpectrum = plt.axes(rect_spectrum)
+        print 'Ploting Spectrum'
         self.plot_spectrum(logged=logged, f_start=args.f_start, f_stop=args.f_stop, t=t)
+        plt.title('')
+        axSpectrum.yaxis.tick_right()
+        axSpectrum.yaxis.set_label_position("right")
+        plt.xlabel('')
+        axSpectrum.xaxis.set_major_formatter(nullfmt)
 
-        plt.subplot(1,2,2)
-        self.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop)
-        
-        plt.tight_layout()
+        #--------
+        axTimeseries = plt.axes(rect_timeseries)
+        print 'Ploting Timeseries'
+        self.plot_time_series(f_start=args.f_start, f_stop=args.f_stop,orientation='v')
+        axTimeseries.yaxis.set_major_formatter(nullfmt)
+        axTimeseries.xaxis.set_major_formatter(nullfmt)
 
+        print '>>>>>> self.timestamps'self.timestamps
+
+        #--------
+        axKurtosis = plt.axes(rect_kurtosis)
+        print 'Ploting Kurtosis'
+        self.plot_kurtosis(f_start=args.f_start, f_stop=args.f_stop)
+
+        #--------
+        axMinMax = plt.axes(rect_min_max)
+        print 'Ploting Min Max'
+        self.plot_spectrum_min_max(logged=logged, f_start=args.f_start, f_stop=args.f_stop, t=t)
+        plt.title('')
+        axMinMax.yaxis.tick_right()
+        axMinMax.yaxis.set_label_position("right")
+
+        #--------
+        axHeader = plt.axes(rect_header)
+        print 'Ploting Header'
+        plot_header = '\n'.join(['%s:  %s'%(key.upper(),value) for (key,value) in self.header.items() if 'source_name' not in key])
+        plt.text(0,1,plot_header,ha='left', va='top', wrap=True)
+
+        axHeader.set_axis_bgcolor('white')
+        axHeader.xaxis.set_major_formatter(nullfmt)
+        axHeader.yaxis.set_major_formatter(nullfmt)
 
     def write_to_filterbank(self, filename_out):
         """ Write data to filterbank file.
@@ -876,8 +1059,8 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
-    parser.add_argument('-p', action='store',  default='b', dest='what_to_plot', type=str,
-                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, "b" both waterfall and spectrum.')
+    parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
+                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, "a" for all available plots and information; and more.')
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
@@ -896,7 +1079,7 @@ if __name__ == "__main__":
                        help='save plot graphic to file (give filename as argument)')
     parser.add_argument('-S', action='store_true', default=False, dest='save_only',
                        help='Turn off plotting of data and only save to file.')
-    parser.add_argument('-D', action='store', default=None, type=int, dest='blank_dc',
+    parser.add_argument('-D', action='store', default=True, type=int, dest='blank_dc',
                        help='Blank DC bin. Need to know number of coarse channels.')
     args = parser.parse_args()
 
@@ -919,7 +1102,7 @@ if __name__ == "__main__":
 
     # only load one integration if looking at spectrum
     wtp = args.what_to_plot
-    if wtp not in ('b', 'w'):
+    if not wtp or 's' in wtp:
         if args.t_start == None:
             t_start = 0
         else:
@@ -929,7 +1112,6 @@ if __name__ == "__main__":
         if args.average:
             t_start = None
             t_stop  = None
-
     else:
         t_start = args.t_start
         t_stop  = args.t_stop
@@ -942,7 +1124,7 @@ if __name__ == "__main__":
     if args.blank_dc:
         print "Blanking DC bin"
         fil.blank_dc(args.blank_dc)
-        
+
     # And if we want to plot data, then plot data.
     if not args.info_only:
         # check start & stop frequencies make sense
@@ -965,8 +1147,17 @@ if __name__ == "__main__":
         elif "s" in args.what_to_plot:
             plt.figure("Spectrum", figsize=(8, 6))
             fil.plot_spectrum(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
-        elif "b" in args.what_to_plot:
-            plt.figure("spectrum and waterfall", figsize=(8, 6))
+        elif "mm" in args.what_to_plot:
+            plt.figure("min max", figsize=(8, 6))
+            fil.plot_spectrum_min_max(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
+        elif "k" in args.what_to_plot:
+            plt.figure("kurtosis", figsize=(8, 6))
+            fil.plot_kurtosis(f_start=args.f_start, f_stop=args.f_stop)
+        elif "t" in args.what_to_plot:
+            plt.figure("Time Series", figsize=(8, 6))
+            fil.plot_time_series(f_start=args.f_start, f_stop=args.f_stop)
+        elif "a" in args.what_to_plot:
+            plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
             fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
 
         if args.plt_filename != '':
