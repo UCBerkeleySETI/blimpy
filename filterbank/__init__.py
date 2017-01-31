@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from . import filterbank
-from . import guppi
-from .filterbank import Filterbank
+
+from .filterbank import Filterbank, read_header, fix_header
 from .guppi import GuppiRaw
+from . import utils

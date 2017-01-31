@@ -75,10 +75,10 @@ class GuppiRaw(object):
         self._d_x = np.zeros(1, dtype='int8')
         self._d_y = np.zeros(1, dtype='int8')
 
-     def __enter__(self):
+    def __enter__(self):
          return self
 
-     def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(self, exception_type, exception_value, traceback):
         self.file_obj.close()
 
     def __repr__(self):
@@ -127,7 +127,7 @@ class GuppiRaw(object):
                 header_dict[key] = val
         except ValueError:
             print "CURRENT LINE: ", line
-             print "BLOCK START IDX: ",  start_idx
+            print "BLOCK START IDX: ",  start_idx
             print "FILE SIZE: ",  self.filesize
             print "NEXT 512 BYTES: \n"
             print self.file_obj.read(512)
@@ -189,9 +189,9 @@ class GuppiRaw(object):
 
         d = d.reshape((n_chan, n_samples, n_pol))    # Real, imag
 
-                if self._d_x.shape != d[..., 0:2].shape:
-                        self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
-                        self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
+        if self._d_x.shape != d[..., 0:2].shape:
+                self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
+                self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
 
         self._d_x[:] = d[..., 0:2]
         self._d_y[:] = d[..., 2:4]
@@ -230,9 +230,9 @@ class GuppiRaw(object):
         d = np.concatenate((d, d2), axis=1)        
         print d.shape
 
-                if self._d_x.shape != (n_chan, n_samples*2, n_pol):
-                        self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
-                        self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
+        if self._d_x.shape != (n_chan, n_samples*2, n_pol):
+                self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
+                self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
 
         self._d_x[:] = d[..., 0:2]
         self._d_y[:] = d[..., 2:4]
@@ -284,8 +284,8 @@ class GuppiRaw(object):
         header0, data_idx0 = self.read_header()
 
         self.file_obj.seek(data_idx0)
-                block_size = int(header0['BLOCSIZE'])
-                n_bits     = int(header0['NBITS'])
+        block_size = int(header0['BLOCSIZE'])
+        n_bits     = int(header0['NBITS'])
         self.file_obj.seek(int(header0['BLOCSIZE']), 1)
         n_blocks = 1
         end_found = False
@@ -347,13 +347,13 @@ class GuppiRaw(object):
         d_xx_fft  = rebin(d_xx_fft, dec_fac_x)
 
         print "Plotting..."
-                if plot_db:
+        if plot_db:
             plt.plot(10 * np.log10(d_xx_fft))
             plt.ylabel("Power [dB]")
         else:
             plt.plot(d_xx_fft)
             plt.ylabel("Power")
-                plt.xlabel("Channel")
+            plt.xlabel("Channel")
         plt.title(self.filename)
         if filename:
             plt.savefig(filename)
@@ -410,14 +410,14 @@ def cmd_tool(args=None):
     parser = ArgumentParser(description="Command line utility for creating spectra from GuppiRaw files.")
 
     parser.add_argument('filename', type=str, help='Name of file to read')
-        parser.add_argument('-o', dest='outdir', type=str, default='./', help='output directory for PNG files')
+    parser.add_argument('-o', dest='outdir', type=str, default='./', help='output directory for PNG files')
     args = parser.parse_args()
 
     r = GuppiRaw(args.filename)
 
     r.print_stats()
-        bname = os.path.splitext(os.path.basename(args.filename))[0]
-        bname = os.path.join(args.outdir, bname)
+    bname = os.path.splitext(os.path.basename(args.filename))[0]
+    bname = os.path.join(args.outdir, bname)
     r.plot_histogram(filename="%s_hist.png" % bname)
     r.plot_spectrum(filename="%s_spec.png" % bname)
 
