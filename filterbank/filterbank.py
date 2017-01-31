@@ -1116,10 +1116,6 @@ def cmd_tool(args=None):
                      load_data=load_data)
     fil.info()
 
-    if args.blank_dc:
-        print "Blanking DC bin"
-        fil.blank_dc(args.blank_dc)
-
     # And if we want to plot data, then plot data.
     if not args.info_only:
         # check start & stop frequencies make sense
@@ -1135,6 +1131,10 @@ def cmd_tool(args=None):
         #    print "Error: Start and stop frequencies must lie inside file's frequency range."
         #    print "i.e. between %2.2f-%2.2f MHz." % (fil.freqs[0], fil.freqs[-1])
         #    exit()
+
+        if args.blank_dc:
+            print "Blanking DC bin"
+            fil.blank_dc(args.blank_dc)
 
         if "w" in args.what_to_plot:
             plt.figure("waterfall", figsize=(8, 6))
