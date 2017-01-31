@@ -1051,14 +1051,16 @@ class Filterbank(object):
                 dset.attrs[key] = value
 
 
-
-if __name__ == "__main__":
+def cmd_tool(args=None):
+    """ Command line tool for plotting and viewing info on filterbank files """    
+    
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
     parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
-                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, "a" for all available plots and information; and more.')
+                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, \
+                             "a" for all available plots and information; and more.')
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
@@ -1166,3 +1168,7 @@ if __name__ == "__main__":
                 plt.show()
             else:
                 print "No $DISPLAY available."
+
+
+if __name__ == "__main__":
+    cmd_tool()
