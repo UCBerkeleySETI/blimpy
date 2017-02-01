@@ -478,8 +478,6 @@ class Filterbank(object):
 
         self._setup_freqs()
 
-
-
     def read_hdf5(self, filename, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
         self.header = {}
@@ -526,7 +524,6 @@ class Filterbank(object):
             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
-
 
     def read_filterbank(self, filename=None, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
@@ -635,7 +632,6 @@ class Filterbank(object):
             ss = ii*n_chan_per_coarse
             self.data[..., ss+mid_chan-1] = self.data[..., ss+mid_chan]
 
-
     def info(self):
         """ Print header information """
 
@@ -671,6 +667,7 @@ class Filterbank(object):
         i_vals = np.arange(chan_stop_idx, chan_start_idx, 1)
 
         freqs = foff * i_vals + fch1
+
         return freqs[::-1]
 
     def grab_data(self, f_start=None, f_stop=None, if_id=0):
@@ -694,6 +691,23 @@ class Filterbank(object):
         plot_f    = self.freqs[i_start:i_stop]
         plot_data = self.data[:, if_id, i_start:i_stop]
         return plot_f, plot_data
+
+    def cacl_N_course_chan(self):
+        ''' This makes an attempt to calculate the number of course channels in a given file.
+            It assumes for now that a single course channel is 2.9296875 MHz
+        '''
+
+        # Could add a telescope based course channel bandwith, or other discriminative.
+        # if telescope_id == 'GBT':
+        # or actually as is currently
+        # if self.header['telescope_id'] == 6:
+
+        course_chan_bw = 2.9296875
+
+        bandwith = self.header['fch1']+self.header['nchans']*self.header['foff']
+        N_course_chan = bandwith / course_chan_bw
+
+        return N_course_chan
 
     def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
         """ Plot frequency spectrum of a given file
@@ -1077,8 +1091,8 @@ if __name__ == "__main__":
                        help='save plot graphic to file (give filename as argument)')
     parser.add_argument('-S', action='store_true', default=False, dest='save_only',
                        help='Turn off plotting of data and only save to file.')
-    parser.add_argument('-D', action='store', default=True, type=int, dest='blank_dc',
-                       help='Blank DC bin. Need to know number of coarse channels.')
+    parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
+                       help='Blank DC bin.')
     args = parser.parse_args()
 
     if args.save_only:
@@ -1121,7 +1135,8 @@ if __name__ == "__main__":
 
     if args.blank_dc:
         print "Blanking DC bin"
-        fil.blank_dc(args.blank_dc)
+        N_course_chan = fil.cacl_N_course_chan()
+        fil.blank_dc(N_course_chan)
 
     # And if we want to plot data, then plot data.
     if not args.info_only:
