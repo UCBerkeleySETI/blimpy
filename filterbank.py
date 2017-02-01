@@ -705,7 +705,7 @@ class Filterbank(object):
         course_chan_bw = 2.9296875
 
         bandwith = abs(self.header['nchans']*self.header['foff'])
-        N_course_chan = bandwith / course_chan_bw
+        N_course_chan = int(bandwith / course_chan_bw)
 
         return N_course_chan
 
