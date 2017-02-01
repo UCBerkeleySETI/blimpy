@@ -1092,7 +1092,7 @@ if __name__ == "__main__":
     parser.add_argument('-S', action='store_true', default=False, dest='save_only',
                        help='Turn off plotting of data and only save to file.')
     parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
-                       help='Blank DC bin.')
+                       help='Use to not blank DC bin.')
     args = parser.parse_args()
 
     if args.save_only:
