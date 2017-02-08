@@ -40,6 +40,14 @@ try:
 except ImportError:
     HAS_HDF5 = False
 
+# Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
+if os.environ.has_key('DISPLAY'):
+    import pylab as plt
+else:
+    import matplotlib
+    matplotlib.use('Agg')
+    import pylab as plt
+
 ###
 # Config values
 ###
@@ -943,7 +951,7 @@ class Filterbank(object):
         #--------
         axWaterfall = plt.axes(rect_waterfall)
         print 'Ploting Waterfall'
-        self.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop,cb=False)
+        self.plot_waterfall(f_start=f_start, f_stop=f_stop,cb=False)
         plt.xlabel('')
 
         # no labels
@@ -969,7 +977,7 @@ class Filterbank(object):
         #--------
         axSpectrum = plt.axes(rect_spectrum)
         print 'Ploting Spectrum'
-        self.plot_spectrum(logged=logged, f_start=args.f_start, f_stop=args.f_stop, t=t)
+        self.plot_spectrum(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
         axSpectrum.yaxis.tick_right()
         axSpectrum.yaxis.set_label_position("right")
@@ -979,19 +987,19 @@ class Filterbank(object):
         #--------
         axTimeseries = plt.axes(rect_timeseries)
         print 'Ploting Timeseries'
-        self.plot_time_series(f_start=args.f_start, f_stop=args.f_stop,orientation='v')
+        self.plot_time_series(f_start=f_start, f_stop=f_stop,orientation='v')
         axTimeseries.yaxis.set_major_formatter(nullfmt)
         axTimeseries.xaxis.set_major_formatter(nullfmt)
 
         #--------
         axKurtosis = plt.axes(rect_kurtosis)
         print 'Ploting Kurtosis'
-        self.plot_kurtosis(f_start=args.f_start, f_stop=args.f_stop)
+        self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
 
         #--------
         axMinMax = plt.axes(rect_min_max)
         print 'Ploting Min Max'
-        self.plot_spectrum_min_max(logged=logged, f_start=args.f_start, f_stop=args.f_stop, t=t)
+        self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
         axMinMax.yaxis.tick_right()
         axMinMax.yaxis.set_label_position("right")
@@ -1065,14 +1073,16 @@ class Filterbank(object):
                 dset.attrs[key] = value
 
 
+def cmd_tool(args=None):
+    """ Command line tool for plotting and viewing info on filterbank files """
 
-if __name__ == "__main__":
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
     parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
-                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, "a" for all available plots and information; and more.')
+                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, \
+                             "a" for all available plots and information; and more.')
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
@@ -1094,19 +1104,6 @@ if __name__ == "__main__":
     parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
                        help='Use to not blank DC bin.')
     args = parser.parse_args()
-
-    if args.save_only:
-            import matplotlib
-            matplotlib.use('Agg')
-            import pylab as plt
-    else:
-        # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
-        if os.environ.has_key('DISPLAY'):
-            import pylab as plt
-        else:
-            import matplotlib
-            matplotlib.use('Agg')
-            import pylab as plt
 
     # Open filterbank data
     filename = args.filename
@@ -1133,11 +1130,6 @@ if __name__ == "__main__":
                      load_data=load_data)
     fil.info()
 
-    if args.blank_dc:
-        print "Blanking DC bin"
-        N_course_chan = fil.cacl_N_course_chan()
-        fil.blank_dc(N_course_chan)
-
     # And if we want to plot data, then plot data.
     if not args.info_only:
         # check start & stop frequencies make sense
@@ -1153,6 +1145,11 @@ if __name__ == "__main__":
         #    print "Error: Start and stop frequencies must lie inside file's frequency range."
         #    print "i.e. between %2.2f-%2.2f MHz." % (fil.freqs[0], fil.freqs[-1])
         #    exit()
+
+        if args.blank_dc:
+            print "Blanking DC bin"
+            N_course_chan = fil.cacl_N_course_chan()
+            fil.blank_dc(N_course_chan)
 
         if "w" in args.what_to_plot:
             plt.figure("waterfall", figsize=(8, 6))
@@ -1181,3 +1178,7 @@ if __name__ == "__main__":
                 plt.show()
             else:
                 print "No $DISPLAY available."
+
+
+if __name__ == "__main__":
+    cmd_tool()
