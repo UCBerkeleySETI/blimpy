@@ -375,6 +375,9 @@ def to_sigproc_keyword(keyword, value=None):
     Returns:
         value_str (str): serialized string to write to file.
     """
+
+    keyword = str(keyword)
+
     if not value:
         return np.int32(len(keyword)).tostring() + keyword
     else:
@@ -406,14 +409,16 @@ def generate_sigproc_header(f):
     header_string += to_sigproc_keyword('HEADER_START')
 
     for keyword in f.header.keys():
-            if keyword == 'src_raj':
-                header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
-            elif keyword == 'src_dej':
-                header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
-            elif keyword == 'az_start' or keyword == 'za_start':
-                header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
-            else:
-                header_string += to_sigproc_keyword(keyword, f.header[keyword])
+        if keyword == 'src_raj':
+            header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
+        elif keyword == 'src_dej':
+            header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
+        elif keyword == 'az_start' or keyword == 'za_start':
+            header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
+        elif keyword not in header_keyword_types.keys():
+            pass
+        else:
+            header_string += to_sigproc_keyword(keyword, f.header[keyword])
 
     header_string += to_sigproc_keyword('HEADER_END')
     return header_string
