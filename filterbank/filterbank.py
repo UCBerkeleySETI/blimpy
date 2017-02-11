@@ -586,6 +586,14 @@ class Filterbank(object):
         i0 = np.min((chan_start_idx, chan_stop_idx))
         i1 = np.max((chan_start_idx, chan_stop_idx))
 
+        #Set up the data type (taken out of loop for speed)
+        if n_bytes == 4:
+            dd_type = 'float32'
+        elif n_bytes == 2:
+            dd_type = 'int16'
+        elif n_bytes == 1:
+            dd_type = 'int8'
+
         if load_data:
 
             if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
@@ -604,12 +612,8 @@ class Filterbank(object):
                     f.seek(n_bytes * i0, 1) # 1 = from current location
                     #d = f.read(n_bytes * n_chans_selected)
                     #bytes_to_read = n_bytes * n_chans_selected
-                    if n_bytes == 4:
-                        dd = np.fromfile(f, count=n_chans_selected, dtype='float32')
-                    elif n_bytes == 2:
-                        dd = np.fromfile(f, count=n_chans_selected, dtype='int16')
-                    elif n_bytes == 1:
-                        dd = np.fromfile(f, count=n_chans_selected, dtype='int8')
+
+                    dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
                     # Reverse array if frequency axis is flipped
                     if f_delt < 0:
@@ -1013,7 +1017,7 @@ class Filterbank(object):
         axHeader = plt.axes(rect_header)
         print 'Ploting Header'
         plot_header = '\n'.join(['%s:  %s'%(key.upper(),value) for (key,value) in self.header.items() if 'source_name' not in key])
-        plt.text(0,1,plot_header,ha='left', va='top', wrap=True)
+        plt.text(0.05,.95,plot_header,ha='left', va='top', wrap=True)
 
         axHeader.set_axis_bgcolor('white')
         axHeader.xaxis.set_major_formatter(nullfmt)
