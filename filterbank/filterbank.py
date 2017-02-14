@@ -375,6 +375,9 @@ def to_sigproc_keyword(keyword, value=None):
     Returns:
         value_str (str): serialized string to write to file.
     """
+
+    keyword = str(keyword)
+
     if not value:
         return np.int32(len(keyword)).tostring() + keyword
     else:
@@ -406,14 +409,16 @@ def generate_sigproc_header(f):
     header_string += to_sigproc_keyword('HEADER_START')
 
     for keyword in f.header.keys():
-            if keyword == 'src_raj':
-                header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
-            elif keyword == 'src_dej':
-                header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
-            elif keyword == 'az_start' or keyword == 'za_start':
-                header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
-            else:
-                header_string += to_sigproc_keyword(keyword, f.header[keyword])
+        if keyword == 'src_raj':
+            header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
+        elif keyword == 'src_dej':
+            header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
+        elif keyword == 'az_start' or keyword == 'za_start':
+            header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
+        elif keyword not in header_keyword_types.keys():
+            pass
+        else:
+            header_string += to_sigproc_keyword(keyword, f.header[keyword])
 
     header_string += to_sigproc_keyword('HEADER_END')
     return header_string
@@ -486,8 +491,6 @@ class Filterbank(object):
 
         self._setup_freqs()
 
-
-
     def read_hdf5(self, filename, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
         self.header = {}
@@ -534,7 +537,6 @@ class Filterbank(object):
             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
-
 
     def read_filterbank(self, filename=None, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
@@ -584,6 +586,14 @@ class Filterbank(object):
         i0 = np.min((chan_start_idx, chan_stop_idx))
         i1 = np.max((chan_start_idx, chan_stop_idx))
 
+        #Set up the data type (taken out of loop for speed)
+        if n_bytes == 4:
+            dd_type = 'float32'
+        elif n_bytes == 2:
+            dd_type = 'int16'
+        elif n_bytes == 1:
+            dd_type = 'int8'
+
         if load_data:
 
             if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
@@ -602,12 +612,8 @@ class Filterbank(object):
                     f.seek(n_bytes * i0, 1) # 1 = from current location
                     #d = f.read(n_bytes * n_chans_selected)
                     #bytes_to_read = n_bytes * n_chans_selected
-                    if n_bytes == 4:
-                        dd = np.fromfile(f, count=n_chans_selected, dtype='float32')
-                    elif n_bytes == 2:
-                        dd = np.fromfile(f, count=n_chans_selected, dtype='int16')
-                    elif n_bytes == 1:
-                        dd = np.fromfile(f, count=n_chans_selected, dtype='int8')
+
+                    dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
                     # Reverse array if frequency axis is flipped
                     if f_delt < 0:
@@ -642,7 +648,6 @@ class Filterbank(object):
         for ii in range(0, n_coarse_chan-1):
             ss = ii*n_chan_per_coarse
             self.data[..., ss+mid_chan-1] = self.data[..., ss+mid_chan]
-
 
     def info(self):
         """ Print header information """
@@ -679,6 +684,7 @@ class Filterbank(object):
         i_vals = np.arange(chan_stop_idx, chan_start_idx, 1)
 
         freqs = foff * i_vals + fch1
+
         return freqs[::-1]
 
     def grab_data(self, f_start=None, f_stop=None, if_id=0):
@@ -702,6 +708,23 @@ class Filterbank(object):
         plot_f    = self.freqs[i_start:i_stop]
         plot_data = self.data[:, if_id, i_start:i_stop]
         return plot_f, plot_data
+
+    def cacl_N_course_chan(self):
+        ''' This makes an attempt to calculate the number of course channels in a given file.
+            It assumes for now that a single course channel is 2.9296875 MHz
+        '''
+
+        # Could add a telescope based course channel bandwith, or other discriminative.
+        # if telescope_id == 'GBT':
+        # or actually as is currently
+        # if self.header['telescope_id'] == 6:
+
+        course_chan_bw = 2.9296875
+
+        bandwith = abs(self.header['nchans']*self.header['foff'])
+        N_course_chan = int(bandwith / course_chan_bw)
+
+        return N_course_chan
 
     def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
         """ Plot frequency spectrum of a given file
@@ -994,7 +1017,7 @@ class Filterbank(object):
         axHeader = plt.axes(rect_header)
         print 'Ploting Header'
         plot_header = '\n'.join(['%s:  %s'%(key.upper(),value) for (key,value) in self.header.items() if 'source_name' not in key])
-        plt.text(0,1,plot_header,ha='left', va='top', wrap=True)
+        plt.text(0.05,.95,plot_header,ha='left', va='top', wrap=True)
 
         axHeader.set_axis_bgcolor('white')
         axHeader.xaxis.set_major_formatter(nullfmt)
@@ -1060,8 +1083,8 @@ class Filterbank(object):
 
 
 def cmd_tool(args=None):
-    """ Command line tool for plotting and viewing info on filterbank files """    
-    
+    """ Command line tool for plotting and viewing info on filterbank files """
+
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
@@ -1087,8 +1110,8 @@ def cmd_tool(args=None):
                        help='save plot graphic to file (give filename as argument)')
     parser.add_argument('-S', action='store_true', default=False, dest='save_only',
                        help='Turn off plotting of data and only save to file.')
-    parser.add_argument('-D', action='store', default=True, type=int, dest='blank_dc',
-                       help='Blank DC bin. Need to know number of coarse channels.')
+    parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
+                       help='Use to not blank DC bin.')
     args = parser.parse_args()
 
     # Open filterbank data
@@ -1134,7 +1157,8 @@ def cmd_tool(args=None):
 
         if args.blank_dc:
             print "Blanking DC bin"
-            fil.blank_dc(args.blank_dc)
+            N_course_chan = fil.cacl_N_course_chan()
+            fil.blank_dc(N_course_chan)
 
         if "w" in args.what_to_plot:
             plt.figure("waterfall", figsize=(8, 6))
