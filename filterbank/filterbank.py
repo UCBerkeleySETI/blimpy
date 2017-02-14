@@ -709,22 +709,22 @@ class Filterbank(object):
         plot_data = self.data[:, if_id, i_start:i_stop]
         return plot_f, plot_data
 
-    def cacl_N_course_chan(self):
-        ''' This makes an attempt to calculate the number of course channels in a given file.
-            It assumes for now that a single course channel is 2.9296875 MHz
+    def calc_n_coarse_chan(self):
+        ''' This makes an attempt to calculate the number of coarse channels in a given file.
+            It assumes for now that a single coarse channel is 2.9296875 MHz
         '''
 
-        # Could add a telescope based course channel bandwith, or other discriminative.
+        # Could add a telescope based coarse channel bandwith, or other discriminative.
         # if telescope_id == 'GBT':
         # or actually as is currently
         # if self.header['telescope_id'] == 6:
 
-        course_chan_bw = 2.9296875
+        coarse_chan_bw = 2.9296875
 
         bandwith = abs(self.header['nchans']*self.header['foff'])
-        N_course_chan = int(bandwith / course_chan_bw)
+        n_coarse_chan = int(bandwith / coarse_chan_bw)
 
-        return N_course_chan
+        return n_coarse_chan
 
     def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
         """ Plot frequency spectrum of a given file
@@ -1157,8 +1157,8 @@ def cmd_tool(args=None):
 
         if args.blank_dc:
             print "Blanking DC bin"
-            N_course_chan = fil.cacl_N_course_chan()
-            fil.blank_dc(N_course_chan)
+            n_coarse_chan = fil.calc_n_coarse_chan()
+            fil.blank_dc(n_coarse_chan)
 
         if "w" in args.what_to_plot:
             plt.figure("waterfall", figsize=(8, 6))
