@@ -875,7 +875,7 @@ class Filterbank(object):
         plt.ylabel("Time [MJD]")
 
     def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None , **kwargs):
-        ''' Plot kurtosis
+        ''' Plot the time series.
 
          Args:
             f_start (float): start frequency, in MHz
