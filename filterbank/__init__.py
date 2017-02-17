@@ -5,3 +5,5 @@ from .guppi import GuppiRaw
 from . import utils
 from . import fil2hdf
 from . import gup2hdf
+from . import filterbank2
+from . import file_wrapper
