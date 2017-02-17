@@ -231,7 +231,7 @@ class Filterbank(object):
             self.__setup_time_axis()
 
             #Loading data (default for light files).
-            if self.container.data.any():
+            if self.container.data is not None:
                 self.data = self.container.data
                 self.freqs = self.container.freqs
             else:
@@ -328,7 +328,7 @@ class Filterbank(object):
 
 
         print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
-        if self.data.any():
+        if self.data is not None:
             print "%16s : %32s" % ("Data shape", self.data.shape)
         if self.freqs.any():
             print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
@@ -780,9 +780,7 @@ def cmd_tool(args=None):
         t_start = args.t_start
         t_stop  = args.t_stop
 
-    fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,
-                     t_start=t_start, t_stop=t_stop,
-                     load_data=load_data)
+    fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
     fil.info()
 
     # And if we want to plot data, then plot data.
