@@ -225,6 +225,7 @@ class Filterbank(object):
 
         if filename:
             self.filename = filename
+            self.ext = filename.split(".")[-1].strip().lower()  #File extension
             self.container = fw.open_file(filename)
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
@@ -672,7 +673,7 @@ class Filterbank(object):
         axHeader.xaxis.set_major_formatter(nullfmt)
         axHeader.yaxis.set_major_formatter(nullfmt)
 
-    def write_to_filterbank(self, filename_out):
+    def write_to_fil(self, filename_out):
         """ Write data to filterbank file.
 
         Args:
@@ -736,11 +737,11 @@ def cmd_tool(args=None):
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
+    parser.add_argument('filename', type=str,
+                        help='Name of file to read')
     parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, \
                              "a" for all available plots and information; and more.')
-    parser.add_argument('filename', type=str,
-                        help='Name of file to read')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
                         help='Start frequency (begin), in MHz')
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float,
@@ -759,12 +760,20 @@ def cmd_tool(args=None):
                        help='Turn off plotting of data and only save to file.')
     parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
                        help='Use to not blank DC bin.')
+    parser.add_argument('-H', action='store_true', default=False, dest='to_hdf5',
+                       help='Write file to hdf5 format.')
+    parser.add_argument('-F', action='store_true', default=False, dest='to_fil',
+                       help='Write file to .fil format.')
+    parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
+                        help='Filename output (if not probided, the name will be the same but with apropiate extension).')
+
     args = parser.parse_args()
 
     # Open filterbank data
     filename = args.filename
     load_data = not args.info_only
     info_only = args.info_only
+    filename_out = args.filename_out
 
 
     # only load one integration if looking at spectrum
@@ -786,12 +795,13 @@ def cmd_tool(args=None):
     fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
     fil.info()
 
-    if fil.heavy:
+    if fil.heavy or args.to_hdf5 or args.to_fil:
         info_only = True
 
     # And if we want to plot data, then plot data.
 
     if not info_only:
+        print ''
 
         # check start & stop frequencies make sense
         #try:
@@ -839,6 +849,33 @@ def cmd_tool(args=None):
                 plt.show()
             else:
                 print "No $DISPLAY available."
+
+
+    else:
+
+        if args.to_hdf5 and args.to_fil:
+            raise warning('Either provide to_hdf5 or to_fil, but not both.')
+
+        if args.to_hdf5:
+            if not filename_out:
+                filename_out = filename.replace('.fil','.h5')
+            elif '.h5' not in filename_out:
+                filename_out = filename_out.replace('.fil','')+'.h5'
+
+            print 'Writing file : %s'%(filename_out)
+            fil.write_to_hdf5(filename_out)
+            print 'File written.'
+
+        if args.to_fil:
+            if not filename_out:
+                filename_out = filename.replace('.h5','.fil')
+            elif '.fil' not in filename_out:
+                filename_out = filename_out.replace('.h5','')+'.fil'
+
+            print 'Writing file : %s'%(filename_out)
+            fil.write_to_fil(filename_out)
+            print 'File written.'
+
 
 
 if __name__ == "__main__":
