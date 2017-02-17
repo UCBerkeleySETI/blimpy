@@ -63,11 +63,11 @@ class  H5_reader(object):
 
             #EE should move this out of the init, since could still read the header. Maybe instead set a warning.
             if self.file_size_bytes < MAX_DATA_ARRAY_SIZE:
+                self.heavy = False
                 self.read_data()
             else:
                 logger.error("The file is of size %f MB, exceeding our size limit %f MB. Aborting..."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                return None
-
+                self.heavy = True
         else:
             raise IOError("Need a file to open, please give me one!")
 
@@ -166,8 +166,10 @@ class  FIL_reader(object):
             #EE should move this out of the init, since could still read the header. Maybe instead set a warning.
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 logger.error("The file is of size %f MB, exceeding our size limit %f MB. Aborting..."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                return None
+                self.heavy = True
+
             else:
+                self.heavy = False
                 self.read_data()
 
         else:
