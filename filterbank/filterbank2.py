@@ -330,7 +330,7 @@ class Filterbank(object):
         print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
         if self.data is not None:
             print "%16s : %32s" % ("Data shape", self.data.shape)
-        if self.freqs.any():
+        if self.freqs is not None:
             print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
             print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
 
