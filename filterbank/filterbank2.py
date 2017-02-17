@@ -229,6 +229,7 @@ class Filterbank(object):
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
             self.__setup_time_axis()
+            self.heavy =  self.container.heavy
 
             #Loading data (default for light files).
             if self.container.data is not None:
@@ -763,6 +764,8 @@ def cmd_tool(args=None):
     # Open filterbank data
     filename = args.filename
     load_data = not args.info_only
+    info_only = args.info_only
+
 
     # only load one integration if looking at spectrum
     wtp = args.what_to_plot
@@ -783,8 +786,13 @@ def cmd_tool(args=None):
     fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
     fil.info()
 
+    if fil.heavy:
+        info_only = True
+
     # And if we want to plot data, then plot data.
-    if not args.info_only:
+
+    if not info_only:
+
         # check start & stop frequencies make sense
         #try:
         #    if args.f_start:
