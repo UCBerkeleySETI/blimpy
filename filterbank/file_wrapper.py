@@ -13,6 +13,20 @@ from astropy.coordinates import Angle
 
 import pdb;# pdb.set_trace()
 
+import logging
+logger = logging.getLogger(__name__)
+
+level_log = logging.INFO
+
+if level_log == logging.INFO:
+    stream = sys.stdout
+    format = '%(name)-15s %(levelname)-8s %(message)s'
+else:
+    stream =  sys.stderr
+    format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
+
+logging.basicConfig(format=format,stream=stream,level = level_log)
+
 ###
 # Config values
 ###
