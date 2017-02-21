@@ -31,10 +31,10 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 # Config values
 ###
 
-#MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
-#MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024.     # Max size of data array to load into memory
-#MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
+#MAX_PLT_POINTS      = 65536                     # Max number of points in matplotlib plot
+#MAX_IMSHOW_POINTS   = (8192, 4096)              # Max number of points in imshow plot
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024. * 8    # Max size of data array to load into memory (in bytes)
+#MAX_HEADER_BLOCKS   = 100                       # Max size of header (in 512-byte blocks)
 
 
 class  H5_reader(object):
@@ -44,7 +44,7 @@ class  H5_reader(object):
     #EE check freq axis.
 
 
-    def __init__(self, filename):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Constructor.
 
         Args:
@@ -57,17 +57,28 @@ class  H5_reader(object):
             self.freqs = None
             self.h5 = h5py.File(self.filename)
             self.__read_header()
-            self.file_size_bytes = os.path.getsize(self.filename)
-            self.n_ints_in_file  = self.h5["data"].shape[0]
+            self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
+            self.n_ints_in_file  = self.h5["data"].shape[0] #
+            self.n_channels_in_file  = self.h5["data"].shape[2] #
+            self.n_beams_in_file = 0 #Placeholder for future development.
+            self.n_pols_in_file = 0 #Placeholder for future development.
             self.__setup_time_axis()
 
-            #EE should move this out of the init, since could still read the header. Maybe instead set a warning.
-            if self.file_size_bytes < MAX_DATA_ARRAY_SIZE:
-                self.heavy = False
-                self.read_data()
-            else:
-                logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+
+            if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
+                if f_start or f_stop or t_start or t_stop:
+                    selection_size = self.__calc_selection_size(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                    if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                    else:
+                        self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                else:
+                    logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            else:
+                self.heavy = False
+                self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
         else:
             raise IOError("Need a file to open, please give me one!")
 
@@ -101,6 +112,30 @@ class  H5_reader(object):
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+
+    def __calc_selection_size(f_start=None, f_stop=None, t_start=None, t_stop=None):
+        '''Calculate size of data of interest.
+        '''
+
+        #Check to see how many integrations requested
+        ii_start, ii_stop = 0, self.n_ints_in_file
+        if t_start:
+            ii_start = t_start
+        if t_stop:
+            ii_stop = t_stop
+        n_ints = ii_stop - ii_start
+
+        #Check to see how many frequency channels requested
+        jj_start, jj_stop = 0, self.n_channels_in_file
+        if f_start:
+            jj_start = f_start
+        if f_stop:
+            jj_stop = f_stop
+        n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
+
+        selection_size = n_ints*n_chan*32/(8.)
+
+        return selection_size
 
     def read_data(self, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
 
@@ -138,10 +173,9 @@ class  H5_reader(object):
 
 class  FIL_reader(object):
     ''' This class handles .fil files.
-
     '''
 
-    def __init__(self, filename):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Constructor.
 
         Args:
@@ -159,20 +193,53 @@ class  FIL_reader(object):
             self.idx_data = self.__len_header()
             self.__get_n_ints_in_file()
             self.__setup_time_axis()
+            self.n_channels  = self.header['nchans']
+            self.n_beams = 0 #Placeholder for future development.
+            self.n_pols = 0 #Placeholder for future development.
 
-            # set start of data, at real length of header
+            # set start of data, at real length of header  (future development.)
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
-            #EE should move this out of the init, since could still read the header. Maybe instead set a warning.
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
-                logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                 self.heavy = True
+                if f_start or f_stop or t_start or t_stop:
+                    selection_size = self.__calc_selection_size(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                    if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                    else:
+                        self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                else:
+                    logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             else:
                 self.heavy = False
-                self.read_data()
+                self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
         else:
             raise IOError("Need a file to open, please give me one!")
+
+    def __calc_selection_size(f_start=None, f_stop=None, t_start=None, t_stop=None):
+        '''Calculate size of data of interest.
+        '''
+
+        #Check to see how many integrations requested
+        ii_start, ii_stop = 0, self.n_ints_in_file
+        if t_start:
+            ii_start = t_start
+        if t_stop:
+            ii_stop = t_stop
+        n_ints = ii_stop - ii_start
+
+        #Check to see how many frequency channels requested
+        jj_start, jj_stop = 0, self.n_channels_in_file
+        if f_start:
+            jj_start = f_start
+        if f_stop:
+            jj_stop = f_stop
+        n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
+
+        selection_size = n_ints*n_chan*32/(8.)
+
+        return selection_size
 
     def __set_header_keywords_types(self):
         self.__header_keyword_types = {
