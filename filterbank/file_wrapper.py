@@ -60,10 +60,10 @@ class  H5_reader(object):
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
             self.n_ints_in_file  = self.h5["data"].shape[0] #
             self.n_channels_in_file  = self.h5["data"].shape[2] #
-            self.n_beams_in_file = 0 #Placeholder for future development.
+            self.n_beams_in_file = 1 #Placeholder for future development.
             self.n_pols_in_file = 0 #Placeholder for future development.
+            self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
             self.__setup_time_axis()
-
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
@@ -193,9 +193,10 @@ class  FIL_reader(object):
             self.idx_data = self.__len_header()
             self.__get_n_ints_in_file()
             self.__setup_time_axis()
-            self.n_channels  = self.header['nchans']
-            self.n_beams = 0 #Placeholder for future development.
-            self.n_pols = 0 #Placeholder for future development.
+            self.n_channels_in_file  = self.header['nchans']
+            self.n_beams_in_file = 1 #Placeholder for future development.
+            self.n_pols_in_file = 0 #Placeholder for future development.
+            self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             # set start of data, at real length of header  (future development.)
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
@@ -458,7 +459,7 @@ class  FIL_reader(object):
         print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
         print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
 
-    def read_data(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
 
         ## Setup frequency axis
         f0 = self.header['fch1']
