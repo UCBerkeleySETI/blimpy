@@ -31,14 +31,10 @@ from astropy import units as u
 from astropy.coordinates import Angle
 import scipy.stats
 from matplotlib.ticker import NullFormatter
+import h5py
 
+import file_wrapper as fw
 from utils import db, lin, rebin, closest
-
-try:
-    import h5py
-    HAS_HDF5 = True
-except ImportError:
-    HAS_HDF5 = False
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if os.environ.has_key('DISPLAY'):
@@ -118,245 +114,6 @@ header_keyword_types = {
     'src_raj'      : 'angle',
     'src_dej'      : 'angle',
     }
-
-def grab_header(filename):
-    """ Extract the filterbank header from the file
-
-    Args:
-        filename (str): name of file to open
-
-    Returns:
-        header_str (str): filterbank header as a binary string
-    """
-    f = open(filename, 'rb')
-    eoh_found = False
-
-    header_str = ''
-    header_sub_count = 0
-    while not eoh_found:
-        header_sub = f.read(512)
-        header_sub_count += 1
-        if 'HEADER_START' in header_sub:
-            idx_start = header_sub.index('HEADER_START') + len('HEADER_START')
-            header_sub = header_sub[idx_start:]
-
-        if 'HEADER_END' in header_sub:
-            eoh_found = True
-            idx_end = header_sub.index('HEADER_END')
-            header_sub = header_sub[:idx_end]
-
-        if header_sub_count >= MAX_HEADER_BLOCKS:
-            raise RuntimeError("MAX HEADER LENGTH REACHED. THIS FILE IS FUBARRED.")
-        header_str += header_sub
-
-    f.close()
-    return header_str
-
-def len_header(filename):
-    """ Return the length of the filterbank header, in bytes
-
-    Args:
-        filename (str): name of file to open
-
-    Returns:
-        idx_end (int): length of header, in bytes
-    """
-    with  open(filename, 'rb') as f:
-        header_sub_count = 0
-        eoh_found = False
-        while not eoh_found:
-            header_sub = f.read(512)
-            header_sub_count += 1
-            if 'HEADER_END' in header_sub:
-                idx_end = header_sub.index('HEADER_END') + len('HEADER_END')
-                eoh_found = True
-                break
-
-        idx_end = (header_sub_count -1) * 512 + idx_end
-    return idx_end
-
-def parse_header(filename):
-    """ Parse a header of a filterbank, looking for allowed keywords
-
-    Uses header_keyword_types dictionary as a lookup for data types.
-
-    Args:
-        filename (str): name of file to open
-
-    Returns:
-        header_dict (dict): A dictioary of header key:value pairs
-    """
-    header = grab_header(filename)
-    header_dict = {}
-
-    #print header
-    for keyword in header_keyword_types.keys():
-        if keyword in header:
-            dtype = header_keyword_types.get(keyword, 'str')
-            idx = header.index(keyword) + len(keyword)
-            dtype = header_keyword_types[keyword]
-            if dtype == '<l':
-                val = struct.unpack(dtype, header[idx:idx+4])[0]
-                header_dict[keyword] = val
-            if dtype == '<d':
-                val = struct.unpack(dtype, header[idx:idx+8])[0]
-                header_dict[keyword] = val
-            if dtype == 'str':
-                str_len = struct.unpack('<L', header[idx:idx+4])[0]
-                str_val = header[idx+4:idx+4+str_len]
-                header_dict[keyword] = str_val
-            if dtype == 'angle':
-                val = struct.unpack('<d', header[idx:idx+8])[0]
-                val = fil_double_to_angle(val)
-
-                if keyword == 'src_raj':
-                    val = Angle(val, unit=u.hour)
-                else:
-                    val = Angle(val, unit=u.deg)
-                header_dict[keyword] = val
-
-    return header_dict
-
-def read_next_header_keyword(fh):
-    """
-
-    Args:
-        fh (file): file handler
-
-    Returns:
-    """
-    n_bytes = np.fromstring(fh.read(4), dtype='uint32')[0]
-    #print n_bytes
-
-    if n_bytes > 255:
-        n_bytes = 16
-
-    keyword = fh.read(n_bytes)
-
-    #print keyword
-
-    if keyword == 'HEADER_START' or keyword == 'HEADER_END':
-        return keyword, 0, fh.tell()
-    else:
-        dtype = header_keyword_types[keyword]
-        #print dtype
-        idx = fh.tell()
-        if dtype == '<l':
-            val = struct.unpack(dtype, fh.read(4))[0]
-        if dtype == '<d':
-            val = struct.unpack(dtype, fh.read(8))[0]
-        if dtype == 'str':
-            str_len = np.fromstring(fh.read(4), dtype='int32')[0]
-            val = fh.read(str_len)
-        if dtype == 'angle':
-            val = struct.unpack('<d', fh.read(8))[0]
-            val = fil_double_to_angle(val)
-            if keyword == 'src_raj':
-                val = Angle(val, unit=u.hour)
-            else:
-                val = Angle(val, unit=u.deg)
-        return keyword, val, idx
-
-def read_header(filename, return_idxs=False):
-    """ Read filterbank header and return a Python dictionary of key:value pairs
-
-    Args:
-        filename (str): name of file to open
-
-    Optional args:
-        return_idxs (bool): Default False. If true, returns the file offset indexes
-                            for values
-
-    returns
-
-    """
-    with open(filename, 'rb') as fh:
-        header_dict = {}
-        header_idxs = {}
-
-        # Check this is a filterbank file
-        keyword, value, idx = read_next_header_keyword(fh)
-
-        try:
-            assert keyword == 'HEADER_START'
-        except AssertionError:
-            raise RuntimeError("Not a valid filterbank file.")
-
-        while True:
-            keyword, value, idx = read_next_header_keyword(fh)
-            if keyword == 'HEADER_END':
-                break
-            else:
-                header_dict[keyword] = value
-                header_idxs[keyword] = idx
-
-    if return_idxs:
-        return header_idxs
-    else:
-        return header_dict
-
-def fix_header(filename, keyword, new_value):
-    """ Apply a quick patch-up to a Filterbank header by overwriting a header value
-
-
-    Args:
-        filename (str): name of file to open and fix. WILL BE MODIFIED.
-        keyword (stt):  header keyword to update
-        new_value (long, double, angle or string): New value to write.
-
-    Notes:
-        This will overwrite the current value of the filterbank with a desired
-        'fixed' version. Note that this has limited support for patching
-        string-type values - if the length of the string changes, all hell will
-        break loose.
-
-    """
-
-    # Read header data and return indexes of data offsets in file
-    hd = read_header(filename)
-    hi = read_header(filename, return_idxs=True)
-    idx = hi[keyword]
-
-    # Find out the datatype for the given keyword
-    dtype = header_keyword_types[keyword]
-    dtype_to_type = {'<l'  : np.int32,
-                     'str' : str,
-                     '<d'  : np.float64,
-                     'angle' : to_sigproc_angle}
-    value_dtype = dtype_to_type[dtype]
-
-    # Generate the new string
-    if value_dtype is str:
-        if len(hd[keyword]) == len(new_value):
-            val_str = np.int32(len(new_value)).tostring() + new_value
-        else:
-            raise RuntimeError("String size mismatch. Cannot update without rewriting entire file.")
-    else:
-        val_str = value_dtype(new_value).tostring()
-
-    # Write the new string to file
-    with open(filename, 'rb+') as fh:
-        fh.seek(idx)
-        fh.write(val_str)
-
-def fil_double_to_angle(angle):
-      """ Reads a little-endian double in ddmmss.s (or hhmmss.s) format and then
-      converts to Float degrees (or hours).  This is primarily used to read
-      src_raj and src_dej header values. """
-
-      negative = (angle < 0.0)
-      angle = np.abs(angle)
-
-      dd = np.floor((angle / 10000))
-      angle -= 10000 * dd
-      mm = np.floor((angle / 100))
-      ss = angle - 100 * mm
-      dd += mm/60.0 + ss/3600.0
-
-      if negative:
-          dd *= -1
-
-      return dd
 
 ###
 # sigproc writing functions
@@ -446,9 +203,7 @@ class Filterbank(object):
     def __repr__(self):
         return "Filterbank data: %s" % self.filename
 
-    def __init__(self, filename=None, f_start=None, f_stop=None,
-                 t_start=None, t_stop=None, load_data=True,
-                 header_dict=None, data_array=None):
+    def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True,header_dict=None, data_array=None):
         """ Class for loading and plotting filterbank data.
 
         This class parses the filterbank file and stores the header and data
@@ -470,45 +225,33 @@ class Filterbank(object):
 
         if filename:
             self.filename = filename
-            if HAS_HDF5:
-                if h5py.is_hdf5(filename):
-                    self.read_hdf5(filename, f_start, f_stop, t_start, t_stop, load_data)
-                else:
-                    self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
+            self.ext = filename.split(".")[-1].strip().lower()  #File extension
+            self.container = fw.open_file(filename)
+            self.header = self.container.header
+            self.n_ints_in_file = self.container.n_ints_in_file
+            self.__setup_time_axis()
+            self.heavy =  self.container.heavy
+
+            #Loading data (default for light files).
+            if self.container.data is not None:
+                self.data = self.container.data
+                self.freqs = self.container.freqs
             else:
-                self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
+                self.data = None
+                self.freqs = None
+
         elif header_dict is not None and data_array is not None:
             self.gen_from_header(header_dict, data_array)
         else:
             pass
 
-    def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,
-                        t_start=None, t_stop=None, load_data=True):
+    def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         self.filename = ''
         self.header = header_dict
         self.data = data_array
         self.n_ints_in_file = 0
 
         self._setup_freqs()
-
-    def read_hdf5(self, filename, f_start=None, f_stop=None,
-                        t_start=None, t_stop=None, load_data=True):
-        self.header = {}
-        self.filename = filename
-        self.h5 = h5py.File(filename)
-        for key, val in self.h5['data'].attrs.items():
-            if key == 'src_raj':
-                self.header[key] = Angle(val, unit='hr')
-            elif key == 'src_dej':
-                self.header[key] = Angle(val, unit='deg')
-            else:
-                self.header[key] = val
-
-        self.data = self.h5["data"][:]
-        self._setup_freqs()
-
-        self.n_ints_in_file  = self.data.shape[0]
-        self.file_size_bytes = os.path.getsize(self.filename)
 
     def _setup_freqs(self, f_start=None, f_stop=None):
         ## Setup frequency axis
@@ -538,102 +281,28 @@ class Filterbank(object):
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
-    def read_filterbank(self, filename=None, f_start=None, f_stop=None,
-                        t_start=None, t_stop=None, load_data=True):
-
-        if filename is None:
-            filename = self.filename
-
-        self.header = read_header(filename)
-
-        ## Setup frequency axis
-        f0 = self.header['fch1']
-        f_delt = self.header['foff']
-
-        # keep this seperate!
-        # file_freq_mapping =  np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
-
-        #convert input frequencies into what their corresponding index would be
-
-        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start, f_stop)
-
-        n_bytes  = self.header['nbits'] / 8
-        n_chans = self.header['nchans']
-        n_chans_selected = self.freqs.shape[0]
-        n_ifs   = self.header['nifs']
-
-
-        # Load binary data
-        self.idx_data = len_header(filename)
-        f = open(filename, 'rb')
-        f.seek(self.idx_data)
-        filesize = os.path.getsize(self.filename)
-        n_bytes_data = filesize - self.idx_data
-        n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
+    def __setup_time_axis(self,t_start=None, t_stop=None):
+        '''  Setup time axis.
+        '''
 
         # now check to see how many integrations requested
-        ii_start, ii_stop = 0, n_ints_in_file
+        ii_start, ii_stop = 0, self.n_ints_in_file
         if t_start:
             ii_start = t_start
         if t_stop:
             ii_stop = t_stop
         n_ints = ii_stop - ii_start
 
-        # Seek to first integration
-        f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
-
-        # Set up indexes used in file read (taken out of loop for speed)
-        i0 = np.min((chan_start_idx, chan_stop_idx))
-        i1 = np.max((chan_start_idx, chan_stop_idx))
-
-        #Set up the data type (taken out of loop for speed)
-        if n_bytes == 4:
-            dd_type = 'float32'
-        elif n_bytes == 2:
-            dd_type = 'int16'
-        elif n_bytes == 1:
-            dd_type = 'int8'
-
-        if load_data:
-
-            if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
-                print "Error: data array is too large to load. Either select fewer"
-                print "points or manually increase MAX_DATA_ARRAY_SIZE."
-                exit()
-
-            self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
-
-            for ii in range(n_ints):
-                """d = f.read(n_bytes * n_chans * n_ifs)
-                """
-
-                for jj in range(n_ifs):
-
-                    f.seek(n_bytes * i0, 1) # 1 = from current location
-                    #d = f.read(n_bytes * n_chans_selected)
-                    #bytes_to_read = n_bytes * n_chans_selected
-
-                    dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
-
-                    # Reverse array if frequency axis is flipped
-                    if f_delt < 0:
-                        dd = dd[::-1]
-
-                    self.data[ii, jj] = dd
-
-                    f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
-        else:
-            print "Skipping data load..."
-            self.data = np.array([0])
-
-        # Finally add some other info to the class as objects
-        self.n_ints_in_file  = n_ints_in_file
-        self.file_size_bytes = filesize
-
         ## Setup time axis
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+
+    def read_data(self, filename=None, f_start=None, f_stop=None,
+                        t_start=None, t_stop=None, load_data=True):
+
+        print 'place holder'
+
 
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
@@ -659,33 +328,14 @@ class Filterbank(object):
                 val = val.to_string(unit=u.deg, sep=':')
             print "%16s : %32s" % (key, val)
 
+
         print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
-        print "%16s : %32s" % ("Data shape", self.data.shape)
-        print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
-        print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
+        if self.data is not None:
+            print "%16s : %32s" % ("Data shape", self.data.shape)
+        if self.freqs is not None:
+            print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
+            print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
 
-    def generate_freqs(self, f_start, f_stop):
-        """
-        returns frequency array [f_start...f_stop]
-        """
-
-        fch1 = self.header['fch1']
-        foff = self.header['foff']
-
-        #convert input frequencies into what their corresponding index would be
-        i_start = (f_start - fch1) / foff
-        i_stop  = (f_stop - fch1)  / foff
-
-        #calculate closest true index value
-        chan_start_idx = np.int(i_start)
-        chan_stop_idx  = np.int(i_stop)
-
-        #create freq array
-        i_vals = np.arange(chan_stop_idx, chan_start_idx, 1)
-
-        freqs = foff * i_vals + fch1
-
-        return freqs[::-1]
 
     def grab_data(self, f_start=None, f_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
@@ -1023,7 +673,7 @@ class Filterbank(object):
         axHeader.xaxis.set_major_formatter(nullfmt)
         axHeader.yaxis.set_major_formatter(nullfmt)
 
-    def write_to_filterbank(self, filename_out):
+    def write_to_fil(self, filename_out):
         """ Write data to filterbank file.
 
         Args:
@@ -1055,8 +705,6 @@ class Filterbank(object):
         Args:
             filename_out (str): Name of output file
         """
-        if not HAS_HDF5:
-            raise RuntimeError("h5py package required for HDF5 output.")
 
         with h5py.File(filename_out, 'w') as h5:
 
@@ -1089,11 +737,11 @@ def cmd_tool(args=None):
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
+    parser.add_argument('filename', type=str,
+                        help='Name of file to read')
     parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, \
                              "a" for all available plots and information; and more.')
-    parser.add_argument('filename', type=str,
-                        help='Name of file to read')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
                         help='Start frequency (begin), in MHz')
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float,
@@ -1112,11 +760,21 @@ def cmd_tool(args=None):
                        help='Turn off plotting of data and only save to file.')
     parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
                        help='Use to not blank DC bin.')
+    parser.add_argument('-H', action='store_true', default=False, dest='to_hdf5',
+                       help='Write file to hdf5 format.')
+    parser.add_argument('-F', action='store_true', default=False, dest='to_fil',
+                       help='Write file to .fil format.')
+    parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
+                        help='Filename output (if not probided, the name will be the same but with apropiate extension).')
+
     args = parser.parse_args()
 
     # Open filterbank data
     filename = args.filename
     load_data = not args.info_only
+    info_only = args.info_only
+    filename_out = args.filename_out
+
 
     # only load one integration if looking at spectrum
     wtp = args.what_to_plot
@@ -1134,13 +792,17 @@ def cmd_tool(args=None):
         t_start = args.t_start
         t_stop  = args.t_stop
 
-    fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,
-                     t_start=t_start, t_stop=t_stop,
-                     load_data=load_data)
+    fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
     fil.info()
 
+    if fil.heavy or args.to_hdf5 or args.to_fil:
+        info_only = True
+
     # And if we want to plot data, then plot data.
-    if not args.info_only:
+
+    if not info_only:
+        print ''
+
         # check start & stop frequencies make sense
         #try:
         #    if args.f_start:
@@ -1187,6 +849,33 @@ def cmd_tool(args=None):
                 plt.show()
             else:
                 print "No $DISPLAY available."
+
+
+    else:
+
+        if args.to_hdf5 and args.to_fil:
+            raise warning('Either provide to_hdf5 or to_fil, but not both.')
+
+        if args.to_hdf5:
+            if not filename_out:
+                filename_out = filename.replace('.fil','.h5')
+            elif '.h5' not in filename_out:
+                filename_out = filename_out.replace('.fil','')+'.h5'
+
+            print 'Writing file : %s'%(filename_out)
+            fil.write_to_hdf5(filename_out)
+            print 'File written.'
+
+        if args.to_fil:
+            if not filename_out:
+                filename_out = filename.replace('.h5','.fil')
+            elif '.fil' not in filename_out:
+                filename_out = filename_out.replace('.h5','')+'.fil'
+
+            print 'Writing file : %s'%(filename_out)
+            fil.write_to_fil(filename_out)
+            print 'File written.'
+
 
 
 if __name__ == "__main__":
