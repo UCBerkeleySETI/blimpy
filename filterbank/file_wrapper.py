@@ -33,7 +33,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 
 #MAX_PLT_POINTS      = 65536                     # Max number of points in matplotlib plot
 #MAX_IMSHOW_POINTS   = (8192, 4096)              # Max number of points in imshow plot
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024. * 8    # Max size of data array to load into memory (in bytes)
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024.    # Max size of data array to load into memory (in bytes)
 #MAX_HEADER_BLOCKS   = 100                       # Max size of header (in 512-byte blocks)
 
 
@@ -64,6 +64,9 @@ class  H5_reader(object):
             self.n_pols_in_file = 0 #Placeholder for future development.
             self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
             self.__setup_time_axis()
+
+
+            #EE double check the size calculation.
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
