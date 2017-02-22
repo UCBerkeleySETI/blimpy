@@ -44,7 +44,7 @@ class  H5_reader(object):
     #EE check freq axis.
 
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
+    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None):
         """ Constructor.
 
         Args:
@@ -62,15 +62,15 @@ class  H5_reader(object):
             self.n_channels_in_file  = self.h5["data"].shape[2] #
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 0 #Placeholder for future development.
-            self.__n_bytes = self.header['nbits'] / 8.  #number of bytes per digit.
+            self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0 :
-                self.f_end  = self.header['foff']
+                self.f_end  = self.header['fch1']
                 self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
             else:
-                self.f_beging  = self.header['foff']
-                self.f_end  = self.f_beging + self.n_channels_in_file*self.header['foff']
+                self.f_begin  = self.header['fch1']
+                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
@@ -96,16 +96,16 @@ class  H5_reader(object):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __setup_selection_range(self,f_start=None, f_stop=None,t_start=None, t_stop=None):
+    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
             '''Making sure the selection if time and frequency are within the file limits.
             '''
 
             if t_start and t_start >= 0:
-                self.t_start = t_start
+                self.t_start = int(t_start)
             else:
                 self.t_start = 0
             if t_stop and t_stop <= self.n_ints_in_file:
-                self.t_stop = t_stop
+                self.t_stop = int(t_stop)
             else:
                 self.t_stop = self.n_ints_in_file
 
@@ -228,16 +228,16 @@ class  FIL_reader(object):
             self.n_channels_in_file  = self.header['nchans']
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 0 #Placeholder for future development.
-            self.__n_bytes = self.header['nbits'] / 8.  #number of bytes per digit.
+            self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.__get_n_ints_in_file()
             self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0 :
-                self.f_end  = self.header['foff']
+                self.f_end  = self.header['fch1']
                 self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
             else:
-                self.f_beging  = self.header['foff']
-                self.f_end  = self.f_beging + self.n_channels_in_file*self.header['foff']
+                self.f_begin  = self.header['fch1']
+                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
@@ -273,11 +273,11 @@ class  FIL_reader(object):
             '''
 
             if t_start and t_start >= 0:
-                self.t_start = t_start
+                self.t_start = int(t_start)
             else:
                 self.t_start = 0
             if t_stop and t_stop <= self.n_ints_in_file:
-                self.t_stop = t_stop
+                self.t_stop = int(t_stop)
             else:
                 self.t_stop = self.n_ints_in_file
 
@@ -529,7 +529,6 @@ class  FIL_reader(object):
             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
 #            load_data = False
-
 
         ## Setup frequency axis
         f0 = self.header['fch1']
