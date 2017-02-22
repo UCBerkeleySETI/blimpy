@@ -138,12 +138,7 @@ class  H5_reader(object):
         '''
 
         # now check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if self.t_start:
-            ii_start = self.t_start
-        if self.t_stop:
-            ii_stop = self.t_stop
-        n_ints = ii_stop - ii_start
+        n_ints = self.t_stop - self.t_start
 
         ## Setup time axis
         t0 = self.header['tstart']
@@ -155,21 +150,10 @@ class  H5_reader(object):
         '''
 
         #Check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if self.t_start:
-            ii_start = self.t_start
-        if self.t_stop:
-            ii_stop = self.t_stop
-        n_ints = ii_stop - ii_start
+        n_ints = self.t_stop - self.t_start
 
         #Check to see how many frequency channels requested
-        jj_start, jj_stop = self.header['fch1']+self.header['foff']*self.header['nchans'], self.header['fch1']
-        if self.f_start:
-            jj_start = self.f_start
-        if self.f_stop:
-            jj_stop = self.f_stop
-        n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
-
+        n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
 
         n_bytes  = self.__n_bytes
 
@@ -312,21 +296,10 @@ class  FIL_reader(object):
         '''
 
         #Check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if self.t_start:
-            ii_start = self.t_start
-        if self.t_stop:
-            ii_stop = self.t_stop
-        n_ints = ii_stop - ii_start
+        n_ints = self.t_stop - self.t_start
 
         #Check to see how many frequency channels requested
-        jj_start, jj_stop = self.header['fch1']+self.header['foff']*self.header['nchans'], self.header['fch1']
-        if self.f_start:
-            jj_start = self.f_start
-        if self.f_stop:
-            jj_stop = self.f_stop
-        n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
-
+        n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
 
         n_bytes  = self.__n_bytes
 
@@ -521,12 +494,7 @@ class  FIL_reader(object):
         '''
 
         # now check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if self.t_start:
-            ii_start = self.t_start
-        if self.t_stop:
-            ii_stop = self.t_stop
-        n_ints = ii_stop - ii_start
+        n_ints = self.t_stop - self.t_start
 
         ## Setup time axis
         t0 = self.header['tstart']
@@ -584,15 +552,10 @@ class  FIL_reader(object):
         f.seek(self.idx_data)
 
         # now check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if self.t_start:
-            ii_start = self.t_start
-        if self.t_stop:
-            ii_stop = self.t_stop
-        n_ints = ii_stop - ii_start
+        n_ints = self.t_stop - self.t_start
 
         # Seek to first integration
-        f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
+        f.seek(self.t_start * n_bytes * n_ifs * n_chans, 1)
 
         # Set up indexes used in file read (taken out of loop for speed)
         i0 = np.min((chan_start_idx, chan_stop_idx))
