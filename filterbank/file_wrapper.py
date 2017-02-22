@@ -66,19 +66,33 @@ class  H5_reader(object):
             self.__n_bytes = self.header['nbits'] / 8.  #number of bytes per digit.
             self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
+            if self.header['foff'] < 0 :
+                self.f_end  = self.header['foff']
+                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+            else:
+                self.f_beging  = self.header['foff']
+                self.f_end  = self.f_beging + self.n_channels_in_file*self.header['foff']
+
+            self.t_start = t_start
+            self.t_stop = t_stop
+            self.f_start = f_start
+            self.f_stop = f_stop
+            self.c_start = (self.f_start - self.f_begin )/ self.header['foff']
+            self.c_stop = (self.f_stop - self.f_begin )/ self.header['foff']
+
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
-                if f_start or f_stop or t_start or t_stop:
-                    selection_size_bytes = self.__calc_selection_size(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                if self.f_start or self.f_stop or self.t_start or self.t_stop:
+                    selection_size_bytes = self.__calc_selection_size()
                     if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
                         logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                     else:
-                        self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                        self.read_data()
                 else:
                     logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             else:
                 self.heavy = False
-                self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                self.read_data()
 
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -97,16 +111,16 @@ class  H5_reader(object):
             else:
                 self.header[key] = val
 
-    def __setup_time_axis(self,t_start=None, t_stop=None):
+    def __setup_time_axis(self,):
         '''  Setup time axis.
         '''
 
         # now check to see how many integrations requested
         ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
         n_ints = ii_stop - ii_start
 
         ## Setup time axis
@@ -114,24 +128,24 @@ class  H5_reader(object):
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
-    def __calc_selection_size(self,f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __calc_selection_size(self):
         '''Calculate size of data of interest.
         '''
 
         #Check to see how many integrations requested
         ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
         n_ints = ii_stop - ii_start
 
         #Check to see how many frequency channels requested
         jj_start, jj_stop = self.header['fch1']+self.header['foff']*self.header['nchans'], self.header['fch1']
-        if f_start:
-            jj_start = f_start
-        if f_stop:
-            jj_stop = f_stop
+        if self.f_start:
+            jj_start = self.f_start
+        if self.f_stop:
+            jj_stop = self.f_stop
         n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
 
 
@@ -141,34 +155,31 @@ class  H5_reader(object):
 
         return selection_size
 
-    def read_data(self, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
+    def read_data(self, load_data=True):
         ''' Read data
         '''
 
 
         #check if selection is small enough.
-        selection_size_bytes = self.__calc_selection_size(f_start = f_start, f_stop = f_stop, t_start = t_start, t_stop = t_stop)
+        selection_size_bytes = self.__calc_selection_size()
         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
 
 
-
-        c_start = f_start -
-
-        self.data = self.h5["data"][t_start:t_stop,c_start:c_stop]
+        self.data = self.h5["data"][self.t_start:self.t_stop,self.c_start:self.c_stop]
         self.__setup_freqs()
 
-    def __setup_freqs(self, f_start=None, f_stop=None):
+    def __setup_freqs(self):
         ## Setup frequency axis
         f0 = self.header['fch1']
         f_delt = self.header['foff']
 
         i_start, i_stop = 0, self.header['nchans']
-        if f_start:
-            i_start = (f_start - f0) / f_delt
-        if f_stop:
-            i_stop  = (f_stop - f0)  / f_delt
+        if self.f_start:
+            i_start = (self.f_start - f0) / f_delt
+        if self.f_stop:
+            i_stop  = (self.f_stop - f0)  / f_delt
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -216,6 +227,20 @@ class  FIL_reader(object):
             self.__get_n_ints_in_file()
             self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
+            if self.header['foff'] < 0 :
+                self.f_end  = self.header['foff']
+                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+            else:
+                self.f_beging  = self.header['foff']
+                self.f_end  = self.f_beging + self.n_channels_in_file*self.header['foff']
+
+            self.t_start = t_start
+            self.t_stop = t_stop
+            self.f_start = f_start
+            self.f_stop = f_stop
+            self.c_start = (self.f_start - self.f_begin )/ self.header['foff']
+            self.c_stop = (self.f_stop - self.f_begin )/ self.header['foff']
+
 #EE ie.
 #           spec = np.squeeze(fil_file.data)
             # set start of data, at real length of header  (future development.)
@@ -223,39 +248,39 @@ class  FIL_reader(object):
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
-                if f_start or f_stop or t_start or t_stop:
-                    selection_size_bytes = self.__calc_selection_size(f_start = f_start, f_stop = f_stop, t_start = t_start, t_stop = t_stop)
+                if self.f_start or self.f_stop or self.t_start or self.t_stop:
+                    selection_size_bytes = self.__calc_selection_size()
                     if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
                         logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                     else:
-                        self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                        self.read_data()
                 else:
                     logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             else:
                 self.heavy = False
-                self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                self.read_data()
 
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __calc_selection_size(self,f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __calc_selection_size(self):
         '''Calculate size of data of interest.
         '''
 
         #Check to see how many integrations requested
         ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
         n_ints = ii_stop - ii_start
 
         #Check to see how many frequency channels requested
         jj_start, jj_stop = self.header['fch1']+self.header['foff']*self.header['nchans'], self.header['fch1']
-        if f_start:
-            jj_start = f_start
-        if f_stop:
-            jj_stop = f_stop
+        if self.f_start:
+            jj_start = self.f_start
+        if self.f_stop:
+            jj_stop = self.f_stop
         n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
 
 
@@ -419,16 +444,16 @@ class  FIL_reader(object):
 
           return dd
 
-    def __setup_freqs(self, f_start=None, f_stop=None):
+    def __setup_freqs(self,):
         ## Setup frequency axis
         f0 = self.header['fch1']
         f_delt = self.header['foff']
 
         i_start, i_stop = 0, self.header['nchans']
-        if f_start:
-            i_start = (f_start - f0) / f_delt
-        if f_stop:
-            i_stop  = (f_stop - f0)  / f_delt
+        if self.f_start:
+            i_start = (self.f_start - f0) / f_delt
+        if self.f_stop:
+            i_stop  = (self.f_stop - f0)  / f_delt
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -447,16 +472,16 @@ class  FIL_reader(object):
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
-    def __setup_time_axis(self,t_start=None, t_stop=None):
+    def __setup_time_axis(self):
         '''  Setup time axis.
         '''
 
         # now check to see how many integrations requested
         ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
         n_ints = ii_stop - ii_start
 
         ## Setup time axis
@@ -482,12 +507,12 @@ class  FIL_reader(object):
         print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
         print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
 
-    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+    def read_data(self, load_data=True):
         ''' Read data.
         '''
 
         #check if selection is small enough.
-        selection_size_bytes = self.__calc_selection_size(f_start = f_start, f_stop = f_stop, t_start = t_start, t_stop = t_stop)
+        selection_size_bytes = self.__calc_selection_size()
         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
@@ -503,7 +528,7 @@ class  FIL_reader(object):
 
         #convert input frequencies into what their corresponding index would be
 
-        i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs(f_start, f_stop)
+        i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs()
 
         n_bytes  = self.__n_bytes
         n_chans = self.header['nchans']
@@ -516,10 +541,10 @@ class  FIL_reader(object):
 
         # now check to see how many integrations requested
         ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
         n_ints = ii_stop - ii_start
 
         # Seek to first integration
