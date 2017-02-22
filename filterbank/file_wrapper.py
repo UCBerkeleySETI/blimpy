@@ -58,15 +58,13 @@ class  H5_reader(object):
             self.h5 = h5py.File(self.filename)
             self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
+            self.__setup_time_axis()
             self.n_ints_in_file  = self.h5["data"].shape[0] #
             self.n_channels_in_file  = self.h5["data"].shape[2] #
-            self.n_beams_in_file = 1 #Placeholder for future development.
+            self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 0 #Placeholder for future development.
+            self.__n_bytes = self.header['nbits'] / 8.  #number of bytes per digit.
             self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
-            self.__setup_time_axis()
-
-
-            #EE double check the size calculation.
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
@@ -137,7 +135,7 @@ class  H5_reader(object):
         n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
 
 
-        n_bytes  = self.header['nbits'] / 8.
+        n_bytes  = self.__n_bytes
 
         selection_size = n_ints*n_chan*n_bytes
 
@@ -155,7 +153,10 @@ class  H5_reader(object):
             return None
 
 
-        self.data = self.h5["data"][:]
+
+        c_start = f_start -
+
+        self.data = self.h5["data"][t_start:t_stop,c_start:c_stop]
         self.__setup_freqs()
 
     def __setup_freqs(self, f_start=None, f_stop=None):
@@ -207,13 +208,16 @@ class  FIL_reader(object):
             self.header = self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
             self.idx_data = self.__len_header()
-            self.__get_n_ints_in_file()
             self.__setup_time_axis()
             self.n_channels_in_file  = self.header['nchans']
-            self.n_beams_in_file = 1 #Placeholder for future development.
+            self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 0 #Placeholder for future development.
+            self.__n_bytes = self.header['nbits'] / 8.  #number of bytes per digit.
+            self.__get_n_ints_in_file()
             self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
+#EE ie.
+#           spec = np.squeeze(fil_file.data)
             # set start of data, at real length of header  (future development.)
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
@@ -255,7 +259,7 @@ class  FIL_reader(object):
         n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
 
 
-        n_bytes  = self.header['nbits'] / 8.
+        n_bytes  = self.__n_bytes
 
         selection_size = n_ints*n_chan*n_bytes
 
@@ -290,9 +294,9 @@ class  FIL_reader(object):
 
     def __get_n_ints_in_file(self):
 
-        n_bytes  = self.header['nbits'] / 8
-        n_chans = self.header['nchans']
-        n_ifs   = self.header['nifs']
+        n_bytes  = self.__n_bytes
+        n_chans = self.n_channels_in_file
+        n_ifs   = self.n_beams_in_file
 
         n_bytes_data = self.file_size_bytes - self.idx_data
         self.n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
@@ -487,6 +491,7 @@ class  FIL_reader(object):
         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
+#            load_data = False
 
 
         ## Setup frequency axis
@@ -500,7 +505,7 @@ class  FIL_reader(object):
 
         i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs(f_start, f_stop)
 
-        n_bytes  = self.header['nbits'] / 8
+        n_bytes  = self.__n_bytes
         n_chans = self.header['nchans']
         n_chans_selected = self.freqs.shape[0]
         n_ifs   = self.header['nifs']
@@ -626,7 +631,7 @@ class  FIL_reader(object):
         self.header['foff']   = self.freqs[1] - self.freqs[0]
         self.header['nchans'] = self.freqs.shape[0]
 
-        n_bytes  = self.header['nbits'] / 8
+        n_bytes  = self.__n_bytes
 
         with open(filename_out, "w") as fileh:
             fileh.write(generate_sigproc_header(self))
@@ -671,128 +676,3 @@ def open_file(filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)
 
-
-class  nonFITS:
-    """ This class is where the filterbank data is loaded, as well as the header info.
-        It creates other atributes related to the search (load_drift_indexes).
-        Similar to FITS, but in this case to load fil not fits.
-
-    """
-    def __init__(self, filename=None, size_limit = 1024.0):
-        if filename and os.path.isfile(filename):
-            self.filename = filename
-            self.filestat = os.stat(filename)
-            filesize = self.filestat.st_size/(1024.0**2)
-            if filesize > size_limit:
-                logger.error("The file is of size %f MB, exceeding our size limit %f MB. Aborting..."%(filesize, size_limit))
-                return None
-            try:
-                fil_file2=fr2.DataReader(filename)  # Will be replaced by danny's filterbank...
-                fil_file=fr.Filterbank(filename)
-                header = self.make_fits_header(fil_file2.headerinfo)
-#EE_fil2                header = self.make_fits_header(fil_file.header)
-            except:
-                logger.error("Error encountered when trying to open FITS file %s"%filename)
-                self.status = False
-                return None
-            self.fftlen = header['NAXIS1']
-            self.tsteps_valid = header['NAXIS2']
-            self.tsteps = int(math.pow(2, math.ceil(np.log2(math.floor(self.tsteps_valid)))))   ## what is this for??
-            self.obs_length = self.tsteps_valid * header['DELTAT']
-            self.shoulder_size = 0
-            self.tdwidth = self.fftlen + self.shoulder_size*self.tsteps  ##EE why is this multiplied by 8? This gives two regions, each of 4*steps, around spectra[i]
-            self.drift_rate_resolution = (1e6 * header['DELTAF']) / self.obs_length
-            self.nom_max_drift = self.drift_rate_resolution * self.tsteps_valid  ##EE Do I need tsteps here?
-
-            ##EE: debug. Skyping barycenter for now. Would need to debug it first.
-            if logger.getEffectiveLevel() > 1000:  ##EE: logging.getLevelName(10)='DEBUG'
-
-                self.header = barycenter.correct(header, self.obs_length)
-                logger.info('barycenter done for fits file %s! baryv: %f'%(filename, self.header['baryv']))
-            else:
-                self.header = header
-                self.header['baryv'] = 0.0
-                self.header['barya'] = 0.0
-
-            # some default values
-            self.original_vals= {'tsteps_valid': self.tsteps_valid, 'tsteps': self.tsteps,
-                                 'tdwidth': self.tdwidth, 'fftlen':self.fftlen}
-            self.compressed_t = False
-            self.compressed_f = False
-            self.status = True
-
-    @staticmethod
-    def make_fits_header(header,LOFAR=False):
-        '''Takes .fil header into fits header format '''
-
-        base_header = {}
-        base_header['SIMPLE'] = True
-        base_header['NAXIS'] = 2
-
-        base_header['DOPPLER'] = 0.0
-        base_header['SNR'] = 0.0
-        base_header['EXTEND'] = True
-        base_header['XTENSION'] = 'IMAGE   '
-        base_header['PCOUNT'] = 1
-        base_header['GCOUNT'] = 1
-
-        if '32' in header['Number of bits per sample']:
-            base_header['BITPIX'] = -32
-        else:
-            raise ValueError('Check nbits per sample. Not equeal 32')
-
-        base_header['NAXIS1'] = int(header['Number of channels'])  #nchans
-#EE_fil2        base_header['NAXIS1'] = int(header['nchans'])  #nchans
-        base_header['NAXIS2'] = int(header['Number of samples'])
-#EE_fil2        base_header['NAXIS2'] = int(header[''])
-        base_header['DELTAT'] = float(header['Sample time (us)'])/1e6
-        base_header['MJD'] = float(header['Time stamp of first sample (MJD)'])
-        base_header['TOFFSET'] = float(header['Sample time (us)'])/1e6
-#EE_fil2        base_header['DELTAT'] = float(header['tsamp'])
-#EE_fil2        base_header['MJD'] = float(header['tstart'])
-#EE_fil2        base_header['TOFFSET'] = float(header['tsamp)'])
-        base_header['DELTAF'] =  np.abs(float(header['Channel bandwidth      (MHz)']))
-#EE_fil2        base_header['DELTAF'] =  np.abs(float(header['foff']))
-        base_header['SOURCE'] = header['Source Name'].replace('\xc2\xa0','_').replace(' ','')  #Removing white spaces and bad formats
-#EE_fil2        base_header['SOURCE'] = header['source_name'].replace('\xc2\xa0','_').replace(' ','')   #Removing white spaces and bad formats
-        base_header['FCNTR'] = float(header['Frequency of channel 1 (MHz)']) - base_header['DELTAF']*base_header['NAXIS1']/2
-#EE_fil2        base_header['FCNTR'] = float(header['fch1']) - base_header['DELTAF']*base_header['NAXIS1']/2
-        base_header['DEC'] = float(header['Source DEC (J2000)'])
-        base_header['RA'] = float(header['Source RA (J2000)'])
-#EE_fil2        base_header['DEC'] = float(header['Source DEC (J2000)'])
-#EE_fil2        base_header['RA'] = float(header['Source RA (J2000)'])
-
-        return base_header
-
-    def load_data(self, max_search_rate=None, bw_compress_width=None, logwriter=None):
-        ''' Read all the data from file.
-        '''
-
-#EE_fil        fil_file = fr2.DataReader(self.filename)
-        fil_file = fr.Filterbank(filename)
-#EE_fil        spec = fil_file.read_all()
-        spec = np.squeeze(fil_file.data)
-        spectra = np.array(spec, dtype=np.float64)
-
-        if spectra.shape != (self.tsteps_valid, self.fftlen):
-            raise ValueError('Something is wrong with array size.')
-
-        drift_indexes = self.load_drift_indexes()
-
-        return spectra, drift_indexes
-
-    def load_drift_indexes(self):
-        ''' The drift indexes are read from an stored file so that no need to recalculate. This speed things up.
-        '''
-        n = int(np.log2(self.tsteps))
-        if n > 9:
-            di_array = np.genfromtxt(resource_filename('dedoppler_bones', '../drift_indexes/drift_indexes_array_%d.txt'%n), delimiter=' ', dtype=int)
-        else:
-            di_array = np.genfromtxt(resource_filename('dedoppler_bones', '../drift_indexes/drift_indexes_array_%d.txt'%n), delimiter='\t', dtype=int)
-
-        ts2 = self.tsteps/2
-        drift_indexes = di_array[self.tsteps_valid - 1 - ts2, 0:self.tsteps_valid]
-        return drift_indexes
-
-    def get_info(self):
-        return ""
