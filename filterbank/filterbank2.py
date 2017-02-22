@@ -792,7 +792,7 @@ def cmd_tool(args=None):
         t_start = args.t_start
         t_stop  = args.t_stop
 
-    fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
+    fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,t_start=args.t_start, t_stop=args.t_stop,load_data=load_data)
     fil.info()
 
     if fil.heavy or args.to_hdf5 or args.to_fil:
