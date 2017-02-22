@@ -96,8 +96,8 @@ class  H5_reader(object):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __setup_selection_range(f_start=None, f_stop=None,t_start=None, t_stop=None):
-            '''Making sure the selection if time and frequency are withint the file limits.
+    def __setup_selection_range(self,f_start=None, f_stop=None,t_start=None, t_stop=None):
+            '''Making sure the selection if time and frequency are within the file limits.
             '''
 
             if t_start and t_start >= 0:
@@ -284,8 +284,8 @@ class  FIL_reader(object):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __setup_selection_range(f_start=None, f_stop=None,t_start=None, t_stop=None):
-            '''Making sure the selection if time and frequency are withint the file limits.
+    def __setup_selection_range(self,f_start=None, f_stop=None,t_start=None, t_stop=None):
+            '''Making sure the selection if time and frequency are within the file limits.
             '''
 
             if t_start and t_start >= 0:
