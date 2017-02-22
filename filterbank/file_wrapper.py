@@ -129,18 +129,31 @@ class  H5_reader(object):
         n_ints = ii_stop - ii_start
 
         #Check to see how many frequency channels requested
-        jj_start, jj_stop = 0, self.n_channels_in_file
+        jj_start, jj_stop = self.header['fch1']+self.header['foff']*self.header['nchans'], self.header['fch1']
         if f_start:
             jj_start = f_start
         if f_stop:
             jj_stop = f_stop
         n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
 
-        selection_size = n_ints*n_chan*32/(8.)
+
+        n_bytes  = self.header['nbits'] / 8.
+
+        selection_size = n_ints*n_chan*n_bytes
 
         return selection_size
 
     def read_data(self, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
+        ''' Read data
+        '''
+
+
+        #check if selection is small enough.
+        selection_size_bytes = self.__calc_selection_size(f_start = f_start, f_stop = f_stop, t_start = t_start, t_stop = t_stop)
+        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            return None
+
 
         self.data = self.h5["data"][:]
         self.__setup_freqs()
@@ -234,14 +247,17 @@ class  FIL_reader(object):
         n_ints = ii_stop - ii_start
 
         #Check to see how many frequency channels requested
-        jj_start, jj_stop = 0, self.header['fch1']
+        jj_start, jj_stop = self.header['fch1']+self.header['foff']*self.header['nchans'], self.header['fch1']
         if f_start:
             jj_start = f_start
         if f_stop:
             jj_stop = f_stop
         n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
 
-        selection_size = n_ints*n_chan*32/(8.)
+
+        n_bytes  = self.header['nbits'] / 8.
+
+        selection_size = n_ints*n_chan*n_bytes
 
         return selection_size
 
@@ -463,6 +479,15 @@ class  FIL_reader(object):
         print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+        ''' Read data.
+        '''
+
+        #check if selection is small enough.
+        selection_size_bytes = self.__calc_selection_size(f_start = f_start, f_stop = f_stop, t_start = t_start, t_stop = t_stop)
+        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            return None
+
 
         ## Setup frequency axis
         f0 = self.header['fch1']
@@ -508,13 +533,6 @@ class  FIL_reader(object):
             dd_type = 'int8'
 
         if load_data:
-
-            #EE added n_bytes here, lets thing again about this...
-            if n_ints * n_ifs * n_chans_selected*n_bytes > MAX_DATA_ARRAY_SIZE:
-                print "Error: data array is too large to load. Either select fewer"
-                print "points or manually increase MAX_DATA_ARRAY_SIZE."
-                exit()
-
             self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
 
             for ii in range(n_ints):
