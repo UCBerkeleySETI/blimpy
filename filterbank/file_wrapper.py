@@ -72,12 +72,10 @@ class  H5_reader(object):
                 self.f_beging  = self.header['foff']
                 self.f_end  = self.f_beging + self.n_channels_in_file*self.header['foff']
 
-            self.t_start = t_start
-            self.t_stop = t_stop
-            self.f_start = f_start
-            self.f_stop = f_stop
-            self.c_start = (self.f_start - self.f_begin )/ self.header['foff']
-            self.c_stop = (self.f_stop - self.f_begin )/ self.header['foff']
+            self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+            self.c_start = lambda: (self.f_start - self.f_begin )/ self.header['foff']
+            self.c_stop = lambda: (self.f_stop - self.f_begin )/ self.header['foff']
 
             self.__setup_time_axis()
 
@@ -97,6 +95,29 @@ class  H5_reader(object):
 
         else:
             raise IOError("Need a file to open, please give me one!")
+
+    def __setup_selection_range(f_start=None, f_stop=None,t_start=None, t_stop=None):
+            '''Making sure the selection if time and frequency are withint the file limits.
+            '''
+
+            if t_start and t_start >= 0:
+                self.t_start = t_start
+            else:
+                self.t_start = 0
+            if t_stop and t_stop <= self.n_ints_in_file:
+                self.t_stop = t_stop
+            else:
+                self.t_stop = self.n_ints_in_file
+
+            if f_start and f_start >= self.f_begin:
+                self.f_start = f_start
+            else:
+                self.f_start = self.f_begin
+
+            if f_stop and f_stop <= self.f_end:
+                self.f_stop = f_stop
+            else:
+                self.f_stop = self.f_end
 
     def __read_header(self):
         """ Read header and return a Python dictionary of key:value pairs
@@ -234,12 +255,10 @@ class  FIL_reader(object):
                 self.f_beging  = self.header['foff']
                 self.f_end  = self.f_beging + self.n_channels_in_file*self.header['foff']
 
-            self.t_start = t_start
-            self.t_stop = t_stop
-            self.f_start = f_start
-            self.f_stop = f_stop
-            self.c_start = (self.f_start - self.f_begin )/ self.header['foff']
-            self.c_stop = (self.f_stop - self.f_begin )/ self.header['foff']
+            self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+            self.c_start = lambda: (self.f_start - self.f_begin )/ self.header['foff']
+            self.c_stop = lambda: (self.f_stop - self.f_begin )/ self.header['foff']
 
             self.__setup_time_axis()
 
@@ -264,6 +283,29 @@ class  FIL_reader(object):
 
         else:
             raise IOError("Need a file to open, please give me one!")
+
+    def __setup_selection_range(f_start=None, f_stop=None,t_start=None, t_stop=None):
+            '''Making sure the selection if time and frequency are withint the file limits.
+            '''
+
+            if t_start and t_start >= 0:
+                self.t_start = t_start
+            else:
+                self.t_start = 0
+            if t_stop and t_stop <= self.n_ints_in_file:
+                self.t_stop = t_stop
+            else:
+                self.t_stop = self.n_ints_in_file
+
+            if f_start and f_start >= self.f_begin:
+                self.f_start = f_start
+            else:
+                self.f_start = self.f_begin
+
+            if f_stop and f_stop <= self.f_end:
+                self.f_stop = f_stop
+            else:
+                self.f_stop = self.f_end
 
     def __calc_selection_size(self):
         '''Calculate size of data of interest.
