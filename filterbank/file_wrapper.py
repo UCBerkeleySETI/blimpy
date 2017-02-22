@@ -621,7 +621,7 @@ class  FIL_reader(object):
                 np.int8(j[:, ::-1].ravel()).tofile(fileh)
 
 
-def open_file(filename, *args, **kwargs):
+def open_file(filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
     """Open a supported file type or fall back to Python built in open function.
 
     ================== ==================================================
@@ -644,10 +644,10 @@ def open_file(filename, *args, **kwargs):
 
     if ext == 'h5':
         # Open HDF5 file
-        return H5_reader(filename, *args, **kwargs)
+        return H5_reader(filename,f_start=None, f_stop=None,t_start=None, t_stop=None)
     elif ext == 'fil':
         # Open FIL file
-        return FIL_reader(filename, *args, **kwargs)
+        return FIL_reader(filename,f_start=None, f_stop=None,t_start=None, t_stop=None)
     else:
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)
