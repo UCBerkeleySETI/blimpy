@@ -226,7 +226,7 @@ class Filterbank(object):
         if filename:
             self.filename = filename
             self.ext = filename.split(".")[-1].strip().lower()  #File extension
-            self.container = fw.open_file(filename)
+            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
             self.__setup_time_axis()
