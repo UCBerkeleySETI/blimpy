@@ -58,7 +58,6 @@ class  H5_reader(object):
             self.h5 = h5py.File(self.filename)
             self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
-            self.__setup_time_axis()
             self.n_ints_in_file  = self.h5["data"].shape[0] #
             self.n_channels_in_file  = self.h5["data"].shape[2] #
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
@@ -79,6 +78,8 @@ class  H5_reader(object):
             self.f_stop = f_stop
             self.c_start = (self.f_start - self.f_begin )/ self.header['foff']
             self.c_stop = (self.f_stop - self.f_begin )/ self.header['foff']
+
+            self.__setup_time_axis()
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
@@ -219,7 +220,6 @@ class  FIL_reader(object):
             self.header = self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
             self.idx_data = self.__len_header()
-            self.__setup_time_axis()
             self.n_channels_in_file  = self.header['nchans']
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 0 #Placeholder for future development.
@@ -240,6 +240,8 @@ class  FIL_reader(object):
             self.f_stop = f_stop
             self.c_start = (self.f_start - self.f_begin )/ self.header['foff']
             self.c_stop = (self.f_stop - self.f_begin )/ self.header['foff']
+
+            self.__setup_time_axis()
 
 #EE ie.
 #           spec = np.squeeze(fil_file.data)
@@ -689,7 +691,6 @@ def open_file(filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
     filename = os.path.expandvars(os.path.expanduser(filename))
     # Get file extension to determine type
     ext = filename.split(".")[-1].strip().lower()
-
 
     if ext == 'h5':
         # Open HDF5 file
