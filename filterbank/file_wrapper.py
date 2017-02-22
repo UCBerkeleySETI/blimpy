@@ -63,7 +63,7 @@ class  H5_reader(object):
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 0 #Placeholder for future development.
             self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
-            self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
+            self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0 :
                 self.f_end  = self.header['fch1']
@@ -161,10 +161,11 @@ class  H5_reader(object):
 
         return selection_size
 
-    def read_data(self, load_data=True):
+    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         ''' Read data
         '''
 
+        self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
         #check if selection is small enough.
         selection_size_bytes = self.__calc_selection_size()
@@ -230,7 +231,7 @@ class  FIL_reader(object):
             self.n_pols_in_file = 0 #Placeholder for future development.
             self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.__get_n_ints_in_file()
-            self.data_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
+            self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0 :
                 self.f_end  = self.header['fch1']
@@ -271,6 +272,12 @@ class  FIL_reader(object):
     def __setup_selection_range(self,f_start=None, f_stop=None,t_start=None, t_stop=None):
             '''Making sure the selection if time and frequency are within the file limits.
             '''
+
+            if t_stop < t_start:
+                raise ErrorValue('Please give t_stop > t_start values.')
+
+            if f_stop < f_start:
+                raise ErrorValue('Please give f_stop > f_start values.')
 
             if t_start and t_start >= 0:
                 self.t_start = int(t_start)
@@ -519,9 +526,11 @@ class  FIL_reader(object):
         print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
         print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
 
-    def read_data(self, load_data=True):
+    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         ''' Read data.
         '''
+
+        self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
         #check if selection is small enough.
         selection_size_bytes = self.__calc_selection_size()
@@ -675,7 +684,7 @@ class  FIL_reader(object):
                 np.int8(j[:, ::-1].ravel()).tofile(fileh)
 
 
-def open_file(filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None):
     """Open a supported file type or fall back to Python built in open function.
 
     ================== ==================================================
