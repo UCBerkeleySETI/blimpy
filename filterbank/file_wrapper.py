@@ -33,7 +33,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 
 #MAX_PLT_POINTS      = 65536                     # Max number of points in matplotlib plot
 #MAX_IMSHOW_POINTS   = (8192, 4096)              # Max number of points in imshow plot
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024.    # Max size of data array to load into memory (in bytes)
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024.        # Max size of data array to load into memory (in bytes)
 #MAX_HEADER_BLOCKS   = 100                       # Max size of header (in 512-byte blocks)
 
 
@@ -71,9 +71,9 @@ class  H5_reader(object):
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
                 if f_start or f_stop or t_start or t_stop:
-                    selection_size = self.__calc_selection_size(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                    selection_size_bytes = self.__calc_selection_size(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
                     if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
-                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                     else:
                         self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
                 else:
@@ -116,7 +116,7 @@ class  H5_reader(object):
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
-    def __calc_selection_size(f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __calc_selection_size(self,f_start=None, f_stop=None, t_start=None, t_stop=None):
         '''Calculate size of data of interest.
         '''
 
@@ -207,9 +207,9 @@ class  FIL_reader(object):
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
                 if f_start or f_stop or t_start or t_stop:
-                    selection_size = self.__calc_selection_size(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+                    selection_size_bytes = self.__calc_selection_size(f_start = f_start, f_stop = f_stop, t_start = t_start, t_stop = t_stop)
                     if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
-                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                     else:
                         self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
                 else:
@@ -221,7 +221,7 @@ class  FIL_reader(object):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __calc_selection_size(f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __calc_selection_size(self,f_start=None, f_stop=None, t_start=None, t_stop=None):
         '''Calculate size of data of interest.
         '''
 
@@ -234,7 +234,7 @@ class  FIL_reader(object):
         n_ints = ii_stop - ii_start
 
         #Check to see how many frequency channels requested
-        jj_start, jj_stop = 0, self.n_channels_in_file
+        jj_start, jj_stop = 0, self.header['fch1']
         if f_start:
             jj_start = f_start
         if f_stop:
@@ -642,12 +642,13 @@ def open_file(filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
     # Get file extension to determine type
     ext = filename.split(".")[-1].strip().lower()
 
+
     if ext == 'h5':
         # Open HDF5 file
-        return H5_reader(filename,f_start=None, f_stop=None,t_start=None, t_stop=None)
+        return H5_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
     elif ext == 'fil':
         # Open FIL file
-        return FIL_reader(filename,f_start=None, f_stop=None,t_start=None, t_stop=None)
+        return FIL_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
     else:
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)
