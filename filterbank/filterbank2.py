@@ -225,12 +225,13 @@ class Filterbank(object):
         if filename:
             self.filename = filename
             self.ext = filename.split(".")[-1].strip().lower()  #File extension
-            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
             self.__setup_time_axis()
             self.heavy =  self.container.heavy
             self.file_shape = self.container.file_shape
+            self.file_size_bytes = self.container.file_size_bytes
 
             self.__load_data()
 
@@ -733,7 +734,7 @@ class Filterbank(object):
 
         with h5py.File(filename_out, 'w') as h5:
 
-            h5.attrs['CLASS'] = 'FILTERBANK'
+#            h5.attrs['CLASS'] = 'FILTERBANK'
 
             dset = h5.create_dataset('data',
                               shape=self.file_shape,
@@ -759,13 +760,21 @@ class Filterbank(object):
             for key, value in fb.header.items():
                 dset.attrs[key] = value
 
-            n_int_per_read = int(filesize / MAX_SIZE / 2)
+
+#            filesize = os.path.getsize(filename)
+
+
+
+            n_int_per_read = int(self.file_size_bytes / MAX_SIZE / 2)
+
             print "Filling in with data over %i reads..." % self.n_int_per_read
             for ii in range(0, n_int_per_read):
                 print "Reading %i of %i" % (ii + 1, n_int_per_read)
                 #print  ii*n_int_per_read, (ii+1)*n_int_per_read
-                fb = Filterbank(filename, t_start=ii*n_int_per_read, t_stop=(ii+1) * n_int_per_read)
-                dset[ii*n_int_per_read:(ii+1)*n_int_per_read] = fb.data[:]
+                t_start = ii*n_int_per_read
+                t_stop = (ii+1) * n_int_per_read
+                fb = Filterbank(filename, t_start=t_start, t_stop=t_stop)
+                dset[t_start:t_stop] = fb.data[:]
 
         t1 = time.time()
         print "Conversion time: %2.2fs" % (t1- t0)
@@ -801,6 +810,21 @@ class Filterbank(object):
             for key, value in self.header.items():
                 dset.attrs[key] = value
 
+    def __get_chunk_dimentions(filename):
+        '''
+        '''
+
+        if 'gpuspec.0000.' in filename:
+            print 'Detecting high frequency resolution data.'
+
+        elif 'gpuspec.0001.' in filename:
+            print 'Detecting high time resolution data.'
+
+        elif 'gpuspec.0002.' in filename:
+            print 'Detecting intermediate frequency and time resolution data.'
+
+        else:
+            raise ValueError('File format not know.')   # maybe just to auto chunking then.
 
 
 

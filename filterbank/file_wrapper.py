@@ -31,10 +31,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 # Config values
 ###
 
-#MAX_PLT_POINTS      = 65536                     # Max number of points in matplotlib plot
-#MAX_IMSHOW_POINTS   = (8192, 4096)              # Max number of points in imshow plot
 MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024.        # Max size of data array to load into memory (in bytes)
-#MAX_HEADER_BLOCKS   = 100                       # Max size of header (in 512-byte blocks)
 
 
 class  H5_reader(object):
@@ -44,7 +41,7 @@ class  H5_reader(object):
     #EE check freq axis.
 
 
-    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
         """ Constructor.
 
         Args:
@@ -53,6 +50,7 @@ class  H5_reader(object):
 
         if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
             self.filename = filename
+            self.load_data = load_data
             self.data = None
             self.freqs = None
             self.h5 = h5py.File(self.filename)
@@ -81,17 +79,26 @@ class  H5_reader(object):
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
-                if self.f_start or self.f_stop or self.t_start or self.t_stop:
-                    selection_size_bytes = self.__calc_selection_size()
-                    if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
-                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                    else:
-                        self.read_data()
-                else:
-                    logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             else:
                 self.heavy = False
-                self.read_data()
+
+            if self.load_data:
+                if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
+                    if self.f_start or self.f_stop or self.t_start or self.t_stop:
+                        selection_size_bytes = self.__calc_selection_size()
+                        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+                            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        else:
+                            self.read_data()
+                    else:
+                        logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                else:
+                    self.read_data()
+
+            else:
+                print "Skipping data load..."
+                self.data = np.array([0])
+
 
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -210,7 +217,7 @@ class  FIL_reader(object):
     ''' This class handles .fil files.
     '''
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         """ Constructor.
 
         Args:
@@ -221,6 +228,7 @@ class  FIL_reader(object):
 
         if filename and os.path.isfile(filename):
             self.filename = filename
+            self.load_data = load_data
             self.data = None
             self.freqs = None
             self.header = self.__read_header()
@@ -254,17 +262,24 @@ class  FIL_reader(object):
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
-                if self.f_start or self.f_stop or self.t_start or self.t_stop:
-                    selection_size_bytes = self.__calc_selection_size()
-                    if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
-                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                    else:
-                        self.read_data()
-                else:
-                    logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             else:
                 self.heavy = False
-                self.read_data()
+
+            if self.load_data:
+                if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
+                    if self.f_start or self.f_stop or self.t_start or self.t_stop:
+                        selection_size_bytes = self.__calc_selection_size()
+                        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+                            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        else:
+                            self.read_data()
+                    else:
+                        logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                else:
+                    self.read_data()
+            else:
+                print "Skipping data load..."
+                self.data = np.array([0])
 
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -684,7 +699,7 @@ class  FIL_reader(object):
                 np.int8(j[:, ::-1].ravel()).tofile(fileh)
 
 
-def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True):
     """Open a supported file type or fall back to Python built in open function.
 
     ================== ==================================================
@@ -707,10 +722,10 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None):
 
     if ext == 'h5':
         # Open HDF5 file
-        return H5_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+        return H5_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
     elif ext == 'fil':
         # Open FIL file
-        return FIL_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+        return FIL_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
     else:
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)
