@@ -579,6 +579,15 @@ class  FIL_reader(object):
         ''' Read data.
         '''
 
+        if not f_start:
+            f_start = self.f_start
+        if not f_stop:
+            f_stop = self.f_stop
+        if not t_start:
+            t_start = self.t_start
+        if not t_stop:
+            t_stop = self.t_stop
+
         self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
         #check if selection is small enough.
