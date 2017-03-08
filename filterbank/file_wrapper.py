@@ -51,8 +51,6 @@ class  H5_reader(object):
         if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
             self.filename = filename
             self.load_data = load_data
-            self.data = None
-            self.freqs = None
             self.h5 = h5py.File(self.filename)
             self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
@@ -72,8 +70,8 @@ class  H5_reader(object):
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
-            self.c_start = lambda: (self.f_start - self.f_begin )/ self.header['foff']
-            self.c_stop = lambda: (self.f_stop - self.f_begin )/ self.header['foff']
+            self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
+            self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
 
             self.__setup_time_axis()
 
@@ -83,22 +81,26 @@ class  H5_reader(object):
                 self.heavy = False
 
             if self.load_data:
-                if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
+                if self.heavy:
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         selection_size_bytes = self.__calc_selection_size()
                         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
                             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            self.data = np.array([0],dtype='float32')
+                            self.freqs = np.array([0],dtype='float32')
                         else:
                             self.read_data()
                     else:
                         logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        self.data = np.array([0],dtype='float32')
+                        self.freqs = np.array([0],dtype='float32')
                 else:
                     self.read_data()
 
             else:
                 print "Skipping data load..."
-                self.data = np.array([0])
-
+                self.data = np.array([0],dtype='float32')
+                self.freqs = np.array([0],dtype='float32')
 
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -189,6 +191,15 @@ class  H5_reader(object):
         ''' Read data
         '''
 
+        if not f_start:
+            f_start = self.f_start
+        if not f_stop:
+            f_stop = self.f_stop
+        if not t_start:
+            t_start = self.t_start
+        if not t_stop:
+            t_stop = self.t_stop
+
         self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
         #check if selection is small enough.
@@ -197,8 +208,7 @@ class  H5_reader(object):
             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
 
-
-        self.data = self.h5["data"][self.t_start:self.t_stop,self.c_start:self.c_stop]
+        self.data = self.h5["data"][self.t_start:self.t_stop,0,self.c_start():self.c_stop()]
         self.__setup_freqs()
 
     def __setup_freqs(self):
@@ -246,8 +256,6 @@ class  FIL_reader(object):
         if filename and os.path.isfile(filename):
             self.filename = filename
             self.load_data = load_data
-            self.data = None
-            self.freqs = None
             self.header = self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
             self.idx_data = self.__len_header()
@@ -267,8 +275,8 @@ class  FIL_reader(object):
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
-            self.c_start = lambda: (self.f_start - self.f_begin )/ self.header['foff']
-            self.c_stop = lambda: (self.f_stop - self.f_begin )/ self.header['foff']
+            self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
+            self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
 
             self.__setup_time_axis()
 
@@ -283,20 +291,25 @@ class  FIL_reader(object):
                 self.heavy = False
 
             if self.load_data:
-                if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
+                if self.heavy:
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         selection_size_bytes = self.__calc_selection_size()
                         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
                             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            self.data = np.array([0],dtype='float32')
+                            self.freqs = np.array([0],dtype='float32')
                         else:
                             self.read_data()
                     else:
                         logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        self.data = np.array([0],dtype='float32')
+                        self.freqs = np.array([0],dtype='float32')
                 else:
                     self.read_data()
             else:
                 print "Skipping data load..."
-                self.data = np.array([0])
+                self.data = np.array([0],dtype='float32')
+                self.freqs = np.array([0],dtype='float32')
 
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -357,7 +370,7 @@ class  FIL_reader(object):
         n_ints = self.t_stop - self.t_start
 
         #Check how many frequency channels were requested
-        n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
+        n_chan = int((self.f_stop - self.f_start) / abs(self.header['foff']))
 
         selection_shape = (n_ints,self.header['nifs'],n_chan)
 
@@ -629,12 +642,11 @@ class  FIL_reader(object):
         elif self.__n_bytes  == 1:
             dd_type = 'int8'
 
+        #EE Could add reading all in one go if file is small...then reshape. Unless actually reading a subsection.
         if load_data:
             self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
 
             for ii in range(n_ints):
-                """d = f.read(n_bytes * n_chans * n_ifs)
-                """
                 for jj in range(n_ifs):
                     f.seek(self.__n_bytes  * i0, 1) # 1 = from current location
                     dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
@@ -655,19 +667,24 @@ class  FIL_reader(object):
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
-    def __read_blob(self,blob_dim,n_blob=0):
+#    def __read_blob(self,blob_dim,n_blob=0):
+    def read_blob(self,blob_dim,n_blob=0):
         '''Read blob from a selection.
         '''
 
-        n_blobs = self.__calc_n_blobs(blob_dim)
-        if n_blob > nblobs or n_blob < 0:
+        n_blobs = self.calc_n_blobs(blob_dim)
+        if n_blob > n_blobs or n_blob < 0:
             raise ValueError('Please provide correct n_blob value. Given %i, but max values is %i'%(n_blob,n_blobs))
         blob_start = self.__find_blob_start(blob_dim)
         blob = np.zeros(blob_dim,dtype='float32')
 
+        # Assuming the blob will be either one dimensional or loops over the whole frequency range.
+        #EE: For now; also assuming one polarization and one beam.
+        blob_flat_size = self.__flat_array_dimmention(blob_dim)
+
         # Load binary data
         f = open(self.filename, 'rb')
-        f.seek(self.idx_data + blob_start)
+        f.seek(self.idx_data + self.__n_bytes  * (blob_start + n_blob*blob_flat_size))
 
         #Set up the data type (taken out of loop for speed)
         if self.__n_bytes  == 4:
@@ -677,13 +694,13 @@ class  FIL_reader(object):
         elif self.__n_bytes  == 1:
             dd_type = 'int8'
 
-        # Assuming the blob will be either one dimensional or loops over the whole frequency range.
-        #EE: For now; also assuming one polarization and one beam.
-        blob_flat_size = self.__flat_blob_dimmention(blob_dim)
-
         dd = np.fromfile(f, count=blob_flat_size, dtype=dd_type)
 
-        blob = dd.reshape(blob_dim)
+        if dd.shape[0] == blob_flat_size:
+            blob = dd.reshape(blob_dim)
+        else:
+            logger.debug('DD shape != blob shape.')
+            blob = dd.reshape((dd.shape[0]/blob_dim[2],blob_dim[1],blob_dim[2]))
 
         return blob
 
@@ -692,20 +709,21 @@ class  FIL_reader(object):
         '''
 
         #Check which is the blob time offset
-        blob_time_start = self.t_start - self.t_begin
+        blob_time_start = self.t_start
 
-        #Check which is the blob frequency offset
-        blob_freq_start = self.f_start - self.f_begin
+        #Check which is the blob frequency offset (in channels)
+        blob_freq_start = self.c_start()
 
         blob_start = blob_time_start*self.n_channels_in_file + blob_freq_start
 
         return blob_start
 
-    def __calc_n_blobs(sefl,blob_dim):
+#    def __calc_n_blobs(self,blob_dim):
+    def calc_n_blobs(self,blob_dim):
         ''' Given a the blob dimensions, calculate how many fit in the data selection.
         '''
 
-        n_blobs = int(np.ceil(self.__flat_array_dimmention(selection_shape))/float(self.__flat_array_dimmention(blob_dim)))
+        n_blobs = int(np.ceil(self.__flat_array_dimmention(self.selection_shape)/float(self.__flat_array_dimmention(blob_dim))))
 
         return n_blobs
 
@@ -716,7 +734,7 @@ class  FIL_reader(object):
         array_flat_size = 1
 
         for a_dim in array_dim:
-            array_flat_size*=b_dim
+            array_flat_size*=a_dim
 
         return array_flat_size
 
