@@ -31,10 +31,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 # Config values
 ###
 
-#MAX_PLT_POINTS      = 65536                     # Max number of points in matplotlib plot
-#MAX_IMSHOW_POINTS   = (8192, 4096)              # Max number of points in imshow plot
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024. * 8    # Max size of data array to load into memory (in bytes)
-#MAX_HEADER_BLOCKS   = 100                       # Max size of header (in 512-byte blocks)
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 2 #256.        # Max size of data array to load into memory (in bytes)
 
 
 class  H5_reader(object):
@@ -43,8 +40,7 @@ class  H5_reader(object):
 
     #EE check freq axis.
 
-
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
+    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
         """ Constructor.
 
         Args:
@@ -53,34 +49,94 @@ class  H5_reader(object):
 
         if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
             self.filename = filename
-            self.data = None
-            self.freqs = None
+            self.load_data = load_data
             self.h5 = h5py.File(self.filename)
             self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
             self.n_ints_in_file  = self.h5["data"].shape[0] #
             self.n_channels_in_file  = self.h5["data"].shape[2] #
-            self.n_beams_in_file = 0 #Placeholder for future development.
+            self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 0 #Placeholder for future development.
-            self.__setup_time_axis()
+            self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
+            self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
+            if self.header['foff'] < 0 :
+                self.f_end  = self.header['fch1']
+                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+            else:
+                self.f_begin  = self.header['fch1']
+                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+
+            self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+            self.t_begin = 0
+            self.t_end = self.n_ints_in_file
+
+            self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
+            self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
+
+            self.__setup_time_axis()
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
-                if f_start or f_stop or t_start or t_stop:
-                    selection_size = self.__calc_selection_size(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
-                    if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
-                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                    else:
-                        self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
-                else:
-                    logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             else:
                 self.heavy = False
-                self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+            if self.load_data:
+                if self.heavy:
+                    if self.f_start or self.f_stop or self.t_start or self.t_stop:
+                        selection_size_bytes = self.__calc_selection_size()
+                        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+                            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            self.data = np.array([0],dtype='float32')
+                            self.freqs = np.array([0],dtype='float32')
+                        else:
+                            self.read_data()
+                    else:
+                        logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        self.data = np.array([0],dtype='float32')
+                        self.freqs = np.array([0],dtype='float32')
+                else:
+                    self.read_data()
+
+            else:
+                print "Skipping data load..."
+                self.data = np.array([0],dtype='float32')
+                self.freqs = np.array([0],dtype='float32')
 
         else:
             raise IOError("Need a file to open, please give me one!")
+
+    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
+        '''Making sure the selection if time and frequency are within the file limits.
+        '''
+
+        if t_stop < t_start:
+            logger.error('Please give t_stop > t_start values.')
+        if f_stop < f_start:
+            logger.error('Please give f_stop > f_start values.')
+
+        if t_start and t_start >= 0:
+            self.t_start = int(t_start)
+        else:
+            self.t_start = 0
+        if t_stop and t_stop <= self.n_ints_in_file:
+            self.t_stop = int(t_stop)
+        else:
+            self.t_stop = self.n_ints_in_file
+
+        if f_start and f_start >= self.f_begin:
+            self.f_start = f_start
+        else:
+            self.f_start = self.f_begin
+
+        if f_stop and f_stop <= self.f_end:
+            self.f_stop = f_stop
+        else:
+            self.f_stop = self.f_end
+
+        #calculate shape of selection
+        self.selection_shape = self.__calc_selection_shape()
 
     def __read_header(self):
         """ Read header and return a Python dictionary of key:value pairs
@@ -96,62 +152,78 @@ class  H5_reader(object):
             else:
                 self.header[key] = val
 
-    def __setup_time_axis(self,t_start=None, t_stop=None):
+    def __setup_time_axis(self,):
         '''  Setup time axis.
         '''
 
         # now check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
+        n_ints = self.t_stop - self.t_start
 
         ## Setup time axis
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
-    def __calc_selection_size(f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __calc_selection_size(self):
         '''Calculate size of data of interest.
         '''
 
         #Check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
-
+        n_ints = self.t_stop - self.t_start
         #Check to see how many frequency channels requested
-        jj_start, jj_stop = 0, self.n_channels_in_file
-        if f_start:
-            jj_start = f_start
-        if f_stop:
-            jj_stop = f_stop
-        n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
+        n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
 
-        selection_size = n_ints*n_chan*32/(8.)
+        n_bytes  = self.__n_bytes
+        selection_size = n_ints*n_chan*n_bytes
 
         return selection_size
 
-    def read_data(self, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
+    def __calc_selection_shape(self):
+        '''Calculate shape of data of interest.
+        '''
 
-        self.data = self.h5["data"][:]
+        #Check to see how many integrations requested
+        n_ints = self.t_stop - self.t_start
+        #Check to see how many frequency channels requested
+        n_chan = int((self.f_stop - self.f_start) / abs(self.header['foff']))
+
+        selection_shape = (n_ints,self.header['nifs'],n_chan)
+
+        return selection_shape
+
+    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+        ''' Read data
+        '''
+
+        if not f_start:
+            f_start = self.f_begin
+        if not f_stop:
+            f_stop = self.f_end
+        if not t_start:
+            t_start = self.t_begin
+        if not t_stop:
+            t_stop = self.t_end
+
+        self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+        #check if selection is small enough.
+        selection_size_bytes = self.__calc_selection_size()
+        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            return None
+
+        self.data = self.h5["data"][self.t_start:self.t_stop,0,self.c_start():self.c_stop()]
         self.__setup_freqs()
 
-    def __setup_freqs(self, f_start=None, f_stop=None):
+    def __setup_freqs(self):
         ## Setup frequency axis
         f0 = self.header['fch1']
-        f_delt = self.header['foff']
 
-        i_start, i_stop = 0, self.header['nchans']
-        if f_start:
-            i_start = (f_start - f0) / f_delt
-        if f_stop:
-            i_stop  = (f_stop - f0)  / f_delt
+        i_start, i_stop = 0, self.n_channels_in_file
+        if self.f_start:
+            i_start = (self.f_start - f0) / self.header['foff']
+        if self.f_stop:
+            i_stop  = (self.f_stop - f0)  / self.header['foff']
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -163,9 +235,9 @@ class  H5_reader(object):
         else:
             i_vals = np.arange(chan_stop_idx, chan_start_idx)
 
-        self.freqs = f_delt * i_vals + f0
+        self.freqs = self.header['foff'] * i_vals + f0
 
-        if f_delt < 0:
+        if self.header['foff'] < 0:
             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
@@ -175,7 +247,7 @@ class  FIL_reader(object):
     ''' This class handles .fil files.
     '''
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         """ Constructor.
 
         Args:
@@ -186,60 +258,125 @@ class  FIL_reader(object):
 
         if filename and os.path.isfile(filename):
             self.filename = filename
-            self.data = None
-            self.freqs = None
+            self.load_data = load_data
             self.header = self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
             self.idx_data = self.__len_header()
+            self.n_channels_in_file  = self.header['nchans']
+            self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
+            self.n_pols_in_file = 0 #Placeholder for future development.
+            self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.__get_n_ints_in_file()
-            self.__setup_time_axis()
-            self.n_channels  = self.header['nchans']
-            self.n_beams = 0 #Placeholder for future development.
-            self.n_pols = 0 #Placeholder for future development.
+            self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
+            if self.header['foff'] < 0 :
+                self.f_end  = self.header['fch1']
+                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+            else:
+                self.f_begin  = self.header['fch1']
+                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+
+            self.t_begin = 0
+            self.t_end = self.n_ints_in_file
+
+            self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+            self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
+            self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
+
+            self.__setup_time_axis()
+
+#EE ie.
+#           spec = np.squeeze(fil_file.data)
             # set start of data, at real length of header  (future development.)
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
-                if f_start or f_stop or t_start or t_stop:
-                    selection_size = self.__calc_selection_size(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
-                    if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
-                        logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                    else:
-                        self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
-                else:
-                    logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             else:
                 self.heavy = False
-                self.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+            if self.load_data:
+                if self.heavy:
+                    if self.f_start or self.f_stop or self.t_start or self.t_stop:
+                        selection_size_bytes = self.__calc_selection_size()
+                        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+                            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            self.data = np.array([0],dtype='float32')
+                            self.freqs = np.array([0],dtype='float32')
+                        else:
+                            self.read_data()
+                    else:
+                        logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        self.data = np.array([0],dtype='float32')
+                        self.freqs = np.array([0],dtype='float32')
+                else:
+                    self.read_data()
+            else:
+                print "Skipping data load..."
+                self.data = np.array([0],dtype='float32')
+                self.freqs = np.array([0],dtype='float32')
 
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __calc_selection_size(f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
+        '''Making sure the selection if time and frequency are within the file limits.
+        '''
+
+        if t_stop < t_start:
+            logger.error('Please give t_stop > t_start values.')
+        if f_stop < f_start:
+            logger.error('Please give f_stop > f_start values.')
+
+        if t_start and t_start >= 0:
+            self.t_start = int(t_start)
+        else:
+            self.t_start = 0
+        if t_stop and t_stop <= self.n_ints_in_file:
+            self.t_stop = int(t_stop)
+        else:
+            self.t_stop = self.n_ints_in_file
+
+        if f_start and f_start >= self.f_begin:
+            self.f_start = f_start
+        else:
+            self.f_start = self.f_begin
+
+        if f_stop and f_stop <= self.f_end:
+            self.f_stop = f_stop
+        else:
+            self.f_stop = self.f_end
+
+        #calculate shape of selection
+        self.selection_shape = self.__calc_selection_shape()
+
+    def __calc_selection_size(self):
         '''Calculate size of data of interest.
         '''
 
         #Check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
-
+        n_ints = self.t_stop - self.t_start
         #Check to see how many frequency channels requested
-        jj_start, jj_stop = 0, self.n_channels_in_file
-        if f_start:
-            jj_start = f_start
-        if f_stop:
-            jj_stop = f_stop
-        n_chan = (jj_stop - jj_start) / abs(self.header['foff'])
+        n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
 
-        selection_size = n_ints*n_chan*32/(8.)
+        n_bytes  = self.__n_bytes
+        selection_size = n_ints*n_chan*n_bytes
 
         return selection_size
+
+    def __calc_selection_shape(self):
+        '''Calculate shape of data of interest.
+        '''
+
+        #Check how many integrations were requested
+        n_ints = self.t_stop - self.t_start
+        #Check how many frequency channels were requested
+        n_chan = int((self.f_stop - self.f_start) / abs(self.header['foff']))
+
+        selection_shape = (n_ints,self.header['nifs'],n_chan)
+
+        return selection_shape
 
     def __set_header_keywords_types(self):
         self.__header_keyword_types = {
@@ -270,9 +407,9 @@ class  FIL_reader(object):
 
     def __get_n_ints_in_file(self):
 
-        n_bytes  = self.header['nbits'] / 8
-        n_chans = self.header['nchans']
-        n_ifs   = self.header['nifs']
+        n_bytes  = self.__n_bytes
+        n_chans = self.n_channels_in_file
+        n_ifs   = self.n_beams_in_file
 
         n_bytes_data = self.file_size_bytes - self.idx_data
         self.n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
@@ -395,16 +532,15 @@ class  FIL_reader(object):
 
           return dd
 
-    def __setup_freqs(self, f_start=None, f_stop=None):
+    def __setup_freqs(self,):
         ## Setup frequency axis
         f0 = self.header['fch1']
-        f_delt = self.header['foff']
 
-        i_start, i_stop = 0, self.header['nchans']
-        if f_start:
-            i_start = (f_start - f0) / f_delt
-        if f_stop:
-            i_stop  = (f_stop - f0)  / f_delt
+        i_start, i_stop = 0, self.n_channels_in_file
+        if self.f_start:
+            i_start = (self.f_start - f0) / self.header['foff']
+        if self.f_stop:
+            i_stop  = (self.f_stop - f0)  / self.header['foff']
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -416,24 +552,19 @@ class  FIL_reader(object):
         else:
             i_vals = np.arange(chan_stop_idx, chan_start_idx)
 
-        self.freqs = f_delt * i_vals + f0
+        self.freqs = self.header['foff'] * i_vals + f0
 
-        if f_delt < 0:
+        if self.header['foff'] < 0:
             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
-    def __setup_time_axis(self,t_start=None, t_stop=None):
+    def __setup_time_axis(self):
         '''  Setup time axis.
         '''
 
         # now check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
+        n_ints = self.t_stop - self.t_start
 
         ## Setup time axis
         t0 = self.header['tstart']
@@ -458,20 +589,31 @@ class  FIL_reader(object):
         print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
         print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
 
-    def read_data(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+        ''' Read data.
+        '''
 
-        ## Setup frequency axis
-        f0 = self.header['fch1']
-        f_delt = self.header['foff']
+        if not f_start:
+            f_start = self.f_start
+        if not f_stop:
+            f_stop = self.f_stop
+        if not t_start:
+            t_start = self.t_start
+        if not t_stop:
+            t_stop = self.t_stop
 
-        # keep this seperate!
-        # file_freq_mapping =  np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
+        self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+        #check if selection is small enough.
+        selection_size_bytes = self.__calc_selection_size()
+        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            return None
+            load_data = False
 
         #convert input frequencies into what their corresponding index would be
+        i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs()
 
-        i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs(f_start, f_stop)
-
-        n_bytes  = self.header['nbits'] / 8
         n_chans = self.header['nchans']
         n_chans_selected = self.freqs.shape[0]
         n_ifs   = self.header['nifs']
@@ -481,57 +623,39 @@ class  FIL_reader(object):
         f.seek(self.idx_data)
 
         # now check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
+        n_ints = self.t_stop - self.t_start
 
         # Seek to first integration
-        f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
+        f.seek(self.t_start * self.__n_bytes  * n_ifs * n_chans, 1)
 
         # Set up indexes used in file read (taken out of loop for speed)
         i0 = np.min((chan_start_idx, chan_stop_idx))
         i1 = np.max((chan_start_idx, chan_stop_idx))
 
         #Set up the data type (taken out of loop for speed)
-        if n_bytes == 4:
+        if self.__n_bytes  == 4:
             dd_type = 'float32'
-        elif n_bytes == 2:
+        elif self.__n_bytes  == 2:
             dd_type = 'int16'
-        elif n_bytes == 1:
+        elif self.__n_bytes  == 1:
             dd_type = 'int8'
 
+        #EE Could add reading all in one go if file is small...then reshape. Unless actually reading a subsection.
         if load_data:
-
-            #EE added n_bytes here, lets thing again about this...
-            if n_ints * n_ifs * n_chans_selected*n_bytes > MAX_DATA_ARRAY_SIZE:
-                print "Error: data array is too large to load. Either select fewer"
-                print "points or manually increase MAX_DATA_ARRAY_SIZE."
-                exit()
-
             self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
 
             for ii in range(n_ints):
-                """d = f.read(n_bytes * n_chans * n_ifs)
-                """
-
                 for jj in range(n_ifs):
-
-                    f.seek(n_bytes * i0, 1) # 1 = from current location
-                    #d = f.read(n_bytes * n_chans_selected)
-                    #bytes_to_read = n_bytes * n_chans_selected
-
+                    f.seek(self.__n_bytes  * i0, 1) # 1 = from current location
                     dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
                     # Reverse array if frequency axis is flipped
-                    if f_delt < 0:
+                    if self.header['foff'] < 0:
                         dd = dd[::-1]
 
                     self.data[ii, jj] = dd
 
-                    f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
+                    f.seek(self.__n_bytes  * (n_chans - i1), 1)  # Seek to start of next block
         else:
             print "Skipping data load..."
             self.data = np.array([0])
@@ -541,6 +665,79 @@ class  FIL_reader(object):
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
+#    def __read_blob(self,blob_dim,n_blob=0):
+    def read_blob(self,blob_dim,n_blob=0):
+        '''Read blob from a selection.
+        '''
+
+        n_blobs = self.calc_n_blobs(blob_dim)
+        if n_blob > n_blobs or n_blob < 0:
+            raise ValueError('Please provide correct n_blob value. Given %i, but max values is %i'%(n_blob,n_blobs))
+        blob_start = self.__find_blob_start(blob_dim)
+        blob = np.zeros(blob_dim,dtype='float32')
+
+        # Assuming the blob will be either one dimensional or loops over the whole frequency range.
+        #EE: For now; also assuming one polarization and one beam.
+        blob_flat_size = self.__flat_array_dimmention(blob_dim)
+
+        # Load binary data
+        f = open(self.filename, 'rb')
+        f.seek(self.idx_data + self.__n_bytes  * (blob_start + n_blob*blob_flat_size))
+
+        #Set up the data type (taken out of loop for speed)
+        if self.__n_bytes  == 4:
+            dd_type = 'float32'
+        elif self.__n_bytes  == 2:
+            dd_type = 'int16'
+        elif self.__n_bytes  == 1:
+            dd_type = 'int8'
+
+        dd = np.fromfile(f, count=blob_flat_size, dtype=dd_type)
+
+        if dd.shape[0] == blob_flat_size:
+            blob = dd.reshape(blob_dim)
+        else:
+            logger.debug('DD shape != blob shape.')
+            blob = dd.reshape((dd.shape[0]/blob_dim[2],blob_dim[1],blob_dim[2]))
+
+        if self.header['foff'] < 0:
+            blob = blob[:,:,::-1]
+
+        return blob
+
+    def __find_blob_start(self,blob_dim):
+        '''Find first blob from selection.
+        '''
+
+        #Check which is the blob time offset
+        blob_time_start = self.t_start
+
+        #Check which is the blob frequency offset (in channels)
+        blob_freq_start = self.c_start()
+
+        blob_start = blob_time_start*self.n_channels_in_file + blob_freq_start
+
+        return blob_start
+
+#    def __calc_n_blobs(self,blob_dim):
+    def calc_n_blobs(self,blob_dim):
+        ''' Given a the blob dimensions, calculate how many fit in the data selection.
+        '''
+
+        n_blobs = int(np.ceil(self.__flat_array_dimmention(self.selection_shape)/float(self.__flat_array_dimmention(blob_dim))))
+
+        return n_blobs
+
+    def __flat_array_dimmention(self,array_dim):
+        '''Multiplies all the dimentions of an array.
+        '''
+
+        array_flat_size = 1
+
+        for a_dim in array_dim:
+            array_flat_size*=a_dim
+
+        return array_flat_size
 
     def read_all(self,reverse=True):
         """ read all the data.
@@ -586,38 +783,7 @@ class  FIL_reader(object):
         return data
 
 
-
-    def write_file(self, filename_out):
-        """ Write data to filterbank file.
-
-        Args:
-            filename_out (str): Name of output file
-        """
-
-
-
-        raise NotImplementedError('For now, writing files will be still implemented by filterbank.py')
-
-
-        #rewrite header to be consistent with modified data
-        self.header['fch1']   = self.freqs[0]
-        self.header['foff']   = self.freqs[1] - self.freqs[0]
-        self.header['nchans'] = self.freqs.shape[0]
-
-        n_bytes  = self.header['nbits'] / 8
-
-        with open(filename_out, "w") as fileh:
-            fileh.write(generate_sigproc_header(self))
-            j = self.data
-            if n_bytes == 4:
-                np.float32(j[:, ::-1].ravel()).tofile(fileh)
-            elif n_bytes == 2:
-                np.int16(j[:, ::-1].ravel()).tofile(fileh)
-            elif n_bytes == 1:
-                np.int8(j[:, ::-1].ravel()).tofile(fileh)
-
-
-def open_file(filename, *args, **kwargs):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True):
     """Open a supported file type or fall back to Python built in open function.
 
     ================== ==================================================
@@ -640,136 +806,11 @@ def open_file(filename, *args, **kwargs):
 
     if ext == 'h5':
         # Open HDF5 file
-        return H5_reader(filename, *args, **kwargs)
+        return H5_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
     elif ext == 'fil':
         # Open FIL file
-        return FIL_reader(filename, *args, **kwargs)
+        return FIL_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
     else:
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)
 
-
-class  nonFITS:
-    """ This class is where the filterbank data is loaded, as well as the header info.
-        It creates other atributes related to the search (load_drift_indexes).
-        Similar to FITS, but in this case to load fil not fits.
-
-    """
-    def __init__(self, filename=None, size_limit = 1024.0):
-        if filename and os.path.isfile(filename):
-            self.filename = filename
-            self.filestat = os.stat(filename)
-            filesize = self.filestat.st_size/(1024.0**2)
-            if filesize > size_limit:
-                logger.error("The file is of size %f MB, exceeding our size limit %f MB. Aborting..."%(filesize, size_limit))
-                return None
-            try:
-                fil_file2=fr2.DataReader(filename)  # Will be replaced by danny's filterbank...
-                fil_file=fr.Filterbank(filename)
-                header = self.make_fits_header(fil_file2.headerinfo)
-#EE_fil2                header = self.make_fits_header(fil_file.header)
-            except:
-                logger.error("Error encountered when trying to open FITS file %s"%filename)
-                self.status = False
-                return None
-            self.fftlen = header['NAXIS1']
-            self.tsteps_valid = header['NAXIS2']
-            self.tsteps = int(math.pow(2, math.ceil(np.log2(math.floor(self.tsteps_valid)))))   ## what is this for??
-            self.obs_length = self.tsteps_valid * header['DELTAT']
-            self.shoulder_size = 0
-            self.tdwidth = self.fftlen + self.shoulder_size*self.tsteps  ##EE why is this multiplied by 8? This gives two regions, each of 4*steps, around spectra[i]
-            self.drift_rate_resolution = (1e6 * header['DELTAF']) / self.obs_length
-            self.nom_max_drift = self.drift_rate_resolution * self.tsteps_valid  ##EE Do I need tsteps here?
-
-            ##EE: debug. Skyping barycenter for now. Would need to debug it first.
-            if logger.getEffectiveLevel() > 1000:  ##EE: logging.getLevelName(10)='DEBUG'
-
-                self.header = barycenter.correct(header, self.obs_length)
-                logger.info('barycenter done for fits file %s! baryv: %f'%(filename, self.header['baryv']))
-            else:
-                self.header = header
-                self.header['baryv'] = 0.0
-                self.header['barya'] = 0.0
-
-            # some default values
-            self.original_vals= {'tsteps_valid': self.tsteps_valid, 'tsteps': self.tsteps,
-                                 'tdwidth': self.tdwidth, 'fftlen':self.fftlen}
-            self.compressed_t = False
-            self.compressed_f = False
-            self.status = True
-
-    @staticmethod
-    def make_fits_header(header,LOFAR=False):
-        '''Takes .fil header into fits header format '''
-
-        base_header = {}
-        base_header['SIMPLE'] = True
-        base_header['NAXIS'] = 2
-
-        base_header['DOPPLER'] = 0.0
-        base_header['SNR'] = 0.0
-        base_header['EXTEND'] = True
-        base_header['XTENSION'] = 'IMAGE   '
-        base_header['PCOUNT'] = 1
-        base_header['GCOUNT'] = 1
-
-        if '32' in header['Number of bits per sample']:
-            base_header['BITPIX'] = -32
-        else:
-            raise ValueError('Check nbits per sample. Not equeal 32')
-
-        base_header['NAXIS1'] = int(header['Number of channels'])  #nchans
-#EE_fil2        base_header['NAXIS1'] = int(header['nchans'])  #nchans
-        base_header['NAXIS2'] = int(header['Number of samples'])
-#EE_fil2        base_header['NAXIS2'] = int(header[''])
-        base_header['DELTAT'] = float(header['Sample time (us)'])/1e6
-        base_header['MJD'] = float(header['Time stamp of first sample (MJD)'])
-        base_header['TOFFSET'] = float(header['Sample time (us)'])/1e6
-#EE_fil2        base_header['DELTAT'] = float(header['tsamp'])
-#EE_fil2        base_header['MJD'] = float(header['tstart'])
-#EE_fil2        base_header['TOFFSET'] = float(header['tsamp)'])
-        base_header['DELTAF'] =  np.abs(float(header['Channel bandwidth      (MHz)']))
-#EE_fil2        base_header['DELTAF'] =  np.abs(float(header['foff']))
-        base_header['SOURCE'] = header['Source Name'].replace('\xc2\xa0','_').replace(' ','')  #Removing white spaces and bad formats
-#EE_fil2        base_header['SOURCE'] = header['source_name'].replace('\xc2\xa0','_').replace(' ','')   #Removing white spaces and bad formats
-        base_header['FCNTR'] = float(header['Frequency of channel 1 (MHz)']) - base_header['DELTAF']*base_header['NAXIS1']/2
-#EE_fil2        base_header['FCNTR'] = float(header['fch1']) - base_header['DELTAF']*base_header['NAXIS1']/2
-        base_header['DEC'] = float(header['Source DEC (J2000)'])
-        base_header['RA'] = float(header['Source RA (J2000)'])
-#EE_fil2        base_header['DEC'] = float(header['Source DEC (J2000)'])
-#EE_fil2        base_header['RA'] = float(header['Source RA (J2000)'])
-
-        return base_header
-
-    def load_data(self, max_search_rate=None, bw_compress_width=None, logwriter=None):
-        ''' Read all the data from file.
-        '''
-
-#EE_fil        fil_file = fr2.DataReader(self.filename)
-        fil_file = fr.Filterbank(filename)
-#EE_fil        spec = fil_file.read_all()
-        spec = np.squeeze(fil_file.data)
-        spectra = np.array(spec, dtype=np.float64)
-
-        if spectra.shape != (self.tsteps_valid, self.fftlen):
-            raise ValueError('Something is wrong with array size.')
-
-        drift_indexes = self.load_drift_indexes()
-
-        return spectra, drift_indexes
-
-    def load_drift_indexes(self):
-        ''' The drift indexes are read from an stored file so that no need to recalculate. This speed things up.
-        '''
-        n = int(np.log2(self.tsteps))
-        if n > 9:
-            di_array = np.genfromtxt(resource_filename('dedoppler_bones', '../drift_indexes/drift_indexes_array_%d.txt'%n), delimiter=' ', dtype=int)
-        else:
-            di_array = np.genfromtxt(resource_filename('dedoppler_bones', '../drift_indexes/drift_indexes_array_%d.txt'%n), delimiter='\t', dtype=int)
-
-        ts2 = self.tsteps/2
-        drift_indexes = di_array[self.tsteps_valid - 1 - ts2, 0:self.tsteps_valid]
-        return drift_indexes
-
-    def get_info(self):
-        return ""
