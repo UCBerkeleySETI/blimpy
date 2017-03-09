@@ -31,7 +31,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 # Config values
 ###
 
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 256.        # Max size of data array to load into memory (in bytes)
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 2 #256.        # Max size of data array to load into memory (in bytes)
 
 
 class  H5_reader(object):
@@ -39,7 +39,6 @@ class  H5_reader(object):
     '''
 
     #EE check freq axis.
-
 
     def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
         """ Constructor.
@@ -69,6 +68,9 @@ class  H5_reader(object):
                 self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+
+            self.t_begin = 0
+            self.t_end = self.n_ints_in_file
 
             self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
             self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
@@ -108,6 +110,11 @@ class  H5_reader(object):
     def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
         '''Making sure the selection if time and frequency are within the file limits.
         '''
+
+        if t_stop < t_start:
+            logger.error('Please give t_stop > t_start values.')
+        if f_stop < f_start:
+            logger.error('Please give f_stop > f_start values.')
 
         if t_start and t_start >= 0:
             self.t_start = int(t_start)
@@ -163,12 +170,10 @@ class  H5_reader(object):
 
         #Check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
-
         #Check to see how many frequency channels requested
         n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
 
         n_bytes  = self.__n_bytes
-
         selection_size = n_ints*n_chan*n_bytes
 
         return selection_size
@@ -179,9 +184,8 @@ class  H5_reader(object):
 
         #Check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
-
         #Check to see how many frequency channels requested
-        n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
+        n_chan = int((self.f_stop - self.f_start) / abs(self.header['foff']))
 
         selection_shape = (n_ints,self.header['nifs'],n_chan)
 
@@ -192,13 +196,13 @@ class  H5_reader(object):
         '''
 
         if not f_start:
-            f_start = self.f_start
+            f_start = self.f_begin
         if not f_stop:
-            f_stop = self.f_stop
+            f_stop = self.f_end
         if not t_start:
-            t_start = self.t_start
+            t_start = self.t_begin
         if not t_stop:
-            t_stop = self.t_stop
+            t_stop = self.t_end
 
         self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
@@ -214,13 +218,12 @@ class  H5_reader(object):
     def __setup_freqs(self):
         ## Setup frequency axis
         f0 = self.header['fch1']
-        delta_freq = self.header['foff']
 
         i_start, i_stop = 0, self.n_channels_in_file
         if self.f_start:
-            i_start = (self.f_start - f0) / delta_freq
+            i_start = (self.f_start - f0) / self.header['foff']
         if self.f_stop:
-            i_stop  = (self.f_stop - f0)  / delta_freq
+            i_stop  = (self.f_stop - f0)  / self.header['foff']
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -232,9 +235,9 @@ class  H5_reader(object):
         else:
             i_vals = np.arange(chan_stop_idx, chan_start_idx)
 
-        self.freqs = delta_freq * i_vals + f0
+        self.freqs = self.header['foff'] * i_vals + f0
 
-        if delta_freq < 0:
+        if self.header['foff'] < 0:
             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
@@ -272,6 +275,9 @@ class  FIL_reader(object):
             else:
                 self.f_begin  = self.header['fch1']
                 self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+
+            self.t_begin = 0
+            self.t_end = self.n_ints_in_file
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
@@ -314,15 +320,14 @@ class  FIL_reader(object):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __setup_selection_range(self,f_start=None, f_stop=None,t_start=None, t_stop=None):
+    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
         '''Making sure the selection if time and frequency are within the file limits.
         '''
 
         if t_stop < t_start:
-            raise ErrorValue('Please give t_stop > t_start values.')
-
+            logger.error('Please give t_stop > t_start values.')
         if f_stop < f_start:
-            raise ErrorValue('Please give f_stop > f_start values.')
+            logger.error('Please give f_stop > f_start values.')
 
         if t_start and t_start >= 0:
             self.t_start = int(t_start)
@@ -352,12 +357,10 @@ class  FIL_reader(object):
 
         #Check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
-
         #Check to see how many frequency channels requested
         n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
 
         n_bytes  = self.__n_bytes
-
         selection_size = n_ints*n_chan*n_bytes
 
         return selection_size
@@ -368,7 +371,6 @@ class  FIL_reader(object):
 
         #Check how many integrations were requested
         n_ints = self.t_stop - self.t_start
-
         #Check how many frequency channels were requested
         n_chan = int((self.f_stop - self.f_start) / abs(self.header['foff']))
 
@@ -533,13 +535,12 @@ class  FIL_reader(object):
     def __setup_freqs(self,):
         ## Setup frequency axis
         f0 = self.header['fch1']
-        delta_freq = self.header['foff']
 
         i_start, i_stop = 0, self.n_channels_in_file
         if self.f_start:
-            i_start = (self.f_start - f0) / delta_freq
+            i_start = (self.f_start - f0) / self.header['foff']
         if self.f_stop:
-            i_stop  = (self.f_stop - f0)  / delta_freq
+            i_stop  = (self.f_stop - f0)  / self.header['foff']
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -551,9 +552,9 @@ class  FIL_reader(object):
         else:
             i_vals = np.arange(chan_stop_idx, chan_start_idx)
 
-        self.freqs = delta_freq * i_vals + f0
+        self.freqs = self.header['foff'] * i_vals + f0
 
-        if delta_freq < 0:
+        if self.header['foff'] < 0:
             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
@@ -610,9 +611,6 @@ class  FIL_reader(object):
             return None
             load_data = False
 
-        ## Setup frequency axis
-        delta_freq = self.header['foff']
-
         #convert input frequencies into what their corresponding index would be
         i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs()
 
@@ -652,7 +650,7 @@ class  FIL_reader(object):
                     dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
                     # Reverse array if frequency axis is flipped
-                    if delta_freq < 0:
+                    if self.header['foff'] < 0:
                         dd = dd[::-1]
 
                     self.data[ii, jj] = dd
@@ -701,6 +699,9 @@ class  FIL_reader(object):
         else:
             logger.debug('DD shape != blob shape.')
             blob = dd.reshape((dd.shape[0]/blob_dim[2],blob_dim[1],blob_dim[2]))
+
+        if self.header['foff'] < 0:
+            blob = blob[:,:,::-1]
 
         return blob
 
@@ -780,37 +781,6 @@ class  FIL_reader(object):
         if reverse:
             data = data[:,::-1]
         return data
-
-
-
-    def write_file(self, filename_out):
-        """ Write data to filterbank file.
-
-        Args:
-            filename_out (str): Name of output file
-        """
-
-
-
-        raise NotImplementedError('For now, writing files will be still implemented by filterbank.py')
-
-
-        #rewrite header to be consistent with modified data
-        self.header['fch1']   = self.freqs[0]
-        self.header['foff']   = self.freqs[1] - self.freqs[0]
-        self.header['nchans'] = self.freqs.shape[0]
-
-        n_bytes  = self.__n_bytes
-
-        with open(filename_out, "w") as fileh:
-            fileh.write(generate_sigproc_header(self))
-            j = self.data
-            if n_bytes == 4:
-                np.float32(j[:, ::-1].ravel()).tofile(fileh)
-            elif n_bytes == 2:
-                np.int16(j[:, ::-1].ravel()).tofile(fileh)
-            elif n_bytes == 1:
-                np.int8(j[:, ::-1].ravel()).tofile(fileh)
 
 
 def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True):
