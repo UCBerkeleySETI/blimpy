@@ -23,6 +23,7 @@ TODO: check the file seek logic works correctly for multiple IFs
 
 import os
 import sys
+import time
 import struct
 import numpy as np
 from pprint import pprint
@@ -35,6 +36,9 @@ import h5py
 
 import file_wrapper as fw
 from utils import db, lin, rebin, closest
+import bitshuffle.h5
+
+import pdb;# pdb.set_trace()
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if os.environ.has_key('DISPLAY'):
@@ -44,14 +48,32 @@ else:
     matplotlib.use('Agg')
     import pylab as plt
 
+
+#------
+# Logging set up
+import logging
+logger = logging.getLogger(__name__)
+
+level_log = logging.INFO
+
+if level_log == logging.INFO:
+    stream = sys.stdout
+    format = '%(name)-15s %(levelname)-8s %(message)s'
+else:
+    stream =  sys.stderr
+    format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
+
+logging.basicConfig(format=format,stream=stream,level = level_log)
+
+
 ###
 # Config values
 ###
 
 MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
+MAX_BLOB_MB         = 2   #256          # Max size of blob in MB
 
 ###
 # Header parsing
@@ -226,24 +248,30 @@ class Filterbank(object):
         if filename:
             self.filename = filename
             self.ext = filename.split(".")[-1].strip().lower()  #File extension
-            self.container = fw.open_file(filename)
+            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
             self.__setup_time_axis()
             self.heavy =  self.container.heavy
+            self.file_shape = self.container.file_shape
+            self.file_size_bytes = self.container.file_size_bytes
+            self.selection_shape = self.container.selection_shape
+            self.n_channels_in_file = self.container.n_channels_in_file
 
-            #Loading data (default for light files).
-            if self.container.data is not None:
-                self.data = self.container.data
-                self.freqs = self.container.freqs
-            else:
-                self.data = None
-                self.freqs = None
+            self.__load_data()
 
         elif header_dict is not None and data_array is not None:
             self.gen_from_header(header_dict, data_array)
         else:
             pass
+
+    def __load_data(self):
+        '''
+        '''
+
+        self.data = self.container.data
+        self.freqs = self.container.freqs
+        self.timestamps = self.container.timestamps
 
     def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         self.filename = ''
@@ -298,11 +326,13 @@ class Filterbank(object):
         t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
-    def read_data(self, filename=None, f_start=None, f_stop=None,
-                        t_start=None, t_stop=None, load_data=True):
+    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
+        ''' Reads data selection if small enough.
+        '''
 
-        print 'place holder'
+        self.container.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
+        self.__load_data()
 
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
@@ -331,11 +361,10 @@ class Filterbank(object):
 
         print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
         if self.data is not None:
-            print "%16s : %32s" % ("Data shape", self.data.shape)
+            print "%16s : %32s" % ("Data shape", self.file_shape)
         if self.freqs is not None:
             print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
             print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
-
 
     def grab_data(self, f_start=None, f_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
@@ -701,10 +730,110 @@ class Filterbank(object):
 
     def write_to_hdf5(self, filename_out, *args, **kwargs):
         """ Write data to HDF5 file.
+            It check the file size then decides how to write the file.
 
         Args:
             filename_out (str): Name of output file
         """
+
+        if self.heavy:
+            self.__write_to_hdf5_heavy(filename_out)
+        else:
+            self.__write_to_hdf5_light(filename_out)
+
+    def __write_to_hdf5_heavy(self, filename_out, *args, **kwargs):
+        """ Write data to HDF5 file.
+
+        Args:
+            filename_out (str): Name of output file
+        """
+
+        t0 = time.time()
+        block_size = 0
+
+        #Note that I make the intentional difference between a chunk and a blob here.
+        chunk_dim = self.__get_chunk_dimentions()
+        blob_dim = self.__get_blob_dimentions(chunk_dim)
+        n_blobs = self.container.calc_n_blobs(blob_dim)
+
+        with h5py.File(filename_out, 'w') as h5:
+
+#            h5.attrs['CLASS'] = 'FILTERBANK'
+
+            dset = h5.create_dataset('data',
+                              shape=self.file_shape,
+                              chunks=chunk_dim,
+#                               compression=bitshuffle.h5.H5FILTER,
+#                               compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+                              compression="lzf",
+                              dtype=self.data.dtype)
+
+            dset_mask = h5.create_dataset('mask',
+                                     shape=self.file_shape,
+                                     chunks=chunk_dim,
+#                                      compression=bitshuffle.h5.H5FILTER,
+#                                      compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+                              compression="lzf",
+                                     dtype='uint8')
+
+            dset.dims[0].label = "frequency"
+            dset.dims[1].label = "feed_id"
+            dset.dims[2].label = "time"
+
+            dset_mask.dims[0].label = "frequency"
+            dset_mask.dims[1].label = "feed_id"
+            dset_mask.dims[2].label = "time"
+
+            # Copy over header information as attributes
+            for key, value in self.header.items():
+                dset.attrs[key] = value
+
+            if blob_dim[2] < self.n_channels_in_file:
+
+                logger.info('Filling in with data over %i n_blobs...'% n_blobs)
+                for ii in range(0, n_blobs):
+                    logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+
+                    bob = self.container.read_blob(blob_dim,n_blob=ii)
+
+                    # Reverse array if frequency axis is flipped
+                    c_start = self.container.c_start() + ii*blob_dim[2]
+                    t_start = self.container.t_start + (c_start/self.n_channels_in_file)*blob_dim[0]
+                    t_stop = t_start + blob_dim[0]
+
+                    if self.header['foff'] < 0:
+                        c_start = self.n_channels_in_file - (c_start)%self.n_channels_in_file
+                        c_stop = c_start - blob_dim[2]
+                    else:
+                        c_start = (c_start)%self.n_channels_in_file
+                        c_stop = c_start + blob_dim[2]
+
+                    logger.debug(t_start,t_stop,c_start,c_stop)
+
+                    dset[t_start:t_stop,0,c_start:c_stop] = bob[:]
+
+            else:
+
+                logger.info('Filling in with data over %i n_blobs...'% n_blobs)
+                for ii in range(0, n_blobs):
+                    logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+
+                    bob = self.container.read_blob(blob_dim,n_blob=ii)
+                    t_start = self.container.t_start + ii*blob_dim[0]
+                    t_stop = min((ii+1)*blob_dim[0],self.n_ints_in_file)
+
+                    dset[t_start:t_stop] = bob[:]
+
+        t1 = time.time()
+        logger.info('Conversion time: %2.2fsec' % (t1- t0))
+
+    def __write_to_hdf5_light(self, filename_out, *args, **kwargs):
+        """ Write data to HDF5 file in one go.
+
+        Args:
+            filename_out (str): Name of output file
+        """
+
 
         with h5py.File(filename_out, 'w') as h5:
 
@@ -713,7 +842,7 @@ class Filterbank(object):
                               compression='lzf')
 
             dset_mask = h5.create_dataset('mask',
-                                     shape=self.data.shape,
+                                     shape=self.file_shape,
                                      compression='lzf',
                                      dtype='uint8')
 
@@ -729,6 +858,38 @@ class Filterbank(object):
             for key, value in self.header.items():
                 dset.attrs[key] = value
 
+    def __get_blob_dimentions(self,chunk_dim):
+        ''' Sets the blob dimmentions, trying to read around 256 MiB at a time. This is assuming chunk is about 1 MiB.
+        '''
+
+        freq_axis_size = min(self.n_channels_in_file,chunk_dim[2]*MAX_BLOB_MB)
+        time_axis_size = chunk_dim[0] * MAX_BLOB_MB * chunk_dim[2] / freq_axis_size
+
+        blob_dim = (time_axis_size, 1, freq_axis_size)
+
+        return blob_dim
+
+    def __get_chunk_dimentions(self):
+        ''' Sets the chunking dimmentions depending on the file type.
+        '''
+
+        if 'gpuspec.0000.' in self.filename:
+            logger.info('Detecting high frequency resolution data.')
+            chunk_dim = (1,1,1048576)
+            return chunk_dim
+        elif 'gpuspec.0001.' in self.filename:
+            logger.info('Detecting high time resolution data.')
+            chunk_dim = (512,1,2048)
+            return chunk_dim
+        elif 'gpuspec.0002.' in self.filename:
+            logger.info('Detecting intermediate frequency and time resolution data.')
+            chunk_dim = (10,1,65536)
+#            chunk_dim = (1,1,65536/4)
+            return chunk_dim
+        else:
+            logger.warning('File format not know. Will use autoblobing.')
+            chunk_dim = True
+            return chunk_dim
 
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on filterbank files """
@@ -767,35 +928,36 @@ def cmd_tool(args=None):
     parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
                         help='Filename output (if not probided, the name will be the same but with apropiate extension).')
 
-    args = parser.parse_args()
+    parse_args = parser.parse_args()
 
     # Open filterbank data
-    filename = args.filename
-    load_data = not args.info_only
-    info_only = args.info_only
-    filename_out = args.filename_out
-
+    filename = parse_args.filename
+    load_data = not parse_args.info_only
+    info_only = parse_args.info_only
+    filename_out = parse_args.filename_out
 
     # only load one integration if looking at spectrum
-    wtp = args.what_to_plot
+    wtp = parse_args.what_to_plot
     if not wtp or 's' in wtp:
-        if args.t_start == None:
+        if parse_args.t_start == None:
             t_start = 0
         else:
-            t_start = args.t_start
+            t_start = parse_args.t_start
         t_stop  = t_start + 1
 
-        if args.average:
+        if parse_args.average:
             t_start = None
             t_stop  = None
     else:
-        t_start = args.t_start
-        t_stop  = args.t_stop
+        t_start = parse_args.t_start
+        t_stop  = parse_args.t_stop
 
-    fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
+    fil = Filterbank(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop,t_start=parse_args.t_start, t_stop=parse_args.t_stop,load_data=load_data)
     fil.info()
 
-    if fil.heavy or args.to_hdf5 or args.to_fil:
+    #Check the size of selection.
+
+    if fil.heavy or parse_args.to_hdf5 or parse_args.to_fil:
         info_only = True
 
     # And if we want to plot data, then plot data.
@@ -805,46 +967,46 @@ def cmd_tool(args=None):
 
         # check start & stop frequencies make sense
         #try:
-        #    if args.f_start:
-        #        print "Start freq: %2.2f" % args.f_start
-        #        assert args.f_start >= fil.freqs[0] or np.isclose(args.f_start, fil.freqs[0])
+        #    if parse_args.f_start:
+        #        print "Start freq: %2.2f" % parse_args.f_start
+        #        assert parse_args.f_start >= fil.freqs[0] or np.isclose(parse_args.f_start, fil.freqs[0])
         #
-        #    if args.f_stop:
-        #        print "Stop freq: %2.2f" % args.f_stop
-        #        assert args.f_stop <= fil.freqs[-1] or np.isclose(args.f_stop, fil.freqs[-1])
+        #    if parse_args.f_stop:
+        #        print "Stop freq: %2.2f" % parse_args.f_stop
+        #        assert parse_args.f_stop <= fil.freqs[-1] or np.isclose(parse_args.f_stop, fil.freqs[-1])
         #except AssertionError:
         #    print "Error: Start and stop frequencies must lie inside file's frequency range."
         #    print "i.e. between %2.2f-%2.2f MHz." % (fil.freqs[0], fil.freqs[-1])
         #    exit()
 
-        if args.blank_dc:
+        if parse_args.blank_dc:
             print "Blanking DC bin"
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
 
-        if "w" in args.what_to_plot:
+        if "w" in parse_args.what_to_plot:
             plt.figure("waterfall", figsize=(8, 6))
-            fil.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop)
-        elif "s" in args.what_to_plot:
+            fil.plot_waterfall(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
+        elif "s" in parse_args.what_to_plot:
             plt.figure("Spectrum", figsize=(8, 6))
-            fil.plot_spectrum(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
-        elif "mm" in args.what_to_plot:
+            fil.plot_spectrum(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
+        elif "mm" in parse_args.what_to_plot:
             plt.figure("min max", figsize=(8, 6))
-            fil.plot_spectrum_min_max(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
-        elif "k" in args.what_to_plot:
+            fil.plot_spectrum_min_max(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
+        elif "k" in parse_args.what_to_plot:
             plt.figure("kurtosis", figsize=(8, 6))
-            fil.plot_kurtosis(f_start=args.f_start, f_stop=args.f_stop)
-        elif "t" in args.what_to_plot:
+            fil.plot_kurtosis(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
+        elif "t" in parse_args.what_to_plot:
             plt.figure("Time Series", figsize=(8, 6))
-            fil.plot_time_series(f_start=args.f_start, f_stop=args.f_stop)
-        elif "a" in args.what_to_plot:
+            fil.plot_time_series(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
+        elif "a" in parse_args.what_to_plot:
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
-            fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
+            fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
 
-        if args.plt_filename != '':
-            plt.savefig(args.plt_filename)
+        if parse_args.plt_filename != '':
+            plt.savefig(parse_args.plt_filename)
 
-        if not args.save_only:
+        if not parse_args.save_only:
             if os.environ.has_key('DISPLAY'):
                 plt.show()
             else:
@@ -853,10 +1015,10 @@ def cmd_tool(args=None):
 
     else:
 
-        if args.to_hdf5 and args.to_fil:
+        if parse_args.to_hdf5 and parse_args.to_fil:
             raise warning('Either provide to_hdf5 or to_fil, but not both.')
 
-        if args.to_hdf5:
+        if parse_args.to_hdf5:
             if not filename_out:
                 filename_out = filename.replace('.fil','.h5')
             elif '.h5' not in filename_out:
@@ -866,7 +1028,7 @@ def cmd_tool(args=None):
             fil.write_to_hdf5(filename_out)
             print 'File written.'
 
-        if args.to_fil:
+        if parse_args.to_fil:
             if not filename_out:
                 filename_out = filename.replace('.h5','.fil')
             elif '.fil' not in filename_out:
@@ -875,7 +1037,6 @@ def cmd_tool(args=None):
             print 'Writing file : %s'%(filename_out)
             fil.write_to_fil(filename_out)
             print 'File written.'
-
 
 
 if __name__ == "__main__":
