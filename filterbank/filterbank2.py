@@ -23,6 +23,7 @@ TODO: check the file seek logic works correctly for multiple IFs
 
 import os
 import sys
+import time
 import struct
 import numpy as np
 from pprint import pprint
@@ -35,6 +36,9 @@ import h5py
 
 import file_wrapper as fw
 from utils import db, lin, rebin, closest
+import bitshuffle.h5
+
+import pdb;# pdb.set_trace()
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if os.environ.has_key('DISPLAY'):
@@ -44,6 +48,24 @@ else:
     matplotlib.use('Agg')
     import pylab as plt
 
+
+#------
+# Logging set up
+import logging
+logger = logging.getLogger(__name__)
+
+level_log = logging.INFO
+
+if level_log == logging.INFO:
+    stream = sys.stdout
+    format = '%(name)-15s %(levelname)-8s %(message)s'
+else:
+    stream =  sys.stderr
+    format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
+
+logging.basicConfig(format=format,stream=stream,level = level_log)
+
+
 ###
 # Config values
 ###
@@ -51,6 +73,7 @@ else:
 MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
+MAX_BLOB_MB         = 2   #256          # Max size of blob in MB
 
 ###
 # Header parsing
@@ -232,6 +255,8 @@ class Filterbank(object):
             self.heavy =  self.container.heavy
             self.file_shape = self.container.file_shape
             self.file_size_bytes = self.container.file_size_bytes
+            self.selection_shape = self.container.selection_shape
+            self.n_channels_in_file = self.container.n_channels_in_file
 
             self.__load_data()
 
@@ -244,15 +269,9 @@ class Filterbank(object):
         '''
         '''
 
-        #Loading data (default for light files).
-        if self.container.data is not None:
-            self.data = self.container.data
-            self.freqs = self.container.freqs
-            self.timestamps = self.container.timestamps
-        else:
-            self.data = None
-            self.freqs = None
-            self.timestamps = None
+        self.data = self.container.data
+        self.freqs = self.container.freqs
+        self.timestamps = self.container.timestamps
 
     def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         self.filename = ''
@@ -732,20 +751,29 @@ class Filterbank(object):
         t0 = time.time()
         block_size = 0
 
+        #Note that I make the intentional difference between a chunk and a blob here.
+        chunk_dim = self.__get_chunk_dimentions()
+        blob_dim = self.__get_blob_dimentions(chunk_dim)
+        n_blobs = self.container.calc_n_blobs(blob_dim)
+
         with h5py.File(filename_out, 'w') as h5:
 
 #            h5.attrs['CLASS'] = 'FILTERBANK'
 
             dset = h5.create_dataset('data',
                               shape=self.file_shape,
-                              compression=bitshuffle.h5.H5FILTER,
-                              compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
-                              dtype=data_dtype)
+                              chunks=chunk_dim,
+#                               compression=bitshuffle.h5.H5FILTER,
+#                               compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+                              compression="lzf",
+                              dtype=self.data.dtype)
 
             dset_mask = h5.create_dataset('mask',
                                      shape=self.file_shape,
-                                     compression=bitshuffle.h5.H5FILTER,
-                                     compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+                                     chunks=chunk_dim,
+#                                      compression=bitshuffle.h5.H5FILTER,
+#                                      compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+                              compression="lzf",
                                      dtype='uint8')
 
             dset.dims[0].label = "frequency"
@@ -757,27 +785,47 @@ class Filterbank(object):
             dset_mask.dims[2].label = "time"
 
             # Copy over header information as attributes
-            for key, value in fb.header.items():
+            for key, value in self.header.items():
                 dset.attrs[key] = value
 
+            if blob_dim[2] < self.n_channels_in_file:
 
-#            filesize = os.path.getsize(filename)
+                logger.info('Filling in with data over %i n_blobs...'% n_blobs)
+                for ii in range(0, n_blobs):
+                    logger.info('Reading %i of %i' % (ii + 1, n_blobs))
 
+                    bob = self.container.read_blob(blob_dim,n_blob=ii)
 
+                    # Reverse array if frequency axis is flipped
+                    c_start = self.container.c_start() + ii*blob_dim[2]
+                    t_start = self.container.t_start + (c_start/self.n_channels_in_file)*blob_dim[0]
+                    t_stop = t_start + blob_dim[0]
 
-            n_int_per_read = int(self.file_size_bytes / MAX_SIZE / 2)
+                    if self.header['foff'] < 0:
+                        c_start = self.n_channels_in_file - (c_start)%self.n_channels_in_file
+                        c_stop = c_start - blob_dim[2]
+                    else:
+                        c_start = (c_start)%self.n_channels_in_file
+                        c_stop = c_start + blob_dim[2]
 
-            print "Filling in with data over %i reads..." % self.n_int_per_read
-            for ii in range(0, n_int_per_read):
-                print "Reading %i of %i" % (ii + 1, n_int_per_read)
-                #print  ii*n_int_per_read, (ii+1)*n_int_per_read
-                t_start = ii*n_int_per_read
-                t_stop = (ii+1) * n_int_per_read
-                fb = Filterbank(filename, t_start=t_start, t_stop=t_stop)
-                dset[t_start:t_stop] = fb.data[:]
+                    logger.debug(t_start,t_stop,c_start,c_stop)
+
+                    dset[t_start:t_stop,0,c_start:c_stop] = bob[:]
+
+            else:
+
+                logger.info('Filling in with data over %i n_blobs...'% n_blobs)
+                for ii in range(0, n_blobs):
+                    logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+
+                    bob = self.container.read_blob(blob_dim,n_blob=ii)
+                    t_start = self.container.t_start + ii*blob_dim[0]
+                    t_stop = min((ii+1)*blob_dim[0],self.n_ints_in_file)
+
+                    dset[t_start:t_stop] = bob[:]
 
         t1 = time.time()
-        print "Conversion time: %2.2fs" % (t1- t0)
+        logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
     def __write_to_hdf5_light(self, filename_out, *args, **kwargs):
         """ Write data to HDF5 file in one go.
@@ -810,23 +858,38 @@ class Filterbank(object):
             for key, value in self.header.items():
                 dset.attrs[key] = value
 
-    def __get_chunk_dimentions(filename):
+    def __get_blob_dimentions(self,chunk_dim):
+        ''' Sets the blob dimmentions, trying to read around 256 MiB at a time. This is assuming chunk is about 1 MiB.
         '''
+
+        freq_axis_size = min(self.n_channels_in_file,chunk_dim[2]*MAX_BLOB_MB)
+        time_axis_size = chunk_dim[0] * MAX_BLOB_MB * chunk_dim[2] / freq_axis_size
+
+        blob_dim = (time_axis_size, 1, freq_axis_size)
+
+        return blob_dim
+
+    def __get_chunk_dimentions(self):
+        ''' Sets the chunking dimmentions depending on the file type.
         '''
 
-        if 'gpuspec.0000.' in filename:
-            print 'Detecting high frequency resolution data.'
-
-        elif 'gpuspec.0001.' in filename:
-            print 'Detecting high time resolution data.'
-
-        elif 'gpuspec.0002.' in filename:
-            print 'Detecting intermediate frequency and time resolution data.'
-
+        if 'gpuspec.0000.' in self.filename:
+            logger.info('Detecting high frequency resolution data.')
+            chunk_dim = (1,1,1048576)
+            return chunk_dim
+        elif 'gpuspec.0001.' in self.filename:
+            logger.info('Detecting high time resolution data.')
+            chunk_dim = (512,1,2048)
+            return chunk_dim
+        elif 'gpuspec.0002.' in self.filename:
+            logger.info('Detecting intermediate frequency and time resolution data.')
+            chunk_dim = (10,1,65536)
+#            chunk_dim = (1,1,65536/4)
+            return chunk_dim
         else:
-            raise ValueError('File format not know.')   # maybe just to auto chunking then.
-
-
+            logger.warning('File format not know. Will use autoblobing.')
+            chunk_dim = True
+            return chunk_dim
 
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on filterbank files """
@@ -873,7 +936,6 @@ def cmd_tool(args=None):
     info_only = parse_args.info_only
     filename_out = parse_args.filename_out
 
-
     # only load one integration if looking at spectrum
     wtp = parse_args.what_to_plot
     if not wtp or 's' in wtp:
@@ -892,6 +954,8 @@ def cmd_tool(args=None):
 
     fil = Filterbank(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop,t_start=parse_args.t_start, t_stop=parse_args.t_stop,load_data=load_data)
     fil.info()
+
+    #Check the size of selection.
 
     if fil.heavy or parse_args.to_hdf5 or parse_args.to_fil:
         info_only = True
