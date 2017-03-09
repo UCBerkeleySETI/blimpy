@@ -31,7 +31,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 # Config values
 ###
 
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 2 #256.        # Max size of data array to load into memory (in bytes)
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 256.        # Max size of data array to load into memory (in bytes)
 
 
 class  H5_reader(object):
