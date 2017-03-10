@@ -73,7 +73,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
-MAX_BLOB_MB         = 2   #256          # Max size of blob in MB
+MAX_BLOB_MB         = 256                    # Max size of blob in MB
 
 ###
 # Header parsing
@@ -761,20 +761,18 @@ class Filterbank(object):
 #            h5.attrs['CLASS'] = 'FILTERBANK'
 
             dset = h5.create_dataset('data',
-                              shape=self.file_shape,
-                              chunks=chunk_dim,
-#                               compression=bitshuffle.h5.H5FILTER,
-#                               compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
-                              compression="lzf",
-                              dtype=self.data.dtype)
+                            shape=self.file_shape,
+                            chunks=chunk_dim,
+                            compression=bitshuffle.h5.H5FILTER,
+                            compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+                            dtype=self.data.dtype)
 
             dset_mask = h5.create_dataset('mask',
-                                     shape=self.file_shape,
-                                     chunks=chunk_dim,
-#                                      compression=bitshuffle.h5.H5FILTER,
-#                                      compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
-                              compression="lzf",
-                                     dtype='uint8')
+                            shape=self.file_shape,
+                            chunks=chunk_dim,
+                            compression=bitshuffle.h5.H5FILTER,
+                            compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+                            dtype='uint8')
 
             dset.dims[0].label = "frequency"
             dset.dims[1].label = "feed_id"
