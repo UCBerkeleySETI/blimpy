@@ -7,3 +7,4 @@ from . import fil2hdf
 from . import gup2hdf
 from . import filterbank2
 from . import file_wrapper
+from .filterbank2 import Filterbank as Filterbank2
