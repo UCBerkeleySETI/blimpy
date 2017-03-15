@@ -282,6 +282,7 @@ class Filterbank(object):
         self._setup_freqs()
 
     def _setup_freqs(self, f_start=None, f_stop=None):
+
         ## Setup frequency axis
         f0 = self.header['fch1']
         f_delt = self.header['foff']
@@ -342,13 +343,13 @@ class Filterbank(object):
         n_chan = self.data.shape[2]
         n_chan_per_coarse = n_chan / n_coarse_chan
 
-        mid_chan = n_chan_per_coarse / 2
+        mid_chan = (n_chan_per_coarse / 2) - 1
 
-        for ii in range(0, n_coarse_chan-1):
+        for ii in range(n_coarse_chan):
             ss = ii*n_chan_per_coarse
-            self.data[..., ss+mid_chan-1] = self.data[..., ss+mid_chan]
+            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+1:ss+mid_chan+10])
 
-    def info(self):
+    def info(self,):
         """ Print header information """
 
         for key, val in self.header.items():
@@ -765,6 +766,7 @@ class Filterbank(object):
                             chunks=chunk_dim,
                             compression=bitshuffle.h5.H5FILTER,
                             compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+#                            compression="lzf",
                             dtype=self.data.dtype)
 
             dset_mask = h5.create_dataset('mask',
@@ -772,6 +774,7 @@ class Filterbank(object):
                             chunks=chunk_dim,
                             compression=bitshuffle.h5.H5FILTER,
                             compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
+#                            compression="lzf",
                             dtype='uint8')
 
             dset.dims[0].label = "frequency"
@@ -788,7 +791,7 @@ class Filterbank(object):
 
             if blob_dim[2] < self.n_channels_in_file:
 
-                logger.info('Filling in with data over %i n_blobs...'% n_blobs)
+                logger.info('Using %i n_blobs to write the data.'% n_blobs)
                 for ii in range(0, n_blobs):
                     logger.info('Reading %i of %i' % (ii + 1, n_blobs))
 
@@ -812,7 +815,7 @@ class Filterbank(object):
 
             else:
 
-                logger.info('Filling in with data over %i n_blobs...'% n_blobs)
+                logger.info('Using %i n_blobs to write the data.'% n_blobs)
                 for ii in range(0, n_blobs):
                     logger.info('Reading %i of %i' % (ii + 1, n_blobs))
 
