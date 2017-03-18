@@ -258,6 +258,12 @@ class Filterbank(object):
             self.selection_shape = self.container.selection_shape
             self.n_channels_in_file = self.container.n_channels_in_file
 
+            # These values will be modified once code for multi_beam and multi_stokes observations are possible.
+            self.freq_axis = 2
+            self.time_axis = 0
+            self.beam_axis = 1  # Place holder
+            self.stokes_axis = 4  # Place holder
+
             self.__load_data()
 
         elif header_dict is not None and data_array is not None:
@@ -340,7 +346,8 @@ class Filterbank(object):
 
         Note: currently only works if entire filterbank file is read
         """
-        n_chan = self.data.shape[2]
+
+        n_chan = self.data.shape[-1]
         n_chan_per_coarse = n_chan / n_coarse_chan
 
         mid_chan = (n_chan_per_coarse / 2) - 1
@@ -390,19 +397,11 @@ class Filterbank(object):
         return plot_f, plot_data
 
     def calc_n_coarse_chan(self):
-        ''' This makes an attempt to calculate the number of coarse channels in a given file.
+        ''' This makes an attempt to calculate the number of coarse channels in a given freq selection.
             It assumes for now that a single coarse channel is 2.9296875 MHz
         '''
 
-        # Could add a telescope based coarse channel bandwith, or other discriminative.
-        # if telescope_id == 'GBT':
-        # or actually as is currently
-        # if self.header['telescope_id'] == 6:
-
-        coarse_chan_bw = 2.9296875
-
-        bandwith = abs(self.header['nchans']*self.header['foff'])
-        n_coarse_chan = int(bandwith / coarse_chan_bw)
+        n_coarse_chan = self.container.calc_n_coarse_chan()
 
         return n_coarse_chan
 
@@ -789,7 +788,7 @@ class Filterbank(object):
             for key, value in self.header.items():
                 dset.attrs[key] = value
 
-            if blob_dim[2] < self.n_channels_in_file:
+            if blob_dim[self.freq_axis] < self.n_channels_in_file:
 
                 logger.info('Using %i n_blobs to write the data.'% n_blobs)
                 for ii in range(0, n_blobs):
@@ -798,16 +797,16 @@ class Filterbank(object):
                     bob = self.container.read_blob(blob_dim,n_blob=ii)
 
                     # Reverse array if frequency axis is flipped
-                    c_start = self.container.c_start() + ii*blob_dim[2]
-                    t_start = self.container.t_start + (c_start/self.n_channels_in_file)*blob_dim[0]
-                    t_stop = t_start + blob_dim[0]
+                    c_start = self.container.c_start() + ii*blob_dim[self.freq_axis]
+                    t_start = self.container.t_start + (c_start/self.n_channels_in_file)*blob_dim[self.time_axis]
+                    t_stop = t_start + blob_dim[self.freq_axis]
 
                     if self.header['foff'] < 0:
                         c_start = self.n_channels_in_file - (c_start)%self.n_channels_in_file
-                        c_stop = c_start - blob_dim[2]
+                        c_stop = c_start - blob_dim[self.freq_axis]
                     else:
                         c_start = (c_start)%self.n_channels_in_file
-                        c_stop = c_start + blob_dim[2]
+                        c_stop = c_start + blob_dim[self.freq_axis]
 
                     logger.debug(t_start,t_stop,c_start,c_stop)
 
@@ -820,8 +819,8 @@ class Filterbank(object):
                     logger.info('Reading %i of %i' % (ii + 1, n_blobs))
 
                     bob = self.container.read_blob(blob_dim,n_blob=ii)
-                    t_start = self.container.t_start + ii*blob_dim[0]
-                    t_stop = min((ii+1)*blob_dim[0],self.n_ints_in_file)
+                    t_start = self.container.t_start + ii*blob_dim[self.time_axis]
+                    t_stop = min((ii+1)*blob_dim[self.time_axis],self.n_ints_in_file)
 
                     dset[t_start:t_stop] = bob[:]
 
@@ -863,8 +862,8 @@ class Filterbank(object):
         ''' Sets the blob dimmentions, trying to read around 256 MiB at a time. This is assuming chunk is about 1 MiB.
         '''
 
-        freq_axis_size = min(self.n_channels_in_file,chunk_dim[2]*MAX_BLOB_MB)
-        time_axis_size = chunk_dim[0] * MAX_BLOB_MB * chunk_dim[2] / freq_axis_size
+        freq_axis_size = min(self.n_channels_in_file,chunk_dim[self.freq_axis]*MAX_BLOB_MB)
+        time_axis_size = chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size
 
         blob_dim = (time_axis_size, 1, freq_axis_size)
 

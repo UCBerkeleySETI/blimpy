@@ -49,6 +49,8 @@ class  H5_reader(object):
 
         if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
             self.filename = filename
+            self.filestat = os.stat(filename)
+            self.filesize = self.filestat.st_size/(1024.0**2)
             self.load_data = load_data
             self.h5 = h5py.File(self.filename)
             self.__read_header()
@@ -242,6 +244,22 @@ class  H5_reader(object):
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
+    def calc_n_coarse_chan(self):
+        ''' This makes an attempt to calculate the number of coarse channels in a given file.
+            It assumes for now that a single coarse channel is 2.9296875 MHz
+        '''
+
+        # Could add a telescope based coarse channel bandwith, or other discriminative.
+        # if telescope_id == 'GBT':
+        # or actually as is currently
+        # if self.header['telescope_id'] == 6:
+
+        coarse_chan_bw = 2.9296875
+
+        bandwith = abs(self.f_stop - self.f_start)
+        n_coarse_chan = int(bandwith / coarse_chan_bw)
+
+        return n_coarse_chan
 
 class  FIL_reader(object):
     ''' This class handles .fil files.
