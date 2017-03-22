@@ -104,6 +104,8 @@ class Filterbank2(Filterbank):
             data_array (np.array): Create filterbank from header dict + data array
         """
 
+        super(Filterbank, self).__init__(filename, f_start, f_stop, t_start, t_stop, load_data, header_dict, data_array)
+
         if filename:
             self.filename = filename
             self.ext = filename.split(".")[-1].strip().lower()  #File extension
