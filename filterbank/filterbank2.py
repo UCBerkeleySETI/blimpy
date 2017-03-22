@@ -24,18 +24,11 @@ TODO: check the file seek logic works correctly for multiple IFs
 import os
 import sys
 import time
-import struct
-import numpy as np
-from pprint import pprint
-
-from astropy import units as u
-from astropy.coordinates import Angle
-import scipy.stats
-from matplotlib.ticker import NullFormatter
 import h5py
 
-import file_wrapper as fw
-from utils import db, lin, rebin, closest
+from .filterbank import Filterbank
+from . import file_wrapper as fw
+
 try:
     HAS_BITSHUFFLE = True
     import bitshuffle.h5
@@ -43,7 +36,8 @@ except ImportError:
     HAS_BITSHUFFLE = False
     pass
 
-import pdb;# pdb.set_trace()
+#import pdb
+#pdb.set_trace()
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if os.environ.has_key('DISPLAY'):
@@ -87,11 +81,8 @@ from sigproc_header import *
 # Main filterbank class
 ###
 
-class Filterbank(object):
+class Filterbank2(Filterbank):
     """ Class for loading and plotting filterbank data """
-
-    def __repr__(self):
-        return "Filterbank data: %s" % self.filename
 
     def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True,header_dict=None, data_array=None):
         """ Class for loading and plotting filterbank data.
@@ -140,436 +131,23 @@ class Filterbank(object):
             pass
 
     def __load_data(self):
-        '''
-        '''
+        """
+        """
 
         self.data = self.container.data
         self.freqs = self.container.freqs
         self.timestamps = self.container.timestamps
 
-    def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
-        self.filename = ''
-        self.header = header_dict
-        self.data = data_array
-        self.n_ints_in_file = 0
 
-        self._setup_freqs()
-
-    def _setup_freqs(self, f_start=None, f_stop=None):
-
-        ## Setup frequency axis
-        f0 = self.header['fch1']
-        f_delt = self.header['foff']
-
-        i_start, i_stop = 0, self.header['nchans']
-        if f_start:
-            i_start = (f_start - f0) / f_delt
-        if f_stop:
-            i_stop  = (f_stop - f0)  / f_delt
-
-        #calculate closest true index value
-        chan_start_idx = np.int(i_start)
-        chan_stop_idx  = np.int(i_stop)
-
-        #create freq array
-        if i_start < i_stop:
-            i_vals = np.arange(chan_start_idx, chan_stop_idx)
-        else:
-            i_vals = np.arange(chan_stop_idx, chan_start_idx)
-
-        self.freqs = f_delt * i_vals + f0
-
-        if f_delt < 0:
-            self.freqs = self.freqs[::-1]
-
-        return i_start, i_stop, chan_start_idx, chan_stop_idx
-
-    def __setup_time_axis(self,t_start=None, t_stop=None):
-        '''  Setup time axis.
-        '''
-
-        # now check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
-
-        ## Setup time axis
-        t0 = self.header['tstart']
-        t_delt = self.header['tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
-        ''' Reads data selection if small enough.
-        '''
+        """ Reads data selection if small enough.
+        """
 
         self.container.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
         self.__load_data()
-
-    def blank_dc(self, n_coarse_chan):
-        """ Blank DC bins in coarse channels.
-
-        Note: currently only works if entire filterbank file is read
-        """
-
-        n_chan = self.data.shape[-1]
-        n_chan_per_coarse = n_chan / n_coarse_chan
-
-        mid_chan = (n_chan_per_coarse / 2) - 1
-
-        for ii in range(n_coarse_chan):
-            ss = ii*n_chan_per_coarse
-            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+1:ss+mid_chan+10])
-
-    def info(self,):
-        """ Print header information """
-
-        for key, val in self.header.items():
-            if key == 'src_raj':
-                val = val.to_string(unit=u.hour, sep=':')
-            if key == 'src_dej':
-                val = val.to_string(unit=u.deg, sep=':')
-            print "%16s : %32s" % (key, val)
-
-
-        print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
-        if self.data is not None:
-            print "%16s : %32s" % ("Data shape", self.file_shape)
-        if self.freqs is not None:
-            print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
-            print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
-
-    def grab_data(self, f_start=None, f_stop=None, if_id=0):
-        """ Extract a portion of data by frequency range.
-
-        Args:
-            f_start (float): start frequency in MHz
-            f_stop (float): stop frequency in MHz
-            if_id (int): IF input identification (req. when multiple IFs in file)
-
-        Returns:
-            (freqs, data) (np.arrays): frequency axis in MHz and data subset
-        """
-        i_start, i_stop = 0, None
-
-        if f_start:
-            i_start = closest(self.freqs, f_start)
-        if f_stop:
-            i_stop = closest(self.freqs, f_stop)
-
-        plot_f    = self.freqs[i_start:i_stop]
-        plot_data = self.data[:, if_id, i_start:i_stop]
-        return plot_f, plot_data
-
-    def calc_n_coarse_chan(self):
-        ''' This makes an attempt to calculate the number of coarse channels in a given freq selection.
-            It assumes for now that a single coarse channel is 2.9296875 MHz
-        '''
-
-        n_coarse_chan = self.container.calc_n_coarse_chan()
-
-        return n_coarse_chan
-
-    def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
-        """ Plot frequency spectrum of a given file
-
-        Args:
-            t (int): integration number to plot (0 -> len(data))
-            logged (bool): Plot in linear (False) or dB units (True)
-            if_id (int): IF identification (if multiple IF signals in file)
-            c: color for line
-            kwargs: keyword args to be passed to matplotlib plot()
-        """
-        ax = plt.gca()
-
-        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
-
-        if isinstance(t, int):
-            print "extracting integration %i..." % t
-            plot_data = plot_data[t]
-        elif t == 'all':
-            print "averaging along time axis..."
-            plot_data = plot_data.mean(axis=0)
-        else:
-            raise RuntimeError("Unknown integration %s" % t)
-
-        # Rebin to max number of points
-        dec_fac_x = 1
-        if plot_data.shape[0] > MAX_PLT_POINTS:
-            dec_fac_x = plot_data.shape[0] / MAX_PLT_POINTS
-
-        plot_data = rebin(plot_data, dec_fac_x, 1)
-        plot_f    = rebin(plot_f, dec_fac_x, 1)
-
-        if not c:
-            kwargs['c'] = '#333333'
-
-        if logged:
-            plt.plot(plot_f, db(plot_data),label='Stokes I', **kwargs)
-            plt.ylabel("Power [dB]")
-        else:
-
-            plt.plot(plot_f, plot_data,label='Stokes I', **kwargs)
-            plt.ylabel("Power [counts]")
-        plt.xlabel("Frequency [MHz]")
-        plt.legend()
-
-        try:
-            plt.title(self.header['source_name'])
-        except KeyError:
-            plt.title(self.filename)
-
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
-        plt.xlim(plot_f[0], plot_f[-1])
-
-    def plot_spectrum_min_max(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
-        """ Plot frequency spectrum of a given file
-
-        Args:
-            logged (bool): Plot in linear (False) or dB units (True)
-            if_id (int): IF identification (if multiple IF signals in file)
-            c: color for line
-            kwargs: keyword args to be passed to matplotlib plot()
-        """
-        ax = plt.gca()
-
-        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
-
-        fig_max = plot_data[0].max()
-        fig_min = plot_data[0].min()
-
-        print "averaging along time axis..."
-        plot_max = plot_data.max(axis=0)
-        plot_min = plot_data.min(axis=0)
-        plot_data = plot_data.mean(axis=0)
-
-        # Rebin to max number of points
-        dec_fac_x = 1
-        MAX_PLT_POINTS = 8*64  # Low resoluition to see the difference.
-        if plot_data.shape[0] > MAX_PLT_POINTS:
-            dec_fac_x = plot_data.shape[0] / MAX_PLT_POINTS
-
-        plot_data = rebin(plot_data, dec_fac_x, 1)
-        plot_min = rebin(plot_min, dec_fac_x, 1)
-        plot_max = rebin(plot_max, dec_fac_x, 1)
-        plot_f    = rebin(plot_f, dec_fac_x, 1)
-
-        if logged:
-            plt.plot(plot_f, db(plot_data),'k', **kwargs)
-            plt.plot(plot_f, db(plot_max),'b', **kwargs)
-            plt.plot(plot_f, db(plot_min),'b', **kwargs)
-            plt.ylabel("Power [dB]")
-        else:
-            plt.plot(plot_f, plot_data,'k', **kwargs)
-            plt.plot(plot_f, plot_max,'b', **kwargs)
-            plt.plot(plot_f, plot_min,'b', **kwargs)
-            plt.ylabel("Power [counts]")
-        plt.xlabel("Frequency [MHz]")
-
-        try:
-            plt.title(self.header['source_name'])
-        except KeyError:
-            plt.title(self.filename)
-
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
-        plt.xlim(plot_f[0], plot_f[-1])
-        plt.ylim(db(fig_min),db(fig_max))
-
-    def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True,cb=True, **kwargs):
-        """ Plot waterfall of data
-
-        Args:
-            f_start (float): start frequency, in MHz
-            f_stop (float): stop frequency, in MHz
-            logged (bool): Plot in linear (False) or dB units (True),
-            cb (bool): for plotting the colorbar
-            kwargs: keyword args to be passed to matplotlib imshow()
-        """
-        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
-
-        if logged:
-            plot_data = db(plot_data)
-
-        # Make sure waterfall plot is under 4k*4k
-        dec_fac_x, dec_fac_y = 1, 1
-        if plot_data.shape[0] > MAX_IMSHOW_POINTS[0]:
-            dec_fac_x = plot_data.shape[0] / MAX_IMSHOW_POINTS[0]
-
-        if plot_data.shape[1] > MAX_IMSHOW_POINTS[1]:
-            dec_fac_y =  plot_data.shape[1] /  MAX_IMSHOW_POINTS[1]
-
-        plot_data = rebin(plot_data, dec_fac_x, dec_fac_y)
-
-        try:
-            plt.title(self.header['source_name'])
-        except KeyError:
-            plt.title(self.filename)
-
-        plt.imshow(plot_data,
-            aspect='auto',
-            rasterized=True,
-            interpolation='nearest',
-            extent=(plot_f[0], plot_f[-1], self.timestamps[-1], self.timestamps[0]),
-            cmap='viridis',
-            **kwargs
-        )
-        if cb:
-            plt.colorbar()
-        plt.xlabel("Frequency [MHz]")
-        plt.ylabel("Time [MJD]")
-
-    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None , **kwargs):
-        ''' Plot the time series.
-
-         Args:
-            f_start (float): start frequency, in MHz
-            f_stop (float): stop frequency, in MHz
-            logged (bool): Plot in linear (False) or dB units (True),
-            kwargs: keyword args to be passed to matplotlib imshow()
-        '''
-
-        ax = plt.gca()
-        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
-
-        if logged:
-            plot_data = db(plot_data)
-
-        plot_data = plot_data.mean(axis=1)
-
-        if 'v' in orientation:
-            plt.plot(plot_data,range(len(plot_data))[::-1], **kwargs)
-        else:
-            plt.plot(plot_data, **kwargs)
-            plt.xlabel("Time [s]")
-
-        ax.autoscale(axis='both',tight=True)
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
-
-    def plot_kurtosis(self, f_start=None, f_stop=None, if_id=0, **kwargs):
-        ''' Plot kurtosis
-
-         Args:
-            f_start (float): start frequency, in MHz
-            f_stop (float): stop frequency, in MHz
-            kwargs: keyword args to be passed to matplotlib imshow()
-        '''
-        ax = plt.gca()
-
-        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
-        plot_kurtossis = np.zeros(len(plot_f))
-
-        for i in range(len(plot_f)):
-            plot_kurtossis[i] = scipy.stats.kurtosis(plot_data[:,i],nan_policy='omit')
-
-        plt.plot(plot_f, plot_kurtossis, **kwargs)
-        plt.ylabel("Kurtosis")
-        plt.xlabel("Frequency [MHz]")
-
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
-        plt.xlim(plot_f[0], plot_f[-1])
-
-    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0,kutosis=True, **kwargs):
-        """ Plot waterfall of data as well as spectrum; also, placeholder to make even more complicated plots in the future.
-
-        Args:
-            f_start (float): start frequency, in MHz
-            f_stop (float): stop frequency, in MHz
-            logged (bool): Plot in linear (False) or dB units (True),
-            t (int): integration number to plot (0 -> len(data))
-            logged (bool): Plot in linear (False) or dB units (True)
-            if_id (int): IF identification (if multiple IF signals in file)
-            kwargs: keyword args to be passed to matplotlib plot() and imshow()
-        """
-
-        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
-
-        nullfmt = NullFormatter()         # no labels
-
-        # definitions for the axes
-        left, width = 0.35, 0.5
-        bottom, height = 0.45, 0.5
-        width2, height2 = 0.1125, 0.15
-        bottom2, left2 = bottom-height2-.025, left-width2-.02
-        bottom3, left3 = bottom2-height2-.025, 0.075
-
-        rect_waterfall = [left, bottom, width, height]
-        rect_colorbar = [left+width, bottom, .025, height]
-        rect_spectrum = [left, bottom2, width, height2]
-        rect_min_max = [left, bottom3, width, height2]
-        rect_timeseries = [left+width, bottom, width2, height]
-        rect_kurtosis = [left3, bottom3, 0.25, height2]
-        rect_header = [left3-.05, bottom, 0.2, height]
-
-        #--------
-        axWaterfall = plt.axes(rect_waterfall)
-        print 'Ploting Waterfall'
-        self.plot_waterfall(f_start=f_start, f_stop=f_stop,cb=False)
-        plt.xlabel('')
-
-        # no labels
-        axWaterfall.xaxis.set_major_formatter(nullfmt)
-
-        #--------
-#         axColorbar = plt.axes(rect_colorbar)
-#         print 'Ploting Colorbar'
-#         print plot_data.max()
-#         print plot_data.min()
-#
-#         plot_colorbar = range(plot_data.min(),plot_data.max(),int((plot_data.max()-plot_data.min())/plot_data.shape[0]))
-#         plot_colorbar = np.array([[plot_colorbar],[plot_colorbar]])
-#
-#         plt.imshow(plot_colorbar,aspect='auto', rasterized=True, interpolation='nearest',)
-
-#         axColorbar.xaxis.set_major_formatter(nullfmt)
-#         axColorbar.yaxis.set_major_formatter(nullfmt)
-
-#         heatmap = axColorbar.pcolor(plot_data, edgecolors = 'none', picker=True)
-#         plt.colorbar(heatmap, cax = axColorbar)
-
-        #--------
-        axSpectrum = plt.axes(rect_spectrum)
-        print 'Ploting Spectrum'
-        self.plot_spectrum(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
-        plt.title('')
-        axSpectrum.yaxis.tick_right()
-        axSpectrum.yaxis.set_label_position("right")
-        plt.xlabel('')
-        axSpectrum.xaxis.set_major_formatter(nullfmt)
-
-        #--------
-        axTimeseries = plt.axes(rect_timeseries)
-        print 'Ploting Timeseries'
-        self.plot_time_series(f_start=f_start, f_stop=f_stop,orientation='v')
-        axTimeseries.yaxis.set_major_formatter(nullfmt)
-        axTimeseries.xaxis.set_major_formatter(nullfmt)
-
-        #--------
-        #Could exclude since it takes much longer to run than the other plots.
-        if kutosis:
-            axKurtosis = plt.axes(rect_kurtosis)
-            print 'Ploting Kurtosis'
-            self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
-
-        #--------
-        axMinMax = plt.axes(rect_min_max)
-        print 'Ploting Min Max'
-        self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
-        plt.title('')
-        axMinMax.yaxis.tick_right()
-        axMinMax.yaxis.set_label_position("right")
-
-        #--------
-        axHeader = plt.axes(rect_header)
-        print 'Ploting Header'
-        plot_header = '\n'.join(['%s:  %s'%(key.upper(),value) for (key,value) in self.header.items() if 'source_name' not in key])
-        plt.text(0.05,.95,plot_header,ha='left', va='top', wrap=True)
-
-        axHeader.set_axis_bgcolor('white')
-        axHeader.xaxis.set_major_formatter(nullfmt)
-        axHeader.yaxis.set_major_formatter(nullfmt)
 
     def write_to_fil(self, filename_out):
         """ Write data to filterbank file.
@@ -734,8 +312,8 @@ class Filterbank(object):
                 dset.attrs[key] = value
 
     def __get_blob_dimentions(self,chunk_dim):
-        ''' Sets the blob dimmentions, trying to read around 256 MiB at a time. This is assuming chunk is about 1 MiB.
-        '''
+        """ Sets the blob dimmentions, trying to read around 256 MiB at a time. This is assuming chunk is about 1 MiB.
+        """
 
         freq_axis_size = min(self.n_channels_in_file,chunk_dim[self.freq_axis]*MAX_BLOB_MB)
         time_axis_size = chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size
@@ -745,8 +323,8 @@ class Filterbank(object):
         return blob_dim
 
     def __get_chunk_dimentions(self):
-        ''' Sets the chunking dimmentions depending on the file type.
-        '''
+        """ Sets the chunking dimmentions depending on the file type.
+        """
 
         if 'gpuspec.0000.' in self.filename:
             logger.info('Detecting high frequency resolution data.')
@@ -827,7 +405,7 @@ def cmd_tool(args=None):
         t_start = parse_args.t_start
         t_stop  = parse_args.t_stop
 
-    fil = Filterbank(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop,t_start=parse_args.t_start, t_stop=parse_args.t_stop,load_data=load_data)
+    fil = Filterbank2(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop,t_start=parse_args.t_start, t_stop=parse_args.t_stop,load_data=load_data)
     fil.info()
 
     #Check the size of selection.
@@ -894,7 +472,7 @@ def cmd_tool(args=None):
     else:
 
         if parse_args.to_hdf5 and parse_args.to_fil:
-            raise warning('Either provide to_hdf5 or to_fil, but not both.')
+            raise Warning('Either provide to_hdf5 or to_fil, but not both.')
 
         if parse_args.to_hdf5:
             if not filename_out:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-''' This modele handles file types.
-'''
+""" This modele handles file types.
+"""
 
 import os
 import sys
@@ -35,8 +35,8 @@ MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 256.        # Max size of data array to load
 
 
 class  H5_reader(object):
-    ''' This class handles .h5 files.
-    '''
+    """ This class handles .h5 files.
+    """
 
     #EE check freq axis.
 
@@ -110,8 +110,8 @@ class  H5_reader(object):
             raise IOError("Need a file to open, please give me one!")
 
     def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
-        '''Making sure the selection if time and frequency are within the file limits.
-        '''
+        """Making sure the selection if time and frequency are within the file limits.
+        """
 
         if t_stop < t_start:
             logger.error('Please give t_stop > t_start values.')
@@ -155,8 +155,8 @@ class  H5_reader(object):
                 self.header[key] = val
 
     def __setup_time_axis(self,):
-        '''  Setup time axis.
-        '''
+        """  Setup time axis.
+        """
 
         # now check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
@@ -167,8 +167,8 @@ class  H5_reader(object):
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
     def __calc_selection_size(self):
-        '''Calculate size of data of interest.
-        '''
+        """Calculate size of data of interest.
+        """
 
         #Check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
@@ -181,8 +181,8 @@ class  H5_reader(object):
         return selection_size
 
     def __calc_selection_shape(self):
-        '''Calculate shape of data of interest.
-        '''
+        """Calculate shape of data of interest.
+        """
 
         #Check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
@@ -194,8 +194,8 @@ class  H5_reader(object):
         return selection_shape
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
-        ''' Read data
-        '''
+        """ Read data
+        """
 
         if not f_start:
             f_start = self.f_begin
@@ -245,9 +245,9 @@ class  H5_reader(object):
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
     def calc_n_coarse_chan(self):
-        ''' This makes an attempt to calculate the number of coarse channels in a given file.
+        """ This makes an attempt to calculate the number of coarse channels in a given file.
             It assumes for now that a single coarse channel is 2.9296875 MHz
-        '''
+        """
 
         # Could add a telescope based coarse channel bandwith, or other discriminative.
         # if telescope_id == 'GBT':
@@ -262,8 +262,8 @@ class  H5_reader(object):
         return n_coarse_chan
 
 class  FIL_reader(object):
-    ''' This class handles .fil files.
-    '''
+    """ This class handles .fil files.
+    """
 
     def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         """ Constructor.
@@ -339,8 +339,8 @@ class  FIL_reader(object):
             raise IOError("Need a file to open, please give me one!")
 
     def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
-        '''Making sure the selection if time and frequency are within the file limits.
-        '''
+        """Making sure the selection if time and frequency are within the file limits.
+        """
 
         if t_stop < t_start:
             logger.error('Please give t_stop > t_start values.')
@@ -370,8 +370,8 @@ class  FIL_reader(object):
         self.selection_shape = self.__calc_selection_shape()
 
     def __calc_selection_size(self):
-        '''Calculate size of data of interest.
-        '''
+        """Calculate size of data of interest.
+        """
 
         #Check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
@@ -384,8 +384,8 @@ class  FIL_reader(object):
         return selection_size
 
     def __calc_selection_shape(self):
-        '''Calculate shape of data of interest.
-        '''
+        """Calculate shape of data of interest.
+        """
 
         #Check how many integrations were requested
         n_ints = self.t_stop - self.t_start
@@ -578,8 +578,8 @@ class  FIL_reader(object):
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
     def __setup_time_axis(self):
-        '''  Setup time axis.
-        '''
+        """  Setup time axis.
+        """
 
         # now check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
@@ -608,8 +608,8 @@ class  FIL_reader(object):
         print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
-        ''' Read data.
-        '''
+        """ Read data.
+        """
 
         if not f_start:
             f_start = self.f_start
@@ -685,8 +685,8 @@ class  FIL_reader(object):
 
 #    def __read_blob(self,blob_dim,n_blob=0):
     def read_blob(self,blob_dim,n_blob=0):
-        '''Read blob from a selection.
-        '''
+        """Read blob from a selection.
+        """
 
         n_blobs = self.calc_n_blobs(blob_dim)
         if n_blob > n_blobs or n_blob < 0:
@@ -724,8 +724,8 @@ class  FIL_reader(object):
         return blob
 
     def __find_blob_start(self,blob_dim):
-        '''Find first blob from selection.
-        '''
+        """Find first blob from selection.
+        """
 
         #Check which is the blob time offset
         blob_time_start = self.t_start
@@ -739,16 +739,16 @@ class  FIL_reader(object):
 
 #    def __calc_n_blobs(self,blob_dim):
     def calc_n_blobs(self,blob_dim):
-        ''' Given a the blob dimensions, calculate how many fit in the data selection.
-        '''
+        """ Given a the blob dimensions, calculate how many fit in the data selection.
+        """
 
         n_blobs = int(np.ceil(self.__flat_array_dimmention(self.selection_shape)/float(self.__flat_array_dimmention(blob_dim))))
 
         return n_blobs
 
     def __flat_array_dimmention(self,array_dim):
-        '''Multiplies all the dimentions of an array.
-        '''
+        """Multiplies all the dimentions of an array.
+        """
 
         array_flat_size = 1
 
@@ -758,9 +758,9 @@ class  FIL_reader(object):
         return array_flat_size
 
     def calc_n_coarse_chan(self):
-        ''' This makes an attempt to calculate the number of coarse channels in a given file.
+        """ This makes an attempt to calculate the number of coarse channels in a given file.
             It assumes for now that a single coarse channel is 2.9296875 MHz
-        '''
+        """
 
         # Could add a telescope based coarse channel bandwith, or other discriminative.
         # if telescope_id == 'GBT':

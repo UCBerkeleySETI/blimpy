@@ -163,6 +163,22 @@ class Filterbank(object):
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
+    def __setup_time_axis(self,t_start=None, t_stop=None):
+        """  Setup time axis.
+        """
+
+        # now check to see how many integrations requested
+        ii_start, ii_stop = 0, self.n_ints_in_file
+        if t_start:
+            ii_start = t_start
+        if t_stop:
+            ii_stop = t_stop
+        n_ints = ii_stop - ii_start
+
+        ## Setup time axis
+        t0 = self.header['tstart']
+        t_delt = self.header['tsamp']
+
     def read_filterbank(self, filename=None, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
 
@@ -339,17 +355,17 @@ class Filterbank(object):
             It assumes for now that a single coarse channel is 2.9296875 MHz
         '''
 
-        # Could add a telescope based coarse channel bandwith, or other discriminative.
+        # Could add a telescope based coarse channel bandwidth, or other discriminative.
         # if telescope_id == 'GBT':
         # or actually as is currently
         # if self.header['telescope_id'] == 6:
 
         coarse_chan_bw = 2.9296875
 
-        bandwith = abs(self.header['nchans']*self.header['foff'])
-        n_coarse_chan = int(bandwith / coarse_chan_bw)
+        bandwidth = abs(self.header['nchans']*self.header['foff'])
+        n_coarse_chan = int(bandwidth / coarse_chan_bw)
 
-        return n_coarse_chan
+        return max(n_coarse_chan, 1)
 
     def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
         """ Plot frequency spectrum of a given file
@@ -619,7 +635,7 @@ class Filterbank(object):
 
         # --------
         axTimeseries = plt.axes(rect_timeseries)
-        print 'Ploting Timeseries'
+        print 'Plotting Timeseries'
         self.plot_time_series(f_start=f_start, f_stop=f_stop, orientation='v')
         axTimeseries.yaxis.set_major_formatter(nullfmt)
         axTimeseries.xaxis.set_major_formatter(nullfmt)
@@ -628,12 +644,12 @@ class Filterbank(object):
         # Could exclude since it takes much longer to run than the other plots.
         if kutosis:
             axKurtosis = plt.axes(rect_kurtosis)
-            print 'Ploting Kurtosis'
+            print 'Plotting Kurtosis'
             self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
 
         # --------
         axMinMax = plt.axes(rect_min_max)
-        print 'Ploting Min Max'
+        print 'Plotting Min Max'
         self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
         axMinMax.yaxis.tick_right()
@@ -642,7 +658,6 @@ class Filterbank(object):
         # --------
         axHeader = plt.axes(rect_header)
         print 'Plotting Header'
-
         # Generate nicer header
         telescopes = {0: 'Fake data',
                       1: 'Arecibo',
@@ -659,7 +674,7 @@ class Filterbank(object):
 
         telescope = telescopes.get(self.header["telescope_id"], self.header["telescope_id"])
 
-        plot_header  = "%14s: %s\n" % ("TELESCOPE_ID", telescope)
+        plot_header = "%14s: %s\n" % ("TELESCOPE_ID", telescope)
         for key in ('SRC_RAJ', 'SRC_DEJ', 'TSTART', 'NCHANS', 'NBEAMS', 'NIFS', 'NBITS'):
             try:
                 plot_header += "%14s: %s\n" % (key, self.header[key.lower()])
@@ -678,9 +693,6 @@ class Filterbank(object):
         plot_header += "%14s: %s\n" % ("FCH1", fch1)
         plot_header += "%14s: %s\n" % ("FOFF", foff)
 
-
-        #plot_header = '\n'.join(
-        #    ['%16s:  %s' % (key.upper(), value) for (key, value) in self.header.items() if 'source_name' not in key])
         plt.text(0.05, .95, plot_header, ha='left', va='top', wrap=True)
 
         axHeader.set_axis_bgcolor('white')
@@ -694,13 +706,13 @@ class Filterbank(object):
             filename_out (str): Name of output file
         """
 
-        #calibrate data
-        #self.data = calibrate(mask(self.data.mean(axis=0)[0]))
-        #rewrite header to be consistent with modified data
+        # calibrate data
+        # self.data = calibrate(mask(self.data.mean(axis=0)[0]))
+        # rewrite header to be consistent with modified data
         self.header['fch1']   = self.freqs[0]
         self.header['foff']   = self.freqs[1] - self.freqs[0]
         self.header['nchans'] = self.freqs.shape[0]
-        #self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
+        # self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
 
         n_bytes  = self.header['nbits'] / 8
         with open(filename_out, "w") as fileh:
