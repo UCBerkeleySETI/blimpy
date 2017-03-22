@@ -36,7 +36,12 @@ import h5py
 
 import file_wrapper as fw
 from utils import db, lin, rebin, closest
-import bitshuffle.h5
+try:
+    HAS_BITSHUFFLE = True
+    import bitshuffle.h5
+except ImportError:
+    HAS_BITSHUFFLE = False
+    pass
 
 import pdb;# pdb.set_trace()
 
@@ -75,145 +80,8 @@ MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow pl
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
 MAX_BLOB_MB         = 256                    # Max size of blob in MB
 
-###
-# Header parsing
-###
 
-# Dictionary of allowed keywords and their types
-# Here are the keywordss that a filter bank file may
-# contain.  Items marked with "[*]" are not yet # supported.  See docs for
-# indivisuabl attribtues for more detailed info.
-#
-#   * telescope_id (int): 0=fake data; 1=Arecibo; 2=Ooty... others to be added
-#   * machine_id (int): 0=FAKE; 1=PSPM; 2=WAPP; 3=OOTY... others to be added
-#   * data_type (int): 1=filterbank; 2=time series... others to be added
-#   * rawdatafile (string): the name of the original data file
-#   * source_name (string): the name of the source being observed by the telescope
-#   * barycentric (int): equals 1 if data are barycentric or 0 otherwise
-#   * pulsarcentric (int): equals 1 if data are pulsarcentric or 0 otherwise
-#   * az_start (double): telescope azimuth at start of scan (degrees)
-#   * za_start (double): telescope zenith angle at start of scan (degrees)
-#   * src_raj (double): right ascension (J2000) of source (hours, converted from hhmmss.s)
-#   * src_dej (double): declination (J2000) of source (degrees, converted from ddmmss.s)
-#   * tstart (double): time stamp (MJD) of first sample
-#   * tsamp (double): time interval between samples (s)
-#   * nbits (int): number of bits per time sample
-#   * nsamples (int): number of time samples in the data file (rarely used any more)
-#   * fch1 (double): centre frequency (MHz) of first filterbank channel
-#   * foff (double): filterbank channel bandwidth (MHz)
-#   * FREQUENCY_START [*] (character): start of frequency table (see below for explanation)
-#   * fchannel [*] (double): frequency channel value (MHz)
-#   * FREQUENCY_END [*] (character): end of frequency table (see below for explanation)
-#   * nchans (int): number of filterbank channels
-#   * nifs (int): number of seperate IF channels
-#   * refdm (double): reference dispersion measure (pc/cm**3)
-#   * period (double): folding period (s)
-#   * nbeams (int):total number of beams (?)
-#   * ibeam (int): number of the beam in this file (?)
-
-header_keyword_types = {
-    'telescope_id' : '<l',
-    'machine_id'   : '<l',
-    'data_type'    : '<l',
-    'barycentric'  : '<l',
-    'pulsarcentric': '<l',
-    'nbits'        : '<l',
-    'nsamples'     : '<l',
-    'nchans'       : '<l',
-    'nifs'         : '<l',
-    'nbeams'       : '<l',
-    'ibeam'        : '<l',
-    'rawdatafile'  : 'str',
-    'source_name'  : 'str',
-    'az_start'     : '<d',
-    'za_start'     : '<d',
-    'tstart'       : '<d',
-    'tsamp'        : '<d',
-    'fch1'         : '<d',
-    'foff'         : '<d',
-    'refdm'        : '<d',
-    'period'       : '<d',
-    'src_raj'      : 'angle',
-    'src_dej'      : 'angle',
-    }
-
-###
-# sigproc writing functions
-###
-
-def to_sigproc_keyword(keyword, value=None):
-    """ Generate a serialized string for a sigproc keyword:value pair
-
-    If value=None, just the keyword will be written with no payload.
-    Data type is inferred by keyword name (via a lookup table)
-
-    Args:
-        keyword (str): Keyword to write
-        value (None, float, str, double or angle): value to write to file
-
-    Returns:
-        value_str (str): serialized string to write to file.
-    """
-
-    keyword = str(keyword)
-
-    if not value:
-        return np.int32(len(keyword)).tostring() + keyword
-    else:
-        dtype = header_keyword_types[keyword]
-
-        dtype_to_type = {'<l'  : np.int32,
-                         'str' : str,
-                         '<d'  : np.float64,
-                         'angle' : to_sigproc_angle}
-
-        value_dtype = dtype_to_type[dtype]
-
-        if value_dtype is str:
-            return np.int32(len(keyword)).tostring() + keyword + np.int32(len(value)).tostring() + value
-        else:
-            return np.int32(len(keyword)).tostring() + keyword + value_dtype(value).tostring()
-
-def generate_sigproc_header(f):
-    """ Generate a serialzed sigproc header which can be written to disk.
-
-    Args:
-        f (Filterbank object): Filterbank object for which to generate header
-
-    Returns:
-        header_str (str): Serialized string corresponding to header
-    """
-
-    header_string = ''
-    header_string += to_sigproc_keyword('HEADER_START')
-
-    for keyword in f.header.keys():
-        if keyword == 'src_raj':
-            header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
-        elif keyword == 'src_dej':
-            header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
-        elif keyword == 'az_start' or keyword == 'za_start':
-            header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
-        elif keyword not in header_keyword_types.keys():
-            pass
-        else:
-            header_string += to_sigproc_keyword(keyword, f.header[keyword])
-
-    header_string += to_sigproc_keyword('HEADER_END')
-    return header_string
-
-def to_sigproc_angle(angle_val):
-    """ Convert an astropy.Angle to the ridiculous sigproc angle format string. """
-    x = str(angle_val)
-
-    if 'h' in x:
-        d, m, s, ss = int(x[0:x.index('h')]), int(x[x.index('h')+1:x.index('m')]), \
-        int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
-    if 'd' in x:
-        d, m, s, ss = int(x[0:x.index('d')]), int(x[x.index('d')+1:x.index('m')]), \
-        int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
-    num = str(d).zfill(2) + str(m).zfill(2) + str(s).zfill(2)+ '.' + str(ss).split(".")[-1]
-    return np.float64(num).tostring()
+from .sigproc_header import *
 
 ###
 # Main filterbank class
@@ -758,22 +626,28 @@ class Filterbank(object):
 
         with h5py.File(filename_out, 'w') as h5:
 
-#            h5.attrs['CLASS'] = 'FILTERBANK'
+            h5.attrs['CLASS'] = 'FILTERBANK'
+
+            if HAS_BITSHUFFLE:
+                bs_compression = bitshuffle.h5.H5FILTER
+                bs_compression_opts = (block_size, bitshuffle.h5.H5_COMPRESS_LZ4)
+            else:
+                bs_compression = None
+                bs_compression_opts = None
+                print("Warning: bitshuffle not found. No compression applied.")
 
             dset = h5.create_dataset('data',
                             shape=self.file_shape,
                             chunks=chunk_dim,
-                            compression=bitshuffle.h5.H5FILTER,
-                            compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
-#                            compression="lzf",
+                            compression=bs_compression,
+                            compression_opts=bs_compression_opts,
                             dtype=self.data.dtype)
 
             dset_mask = h5.create_dataset('mask',
                             shape=self.file_shape,
                             chunks=chunk_dim,
-                            compression=bitshuffle.h5.H5FILTER,
-                            compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
-#                            compression="lzf",
+                            compression=bs_compression,
+                            compression_opts=bs_compression_opts,
                             dtype='uint8')
 
             dset.dims[0].label = "frequency"
