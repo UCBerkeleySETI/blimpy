@@ -13,7 +13,7 @@ import numpy as np
 MAX_SIZE = 4e9
 
 def cmd_tool(args=None):
-    """ Command line utility for creating HDF5 blio files. """
+    """ Command line utility for creating HDF5 blimpy files. """
     from argparse import ArgumentParser
     parser = ArgumentParser(description="Command line utility for creating HDF5 Filterbank files.")
     parser.add_argument('dirname', type=str, help='Name of directory to read')

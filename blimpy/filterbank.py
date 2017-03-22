@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-# blio.py
+# blimpy.py
 
-Python class and command line utility for reading and plotting blio files.
+Python class and command line utility for reading and plotting blimpy files.
 
 This provides a class, Filterbank(), which can be used to read a .fil file:
 
@@ -62,11 +62,11 @@ MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte b
 
 
 ###
-# Main blio class
+# Main blimpy class
 ###
 
 class Filterbank(object):
-    """ Class for loading and plotting blio data """
+    """ Class for loading and plotting blimpy data """
 
     def __repr__(self):
         return "Filterbank data: %s" % self.filename
@@ -74,23 +74,23 @@ class Filterbank(object):
     def __init__(self, filename=None, f_start=None, f_stop=None,
                  t_start=None, t_stop=None, load_data=True,
                  header_dict=None, data_array=None):
-        """ Class for loading and plotting blio data.
+        """ Class for loading and plotting blimpy data.
 
-        This class parses the blio file and stores the header and data
+        This class parses the blimpy file and stores the header and data
         as objects:
             fb = Filterbank('filename_here.fil')
-            fb.header        # blio header, as a dictionary
-            fb.data          # blio data, as a numpy array
+            fb.header        # blimpy header, as a dictionary
+            fb.data          # blimpy data, as a numpy array
 
         Args:
-            filename (str): filename of blio file.
+            filename (str): filename of blimpy file.
             f_start (float): start frequency in MHz
             f_stop (float): stop frequency in MHz
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
-            header_dict (dict): Create blio from header dictionary + data array
-            data_array (np.array): Create blio from header dict + data array
+            header_dict (dict): Create blimpy from header dictionary + data array
+            data_array (np.array): Create blimpy from header dict + data array
         """
 
         if filename:
@@ -279,7 +279,7 @@ class Filterbank(object):
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
 
-        Note: currently only works if entire blio file is read
+        Note: currently only works if entire blimpy file is read
         """
         n_chan = self.data.shape[2]
         n_chan_per_coarse = n_chan / n_coarse_chan
@@ -698,7 +698,7 @@ class Filterbank(object):
         axHeader.yaxis.set_major_formatter(nullfmt)
 
     def write_to_filterbank(self, filename_out):
-        """ Write data to blio file.
+        """ Write data to blimpy file.
 
         Args:
             filename_out (str): Name of output file
@@ -757,11 +757,11 @@ class Filterbank(object):
 
 
 def cmd_tool(args=None):
-    """ Command line tool for plotting and viewing info on blio files """
+    """ Command line tool for plotting and viewing info on blimpy files """
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description="Command line utility for reading and plotting blio files.")
+    parser = ArgumentParser(description="Command line utility for reading and plotting blimpy files.")
 
     parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, \
@@ -788,7 +788,7 @@ def cmd_tool(args=None):
                        help='Use to not blank DC bin.')
     args = parser.parse_args()
 
-    # Open blio data
+    # Open blimpy data
     filename = args.filename
     load_data = not args.info_only
 

@@ -44,7 +44,7 @@ class  H5_reader(object):
         """ Constructor.
 
         Args:
-            filename (str): filename of blio file.
+            filename (str): filename of blimpy file.
         """
 
         if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
@@ -269,7 +269,7 @@ class  FIL_reader(object):
         """ Constructor.
 
         Args:
-            filename (str): filename of blio file.
+            filename (str): filename of blimpy file.
         """
 
         self.__set_header_keywords_types()
@@ -433,7 +433,7 @@ class  FIL_reader(object):
         self.n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
 
     def __len_header(self):
-        """ Return the length of the blio header, in bytes
+        """ Return the length of the blimpy header, in bytes
 
         Args:
             filename (str): name of file to open
@@ -494,7 +494,7 @@ class  FIL_reader(object):
             return keyword, val, idx
 
     def __read_header(self, return_idxs=False):
-        """ Read blio header and return a Python dictionary of key:value pairs
+        """ Read blimpy header and return a Python dictionary of key:value pairs
 
         Args:
             filename (str): name of file to open
@@ -510,13 +510,13 @@ class  FIL_reader(object):
             header_dict = {}
             header_idxs = {}
 
-            # Check this is a blio file
+            # Check this is a blimpy file
             keyword, value, idx = self.__read_next_header_keyword(fh)
 
             try:
                 assert keyword == 'HEADER_START'
             except AssertionError:
-                raise RuntimeError("Not a valid blio file.")
+                raise RuntimeError("Not a valid blimpy file.")
 
             while True:
                 keyword, value, idx = self.__read_next_header_keyword(fh)

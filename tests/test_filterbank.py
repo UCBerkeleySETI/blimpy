@@ -1,4 +1,4 @@
-from filterbank import Filterbank, read_header, fix_header
+from blimpy import Filterbank, read_header, fix_header
 import pylab as plt
 import numpy as np
 import os
@@ -65,7 +65,7 @@ def test_voyager_fix_header():
     os.remove(new_filename)
 
 def test_filterbank_gen():
-    """ Generate a filterbank from nothing """
+    """ Generate a blimpy from nothing """
     filename = '/bldata/gbt_data/voyager_f1032192_t300_v2.fil'
     fb0 = Filterbank(filename)
     fb0.info()
@@ -73,7 +73,7 @@ def test_filterbank_gen():
     fb = Filterbank(header_dict=fb0.header, data_array=fb0.data)
     fb.info()
 
-    print "Writing to filterbank..."
+    print "Writing to blimpy..."
     fb.write_to_filterbank('test.fil')
 
     print "Writing to hdf5..."

@@ -360,7 +360,7 @@ class GuppiRaw(object):
         plt.show()
 
     def generate_filterbank_header(self, nchans=1, ):
-        """ Generate a blio header dictionary """
+        """ Generate a blimpy header dictionary """
         gp_head = self.read_first_header()
         fb_head = {}
 
