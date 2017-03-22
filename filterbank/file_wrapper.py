@@ -214,7 +214,7 @@ class  H5_reader(object):
             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(selection_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
 
-        self.data = self.h5["data"][self.t_start:self.t_stop,0,self.c_start():self.c_stop()]
+        self.data = self.h5["data"][self.t_start:self.t_stop,:,self.c_start():self.c_stop()]
         self.__setup_freqs()
 
     def __setup_freqs(self):
@@ -756,6 +756,23 @@ class  FIL_reader(object):
             array_flat_size*=a_dim
 
         return array_flat_size
+
+    def calc_n_coarse_chan(self):
+        ''' This makes an attempt to calculate the number of coarse channels in a given file.
+            It assumes for now that a single coarse channel is 2.9296875 MHz
+        '''
+
+        # Could add a telescope based coarse channel bandwith, or other discriminative.
+        # if telescope_id == 'GBT':
+        # or actually as is currently
+        # if self.header['telescope_id'] == 6:
+
+        coarse_chan_bw = 2.9296875
+
+        bandwith = abs(self.f_stop - self.f_start)
+        n_coarse_chan = int(bandwith / coarse_chan_bw)
+
+        return n_coarse_chan
 
     def read_all(self,reverse=True):
         """ read all the data.
