@@ -81,7 +81,7 @@ MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte b
 MAX_BLOB_MB         = 256                    # Max size of blob in MB
 
 
-from .sigproc_header import *
+from sigproc_header import *
 
 ###
 # Main filterbank class
@@ -471,7 +471,7 @@ class Filterbank(object):
         ax.get_xaxis().get_major_formatter().set_useOffset(False)
         plt.xlim(plot_f[0], plot_f[-1])
 
-    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
+    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0,kutosis=True, **kwargs):
         """ Plot waterfall of data as well as spectrum; also, placeholder to make even more complicated plots in the future.
 
         Args:
@@ -481,7 +481,6 @@ class Filterbank(object):
             t (int): integration number to plot (0 -> len(data))
             logged (bool): Plot in linear (False) or dB units (True)
             if_id (int): IF identification (if multiple IF signals in file)
-            c: color for line
             kwargs: keyword args to be passed to matplotlib plot() and imshow()
         """
 
@@ -548,9 +547,11 @@ class Filterbank(object):
         axTimeseries.xaxis.set_major_formatter(nullfmt)
 
         #--------
-        axKurtosis = plt.axes(rect_kurtosis)
-        print 'Ploting Kurtosis'
-        self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
+        #Could exclude since it takes much longer to run than the other plots.
+        if kutosis:
+            axKurtosis = plt.axes(rect_kurtosis)
+            print 'Ploting Kurtosis'
+            self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
 
         #--------
         axMinMax = plt.axes(rect_min_max)
@@ -858,24 +859,27 @@ def cmd_tool(args=None):
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
 
-        if "w" in parse_args.what_to_plot:
+        if parse_args.what_to_plot == "w":
             plt.figure("waterfall", figsize=(8, 6))
             fil.plot_waterfall(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
-        elif "s" in parse_args.what_to_plot:
+        elif parse_args.what_to_plot == "s":
             plt.figure("Spectrum", figsize=(8, 6))
             fil.plot_spectrum(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
-        elif "mm" in parse_args.what_to_plot:
+        elif parse_args.what_to_plot == "mm":
             plt.figure("min max", figsize=(8, 6))
             fil.plot_spectrum_min_max(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
-        elif "k" in parse_args.what_to_plot:
+        elif parse_args.what_to_plot == "k":
             plt.figure("kurtosis", figsize=(8, 6))
             fil.plot_kurtosis(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
-        elif "t" in parse_args.what_to_plot:
+        elif parse_args.what_to_plot == "t":
             plt.figure("Time Series", figsize=(8, 6))
             fil.plot_time_series(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
-        elif "a" in parse_args.what_to_plot:
+        elif parse_args.what_to_plot == "a":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
             fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
+        elif parse_args.what_to_plot == "ank":
+            plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
+            fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all',kutosis=False)
 
         if parse_args.plt_filename != '':
             plt.savefig(parse_args.plt_filename)
