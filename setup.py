@@ -10,18 +10,18 @@ version = '1.0.0'
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
 entry_points = {
     'console_scripts' :
-        ['filutil = filterbank.filterbank:cmd_tool',
-         'rawutil = filterbank.guppi:cmd_tool',
-         'fil2hdf = filterbank.fil2hdf:cmd_tool',
-         'gup2hdf = filterbank.gup2hdf:cmd_tool'
+        ['filutil = blimpy.blimpy:cmd_tool',
+         'rawutil = blimpy.guppi:cmd_tool',
+         'fil2hdf = blimpy.fil2hdf:cmd_tool',
+         'gup2hdf = blimpy.gup2hdf:cmd_tool'
      ]
     }
 
-setup(name='filterbank',
+setup(name='blimpy',
       version=version,
       description='Python utilities for Breakthrough Listen SETI observations',
       install_requires=['astropy', 'numpy', 'cython', 'h5py'],
-      url='https://github.com/ucberkeleyseti/filterbank',
+      url='https://github.com/ucberkeleyseti/blimpy',
       author='Danny Price',
       author_email='dancpr@berkeley.edu',
       license='MIT',
