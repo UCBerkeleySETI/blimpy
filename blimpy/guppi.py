@@ -360,7 +360,7 @@ class GuppiRaw(object):
         plt.show()
 
     def generate_filterbank_header(self, nchans=1, ):
-        """ Generate a filterbank header dictionary """
+        """ Generate a blio header dictionary """
         gp_head = self.read_first_header()
         fb_head = {}
 
@@ -383,7 +383,7 @@ class GuppiRaw(object):
 
         # hardcoded
         fb_head["machine_id"]    = 20
-        fb_head["data_type"]     = 1      # filterbank datatype
+        fb_head["data_type"]     = 1      # blio datatype
         fb_head["barycentric"]      = 0
         fb_head["pulsarcentric"] = 0
         fb_head["nbits"]         = 32

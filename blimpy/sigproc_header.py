@@ -22,7 +22,7 @@ except ImportError:
 #
 #   * telescope_id (int): 0=fake data; 1=Arecibo; 2=Ooty... others to be added
 #   * machine_id (int): 0=FAKE; 1=PSPM; 2=WAPP; 3=OOTY... others to be added
-#   * data_type (int): 1=filterbank; 2=time series... others to be added
+#   * data_type (int): 1=blio; 2=time series... others to be added
 #   * rawdatafile (string): the name of the original data file
 #   * source_name (string): the name of the source being observed by the telescope
 #   * barycentric (int): equals 1 if data are barycentric or 0 otherwise
@@ -35,12 +35,12 @@ except ImportError:
 #   * tsamp (double): time interval between samples (s)
 #   * nbits (int): number of bits per time sample
 #   * nsamples (int): number of time samples in the data file (rarely used any more)
-#   * fch1 (double): centre frequency (MHz) of first filterbank channel
-#   * foff (double): filterbank channel bandwidth (MHz)
+#   * fch1 (double): centre frequency (MHz) of first blio channel
+#   * foff (double): blio channel bandwidth (MHz)
 #   * FREQUENCY_START [*] (character): start of frequency table (see below for explanation)
 #   * fchannel [*] (double): frequency channel value (MHz)
 #   * FREQUENCY_END [*] (character): end of frequency table (see below for explanation)
-#   * nchans (int): number of filterbank channels
+#   * nchans (int): number of blio channels
 #   * nifs (int): number of seperate IF channels
 #   * refdm (double): reference dispersion measure (pc/cm**3)
 #   * period (double): folding period (s)
@@ -74,13 +74,13 @@ header_keyword_types = {
     }
 
 def grab_header(filename):
-    """ Extract the filterbank header from the file
+    """ Extract the blio header from the file
 
     Args:
         filename (str): name of file to open
 
     Returns:
-        header_str (str): filterbank header as a binary string
+        header_str (str): blio header as a binary string
     """
     f = open(filename, 'rb')
     eoh_found = False
@@ -107,7 +107,7 @@ def grab_header(filename):
     return header_str
 
 def len_header(filename):
-    """ Return the length of the filterbank header, in bytes
+    """ Return the length of the blio header, in bytes
 
     Args:
         filename (str): name of file to open
@@ -130,7 +130,7 @@ def len_header(filename):
     return idx_end
 
 def parse_header(filename):
-    """ Parse a header of a filterbank, looking for allowed keywords
+    """ Parse a header of a blio, looking for allowed keywords
 
     Uses header_keyword_types dictionary as a lookup for data types.
 
@@ -212,7 +212,7 @@ def read_next_header_keyword(fh):
         return keyword, val, idx
 
 def read_header(filename, return_idxs=False):
-    """ Read filterbank header and return a Python dictionary of key:value pairs
+    """ Read blio header and return a Python dictionary of key:value pairs
 
     Args:
         filename (str): name of file to open
@@ -228,13 +228,13 @@ def read_header(filename, return_idxs=False):
         header_dict = {}
         header_idxs = {}
 
-        # Check this is a filterbank file
+        # Check this is a blio file
         keyword, value, idx = read_next_header_keyword(fh)
 
         try:
             assert keyword == 'HEADER_START'
         except AssertionError:
-            raise RuntimeError("Not a valid filterbank file.")
+            raise RuntimeError("Not a valid blio file.")
 
         while True:
             keyword, value, idx = read_next_header_keyword(fh)
@@ -259,7 +259,7 @@ def fix_header(filename, keyword, new_value):
         new_value (long, double, angle or string): New value to write.
 
     Notes:
-        This will overwrite the current value of the filterbank with a desired
+        This will overwrite the current value of the blio with a desired
         'fixed' version. Note that this has limited support for patching
         string-type values - if the length of the string changes, all hell will
         break loose.

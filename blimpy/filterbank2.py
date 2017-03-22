@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-# filterbank.py
+# blio.py
 
-Python class and command line utility for reading and plotting filterbank files.
+Python class and command line utility for reading and plotting blio files.
 
 This provides a class, Filterbank(), which can be used to read a .fil file:
 
@@ -78,30 +78,30 @@ MAX_BLOB_MB         = 256                    # Max size of blob in MB
 from sigproc_header import *
 
 ###
-# Main filterbank class
+# Main blio class
 ###
 
 class Filterbank2(Filterbank):
-    """ Class for loading and plotting filterbank data """
+    """ Class for loading and plotting blio data """
 
     def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True,header_dict=None, data_array=None):
-        """ Class for loading and plotting filterbank data.
+        """ Class for loading and plotting blio data.
 
-        This class parses the filterbank file and stores the header and data
+        This class parses the blio file and stores the header and data
         as objects:
             fb = Filterbank('filename_here.fil')
-            fb.header        # filterbank header, as a dictionary
-            fb.data          # filterbank data, as a numpy array
+            fb.header        # blio header, as a dictionary
+            fb.data          # blio data, as a numpy array
 
         Args:
-            filename (str): filename of filterbank file.
+            filename (str): filename of blio file.
             f_start (float): start frequency in MHz
             f_stop (float): stop frequency in MHz
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
-            header_dict (dict): Create filterbank from header dictionary + data array
-            data_array (np.array): Create filterbank from header dict + data array
+            header_dict (dict): Create blio from header dictionary + data array
+            data_array (np.array): Create blio from header dict + data array
         """
 
         super(Filterbank, self).__init__(filename, f_start, f_stop, t_start, t_stop, load_data, header_dict, data_array)
@@ -149,7 +149,7 @@ class Filterbank2(Filterbank):
         self.__load_data()
 
     def write_to_fil(self, filename_out):
-        """ Write data to filterbank file.
+        """ Write data to blio file.
 
         Args:
             filename_out (str): Name of output file
@@ -344,11 +344,11 @@ class Filterbank2(Filterbank):
             return chunk_dim
 
 def cmd_tool(args=None):
-    """ Command line tool for plotting and viewing info on filterbank files """
+    """ Command line tool for plotting and viewing info on blio files """
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
+    parser = ArgumentParser(description="Command line utility for reading and plotting blio files.")
 
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
@@ -382,7 +382,7 @@ def cmd_tool(args=None):
 
     parse_args = parser.parse_args()
 
-    # Open filterbank data
+    # Open blio data
     filename = parse_args.filename
     load_data = not parse_args.info_only
     info_only = parse_args.info_only
