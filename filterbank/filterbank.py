@@ -452,14 +452,14 @@ class Filterbank(object):
         plot_f    = rebin(plot_f, dec_fac_x, 1)
 
         if logged:
-            plt.plot(plot_f, db(plot_data),'k', **kwargs)
-            plt.plot(plot_f, db(plot_max),'b', **kwargs)
-            plt.plot(plot_f, db(plot_min),'b', **kwargs)
+            plt.plot(plot_f, db(plot_data), "#333333", **kwargs)
+            plt.plot(plot_f, db(plot_max),  "#e74c3c", **kwargs)
+            plt.plot(plot_f, db(plot_min),  '#3b5b92', **kwargs)
             plt.ylabel("Power [dB]")
         else:
-            plt.plot(plot_f, plot_data,'k', **kwargs)
-            plt.plot(plot_f, plot_max,'b', **kwargs)
-            plt.plot(plot_f, plot_min,'b', **kwargs)
+            plt.plot(plot_f, plot_data,  "#333333", **kwargs)
+            plt.plot(plot_f, plot_max,   "#e74c3c", **kwargs)
+            plt.plot(plot_f, plot_min,   '#3b5b92', **kwargs)
             plt.ylabel("Power [counts]")
         plt.xlabel("Frequency [MHz]")
 
@@ -516,14 +516,14 @@ class Filterbank(object):
         plt.ylabel("Time [MJD]")
 
     def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None , **kwargs):
-        ''' Plot the time series.
+        """ Plot the time series.
 
          Args:
             f_start (float): start frequency, in MHz
             f_stop (float): stop frequency, in MHz
             logged (bool): Plot in linear (False) or dB units (True),
             kwargs: keyword args to be passed to matplotlib imshow()
-        '''
+        """
 
         ax = plt.gca()
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
@@ -543,22 +543,20 @@ class Filterbank(object):
         ax.get_xaxis().get_major_formatter().set_useOffset(False)
 
     def plot_kurtosis(self, f_start=None, f_stop=None, if_id=0, **kwargs):
-        ''' Plot kurtosis
+        """ Plot kurtosis
 
          Args:
             f_start (float): start frequency, in MHz
             f_stop (float): stop frequency, in MHz
             kwargs: keyword args to be passed to matplotlib imshow()
-        '''
+        """
         ax = plt.gca()
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
-        plot_kurtossis = np.zeros(len(plot_f))
 
-        for i in range(len(plot_f)):
-            plot_kurtossis[i] = scipy.stats.kurtosis(plot_data[:,i],nan_policy='omit')
+        plot_kurtosis = scipy.stats.kurtosis(plot_data, axis=0, nan_policy='omit')
 
-        plt.plot(plot_f, plot_kurtossis, **kwargs)
+        plt.plot(plot_f, plot_kurtosis, **kwargs)
         plt.ylabel("Kurtosis")
         plt.xlabel("Frequency [MHz]")
 
