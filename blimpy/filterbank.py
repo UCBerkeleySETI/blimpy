@@ -554,7 +554,10 @@ class Filterbank(object):
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        plot_kurtosis = scipy.stats.kurtosis(plot_data, axis=0, nan_policy='omit')
+        try:
+            plot_kurtosis = scipy.stats.kurtosis(plot_data, axis=0, nan_policy='omit')
+        except:
+            plot_kurtosis = plot_data*0.0
 
         plt.plot(plot_f, plot_kurtosis, **kwargs)
         plt.ylabel("Kurtosis")
