@@ -140,9 +140,6 @@ class Filterbank2(Filterbank):
         self.freqs = self.container.freqs
         self.timestamps = self.container.timestamps
 
-
-        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
-
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Reads data selection if small enough.
         """

@@ -9,6 +9,6 @@ from . import filterbank2
 from . import file_wrapper
 
 try:
-    from .filterbank2 import Filterbank as Filterbank2
+    from .filterbank2 import Filterbank2
 except ImportError:
     pass
