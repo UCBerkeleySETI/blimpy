@@ -549,7 +549,7 @@ class Filterbank(object):
         ax.get_xaxis().get_major_formatter().set_useOffset(False)
         plt.xlim(plot_f[0], plot_f[-1])
 
-    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
+    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kutosis=True, **kwargs):
         """ Plot waterfall of data as well as spectrum; also, placeholder to make even more complicated plots in the future.
 
         Args:
@@ -559,56 +559,55 @@ class Filterbank(object):
             t (int): integration number to plot (0 -> len(data))
             logged (bool): Plot in linear (False) or dB units (True)
             if_id (int): IF identification (if multiple IF signals in file)
-            c: color for line
             kwargs: keyword args to be passed to matplotlib plot() and imshow()
         """
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        nullfmt = NullFormatter()         # no labels
+        nullfmt = NullFormatter()  # no labels
 
         # definitions for the axes
         left, width = 0.35, 0.5
         bottom, height = 0.45, 0.5
         width2, height2 = 0.1125, 0.15
-        bottom2, left2 = bottom-height2-.025, left-width2-.02
-        bottom3, left3 = bottom2-height2-.025, 0.075
+        bottom2, left2 = bottom - height2 - .025, left - width2 - .02
+        bottom3, left3 = bottom2 - height2 - .025, 0.075
 
         rect_waterfall = [left, bottom, width, height]
-        rect_colorbar = [left+width, bottom, .025, height]
+        rect_colorbar = [left + width, bottom, .025, height]
         rect_spectrum = [left, bottom2, width, height2]
         rect_min_max = [left, bottom3, width, height2]
-        rect_timeseries = [left+width, bottom, width2, height]
+        rect_timeseries = [left + width, bottom, width2, height]
         rect_kurtosis = [left3, bottom3, 0.25, height2]
-        rect_header = [left3-.05, bottom, 0.2, height]
+        rect_header = [left3 - .05, bottom, 0.2, height]
 
-        #--------
+        # --------
         axWaterfall = plt.axes(rect_waterfall)
         print 'Ploting Waterfall'
-        self.plot_waterfall(f_start=f_start, f_stop=f_stop,cb=False)
+        self.plot_waterfall(f_start=f_start, f_stop=f_stop, cb=False)
         plt.xlabel('')
 
         # no labels
         axWaterfall.xaxis.set_major_formatter(nullfmt)
 
-        #--------
-#         axColorbar = plt.axes(rect_colorbar)
-#         print 'Ploting Colorbar'
-#         print plot_data.max()
-#         print plot_data.min()
-#
-#         plot_colorbar = range(plot_data.min(),plot_data.max(),int((plot_data.max()-plot_data.min())/plot_data.shape[0]))
-#         plot_colorbar = np.array([[plot_colorbar],[plot_colorbar]])
-#
-#         plt.imshow(plot_colorbar,aspect='auto', rasterized=True, interpolation='nearest',)
+        # --------
+        #         axColorbar = plt.axes(rect_colorbar)
+        #         print 'Ploting Colorbar'
+        #         print plot_data.max()
+        #         print plot_data.min()
+        #
+        #         plot_colorbar = range(plot_data.min(),plot_data.max(),int((plot_data.max()-plot_data.min())/plot_data.shape[0]))
+        #         plot_colorbar = np.array([[plot_colorbar],[plot_colorbar]])
+        #
+        #         plt.imshow(plot_colorbar,aspect='auto', rasterized=True, interpolation='nearest',)
 
-#         axColorbar.xaxis.set_major_formatter(nullfmt)
-#         axColorbar.yaxis.set_major_formatter(nullfmt)
+        #         axColorbar.xaxis.set_major_formatter(nullfmt)
+        #         axColorbar.yaxis.set_major_formatter(nullfmt)
 
-#         heatmap = axColorbar.pcolor(plot_data, edgecolors = 'none', picker=True)
-#         plt.colorbar(heatmap, cax = axColorbar)
+        #         heatmap = axColorbar.pcolor(plot_data, edgecolors = 'none', picker=True)
+        #         plt.colorbar(heatmap, cax = axColorbar)
 
-        #--------
+        # --------
         axSpectrum = plt.axes(rect_spectrum)
         print 'Ploting Spectrum'
         self.plot_spectrum(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
@@ -618,19 +617,21 @@ class Filterbank(object):
         plt.xlabel('')
         axSpectrum.xaxis.set_major_formatter(nullfmt)
 
-        #--------
+        # --------
         axTimeseries = plt.axes(rect_timeseries)
         print 'Ploting Timeseries'
-        self.plot_time_series(f_start=f_start, f_stop=f_stop,orientation='v')
+        self.plot_time_series(f_start=f_start, f_stop=f_stop, orientation='v')
         axTimeseries.yaxis.set_major_formatter(nullfmt)
         axTimeseries.xaxis.set_major_formatter(nullfmt)
 
-        #--------
-        axKurtosis = plt.axes(rect_kurtosis)
-        print 'Ploting Kurtosis'
-        self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
+        # --------
+        # Could exclude since it takes much longer to run than the other plots.
+        if kutosis:
+            axKurtosis = plt.axes(rect_kurtosis)
+            print 'Ploting Kurtosis'
+            self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
 
-        #--------
+        # --------
         axMinMax = plt.axes(rect_min_max)
         print 'Ploting Min Max'
         self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
@@ -638,11 +639,49 @@ class Filterbank(object):
         axMinMax.yaxis.tick_right()
         axMinMax.yaxis.set_label_position("right")
 
-        #--------
+        # --------
         axHeader = plt.axes(rect_header)
-        print 'Ploting Header'
-        plot_header = '\n'.join(['%s:  %s'%(key.upper(),value) for (key,value) in self.header.items() if 'source_name' not in key])
-        plt.text(0.05,.95,plot_header,ha='left', va='top', wrap=True)
+        print 'Plotting Header'
+
+        # Generate nicer header
+        telescopes = {0: 'Fake data',
+                      1: 'Arecibo',
+                      2: 'Ooty',
+                      3: 'Nancay',
+                      4: 'Parkes',
+                      5: 'Jodrell',
+                      6: 'GBT',
+                      8: 'Effelsberg',
+                      10: 'SRT',
+                      64: 'MeerKAT',
+                      65: 'KAT7'
+                      }
+
+        telescope = telescopes.get(self.header["telescope_id"], self.header["telescope_id"])
+
+        plot_header  = "%14s: %s\n" % ("TELESCOPE_ID", telescope)
+        for key in ('SRC_RAJ', 'SRC_DEJ', 'TSTART', 'NCHANS', 'NBEAMS', 'NIFS', 'NBITS'):
+            try:
+                plot_header += "%14s: %s\n" % (key, self.header[key.lower()])
+            except KeyError:
+                pass
+        fch1 = "%6.6f MHz" % self.header['fch1']
+
+        foff = (self.header['foff'] * 1e6 * u.Hz)
+        if np.abs(foff) > 1e6 * u.Hz:
+            foff = str(foff.to('MHz'))
+        elif np.abs(foff) > 1e3 * u.Hz:
+            foff = str(foff.to('kHz'))
+        else:
+            foff = str(foff.to('Hz'))
+
+        plot_header += "%14s: %s\n" % ("FCH1", fch1)
+        plot_header += "%14s: %s\n" % ("FOFF", foff)
+
+
+        #plot_header = '\n'.join(
+        #    ['%16s:  %s' % (key.upper(), value) for (key, value) in self.header.items() if 'source_name' not in key])
+        plt.text(0.05, .95, plot_header, ha='left', va='top', wrap=True)
 
         axHeader.set_axis_bgcolor('white')
         axHeader.xaxis.set_major_formatter(nullfmt)
