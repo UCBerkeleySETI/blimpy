@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-# blimpy.py
+# filterbank.py
 
-Python class and command line utility for reading and plotting blimpy files.
+Python class and command line utility for reading and plotting filterbank files.
 
 This provides a class, Filterbank(), which can be used to read a .fil file:
 
@@ -344,11 +344,11 @@ class Filterbank2(Filterbank):
             return chunk_dim
 
 def cmd_tool(args=None):
-    """ Command line tool for plotting and viewing info on blimpy files """
+    """ Command line tool for plotting and viewing info on filterbank files """
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description="Command line utility for reading and plotting blimpy files.")
+    parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
     parser.add_argument('filename', type=str,
                         help='Name of file to read')

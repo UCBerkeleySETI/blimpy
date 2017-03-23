@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-# blimpy.py
+# filterbank.py
 
-Python class and command line utility for reading and plotting blimpy files.
+Python class and command line utility for reading and plotting filterbank files.
 
 This provides a class, Filterbank(), which can be used to read a .fil file:
 
@@ -760,11 +760,11 @@ class Filterbank(object):
 
 
 def cmd_tool(args=None):
-    """ Command line tool for plotting and viewing info on blimpy files """
+    """ Command line tool for plotting and viewing info on filterbank files """
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description="Command line utility for reading and plotting blimpy files.")
+    parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
     parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, \
