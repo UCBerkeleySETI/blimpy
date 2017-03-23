@@ -837,24 +837,27 @@ def cmd_tool(args=None):
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
 
-        if "w" in args.what_to_plot:
+        if parse_args.what_to_plot == "w":
             plt.figure("waterfall", figsize=(8, 6))
-            fil.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop)
-        elif "s" in args.what_to_plot:
+            fil.plot_waterfall(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
+        elif parse_args.what_to_plot == "s":
             plt.figure("Spectrum", figsize=(8, 6))
-            fil.plot_spectrum(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
-        elif "mm" in args.what_to_plot:
+            fil.plot_spectrum(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
+        elif parse_args.what_to_plot == "mm":
             plt.figure("min max", figsize=(8, 6))
-            fil.plot_spectrum_min_max(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
-        elif "k" in args.what_to_plot:
+            fil.plot_spectrum_min_max(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
+        elif parse_args.what_to_plot == "k":
             plt.figure("kurtosis", figsize=(8, 6))
-            fil.plot_kurtosis(f_start=args.f_start, f_stop=args.f_stop)
-        elif "t" in args.what_to_plot:
+            fil.plot_kurtosis(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
+        elif parse_args.what_to_plot == "t":
             plt.figure("Time Series", figsize=(8, 6))
-            fil.plot_time_series(f_start=args.f_start, f_stop=args.f_stop)
-        elif "a" in args.what_to_plot:
+            fil.plot_time_series(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
+        elif parse_args.what_to_plot == "a":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
-            fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
+            fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
+        elif parse_args.what_to_plot == "ank":
+            plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
+            fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all',kutosis=False)
 
         if args.plt_filename != '':
             plt.savefig(args.plt_filename)
