@@ -9,8 +9,9 @@ To install, download this repository and then run `python setup.py install` (wit
 
 ### Command line utilities
 
-After installation, two command line utilities will be installed: 
+After installation, two command line utilities will be installed:
 * `filutil`, for plotting and reading filterbank information.
+* `filutil2`, for writing h5 files (but plotting also available).
 * `rawutil`, for plotting data in guppi raw files.
 
 Use the `-h` flag to display command line arguments.
@@ -19,7 +20,7 @@ Use the `-h` flag to display command line arguments.
 The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank format. The `filterbank.py` script provides a Python API for interacting with filterbank data; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/breakthrough/blob/master/GBT/voyager/voyager.ipynb) for an overview.
 
 ```python
-from filterbank import Filterbank
+from blimpy import Filterbank
 fb = Filterbank('/path/to/filterbank.fil')
 fb.info()
 data = fb.data
@@ -29,10 +30,10 @@ data = fb.data
 The [Guppi Raw format](https://github.com/UCBerkeleySETI/breakthrough/blob/master/doc/RAW-File-Format.md) can be read using the `GuppiRaw` class from `guppi.py`:
 
 ```python
-from filterbank import GuppiRaw
+from blimpy import GuppiRaw
 r = GuppiRaw('/path/to/guppirawfile.raw')
 
 header, data = r.read_next_data_block()
 ```
 
-Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files. 
+Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.
