@@ -4,13 +4,14 @@ setup.py -- setup script for fits2hdf package
 """
 from setuptools import setup, find_packages
 
-version = '1.0.0'
+version = '1.1.0'
 
 # create entry points
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
 entry_points = {
     'console_scripts' :
-        ['filutil = blimpy.blimpy:cmd_tool',
+        ['filutil = blimpy.filterbank:cmd_tool',
+         'filutil2 = blimpy.filterbank2:cmd_tool',
          'rawutil = blimpy.guppi:cmd_tool',
          'fil2hdf = blimpy.fil2hdf:cmd_tool',
          'gup2hdf = blimpy.gup2hdf:cmd_tool'
