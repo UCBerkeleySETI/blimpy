@@ -789,7 +789,7 @@ def cmd_tool(args=None):
                        help='Turn off plotting of data and only save to file.')
     parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
                        help='Use to not blank DC bin.')
-    args = parser.parse_args()
+    args = parser.args()
 
     # Open blimpy data
     filename = args.filename
@@ -837,27 +837,27 @@ def cmd_tool(args=None):
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
 
-        if parse_args.what_to_plot == "w":
+        if args.what_to_plot == "w":
             plt.figure("waterfall", figsize=(8, 6))
-            fil.plot_waterfall(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
-        elif parse_args.what_to_plot == "s":
+            fil.plot_waterfall(f_start=args.f_start, f_stop=args.f_stop)
+        elif args.what_to_plot == "s":
             plt.figure("Spectrum", figsize=(8, 6))
-            fil.plot_spectrum(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
-        elif parse_args.what_to_plot == "mm":
+            fil.plot_spectrum(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
+        elif args.what_to_plot == "mm":
             plt.figure("min max", figsize=(8, 6))
-            fil.plot_spectrum_min_max(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
-        elif parse_args.what_to_plot == "k":
+            fil.plot_spectrum_min_max(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
+        elif args.what_to_plot == "k":
             plt.figure("kurtosis", figsize=(8, 6))
-            fil.plot_kurtosis(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
-        elif parse_args.what_to_plot == "t":
+            fil.plot_kurtosis(f_start=args.f_start, f_stop=args.f_stop)
+        elif args.what_to_plot == "t":
             plt.figure("Time Series", figsize=(8, 6))
-            fil.plot_time_series(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
-        elif parse_args.what_to_plot == "a":
+            fil.plot_time_series(f_start=args.f_start, f_stop=args.f_stop)
+        elif args.what_to_plot == "a":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
-            fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
-        elif parse_args.what_to_plot == "ank":
+            fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
+        elif args.what_to_plot == "ank":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
-            fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all',kutosis=False)
+            fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all',kutosis=False)
 
         if args.plt_filename != '':
             plt.savefig(args.plt_filename)
