@@ -789,7 +789,7 @@ def cmd_tool(args=None):
                        help='Turn off plotting of data and only save to file.')
     parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
                        help='Use to not blank DC bin.')
-    args = parser.args()
+    args = parser.parse_args()
 
     # Open blimpy data
     filename = args.filename
