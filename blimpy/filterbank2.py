@@ -72,7 +72,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
-MAX_BLOB_MB         = 256                    # Max size of blob in MB
+MAX_BLOB_MB         = 1024                    # Max size of blob in MB
 
 
 from sigproc_header import *
