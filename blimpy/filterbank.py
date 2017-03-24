@@ -452,16 +452,17 @@ class Filterbank(object):
         plot_f    = rebin(plot_f, dec_fac_x, 1)
 
         if logged:
-            plt.plot(plot_f, db(plot_data), "#333333", **kwargs)
-            plt.plot(plot_f, db(plot_max),  "#e74c3c", **kwargs)
-            plt.plot(plot_f, db(plot_min),  '#3b5b92', **kwargs)
+            plt.plot(plot_f, db(plot_data), "#333333", label='mean', **kwargs)
+            plt.plot(plot_f, db(plot_max),  "#e74c3c", label='max', **kwargs)
+            plt.plot(plot_f, db(plot_min),  '#3b5b92', label='min', **kwargs)
             plt.ylabel("Power [dB]")
         else:
-            plt.plot(plot_f, plot_data,  "#333333", **kwargs)
-            plt.plot(plot_f, plot_max,   "#e74c3c", **kwargs)
-            plt.plot(plot_f, plot_min,   '#3b5b92', **kwargs)
+            plt.plot(plot_f, plot_data,  "#333333", label='mean', **kwargs)
+            plt.plot(plot_f, plot_max,   "#e74c3c", label='max', **kwargs)
+            plt.plot(plot_f, plot_min,   '#3b5b92', label='min', **kwargs)
             plt.ylabel("Power [counts]")
         plt.xlabel("Frequency [MHz]")
+        plt.legend()
 
         try:
             plt.title(self.header['source_name'])
@@ -472,7 +473,7 @@ class Filterbank(object):
         plt.xlim(plot_f[0], plot_f[-1])
         plt.ylim(db(fig_min),db(fig_max))
 
-    def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True,cb=True, **kwargs):
+    def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True,cb=True,MJD_time=False, **kwargs):
         """ Plot waterfall of data
 
         Args:
@@ -502,18 +503,27 @@ class Filterbank(object):
         except KeyError:
             plt.title(self.filename)
 
+        if MJD_time:
+            extent=(plot_f[0], plot_f[-1], self.timestamps[-1], self.timestamps[0])
+        else:
+            extent=(plot_f[0], plot_f[-1], (self.timestamps[-1]-self.timestamps[0])*24.*60.*60, 0.0)
+
         plt.imshow(plot_data,
             aspect='auto',
             rasterized=True,
             interpolation='nearest',
-            extent=(plot_f[0], plot_f[-1], self.timestamps[-1], self.timestamps[0]),
+            extent=extent,
             cmap='viridis',
             **kwargs
         )
         if cb:
             plt.colorbar()
         plt.xlabel("Frequency [MHz]")
-        plt.ylabel("Time [MJD]")
+        if MJD_time:
+            plt.ylabel("Time [MJD]")
+        else:
+            plt.ylabel("Time from tstart [s]")
+
 
     def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None , **kwargs):
         """ Plot the time series.
