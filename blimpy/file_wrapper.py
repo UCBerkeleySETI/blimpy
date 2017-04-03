@@ -259,7 +259,7 @@ class  H5_reader(object):
         bandwith = abs(self.f_stop - self.f_start)
         n_coarse_chan = int(bandwith / coarse_chan_bw)
 
-        return n_coarse_chan
+        return max(n_coarse_chan, 1)
 
 class  FIL_reader(object):
     """ This class handles .fil files.

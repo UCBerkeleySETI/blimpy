@@ -524,7 +524,6 @@ class Filterbank(object):
         else:
             plt.ylabel("Time from tstart [s]")
 
-
     def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None , **kwargs):
         """ Plot the time series.
 
