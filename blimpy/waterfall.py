@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-# filterbank.py
+# bl_waterfall.py
 
-Python class and command line utility for reading and plotting filterbank files.
+Python class and command line utility for reading and plotting waterfall files.
 
-This provides a class, Filterbank(), which can be used to read a .fil file:
+This provides a class, Waterfall(), which can be used to read a .fil file:
 
     ````
-    fil = Filterbank('test_psr.fil')
+    fil = Waterfall('test_psr.fil')
     print fil.header
     print fil.data.shape
     print fil.freqs
@@ -81,7 +81,7 @@ from sigproc_header import *
 # Main blimpy class
 ###
 
-class Filterbank2(Filterbank):
+class Waterfall(Filterbank):
     """ Class for loading and plotting blimpy data """
 
     def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True,header_dict=None, data_array=None):
@@ -89,7 +89,7 @@ class Filterbank2(Filterbank):
 
         This class parses the blimpy file and stores the header and data
         as objects:
-            fb = Filterbank('filename_here.fil')
+            fb = Waterfall('filename_here.fil')
             fb.header        # blimpy header, as a dictionary
             fb.data          # blimpy data, as a numpy array
 
@@ -104,7 +104,7 @@ class Filterbank2(Filterbank):
             data_array (np.array): Create blimpy from header dict + data array
         """
 
-##EE        super(Filterbank2, self).__init__()
+##EE        super(Waterfall, self).__init__()
 
         if filename:
             self.filename = filename
@@ -390,7 +390,7 @@ class Filterbank2(Filterbank):
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
 
-        Note: currently only works if entire filterbank file is read
+        Note: currently only works if entire waterfall file is read
         """
 
         n_chan = self.data.shape[-1]
@@ -404,11 +404,11 @@ class Filterbank2(Filterbank):
 
 
 def cmd_tool(args=None):
-    """ Command line tool for plotting and viewing info on filterbank files """
+    """ Command line tool for plotting and viewing info on waterfall files """
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
+    parser = ArgumentParser(description="Command line utility for reading and plotting waterfall files.")
 
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
@@ -464,7 +464,7 @@ def cmd_tool(args=None):
         t_start = parse_args.t_start
         t_stop  = parse_args.t_stop
 
-    fil = Filterbank2(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop,t_start=parse_args.t_start, t_stop=parse_args.t_stop,load_data=load_data)
+    fil = Waterfall(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop,t_start=parse_args.t_start, t_stop=parse_args.t_stop,load_data=load_data)
     fil.info()
 
     #Check the size of selection.
