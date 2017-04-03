@@ -104,7 +104,7 @@ class Filterbank2(Filterbank):
             data_array (np.array): Create blimpy from header dict + data array
         """
 
-        super(Filterbank, self).__init__(filename, f_start, f_stop, t_start, t_stop, load_data, header_dict, data_array)
+##EE        super(Filterbank2, self).__init__()
 
         if filename:
             self.filename = filename
@@ -131,6 +131,41 @@ class Filterbank2(Filterbank):
             self.gen_from_header(header_dict, data_array)
         else:
             pass
+
+    def info(self,):
+        """ Print header information """
+
+        for key, val in self.header.items():
+            if key == 'src_raj':
+                val = val.to_string(unit=u.hour, sep=':')
+            if key == 'src_dej':
+                val = val.to_string(unit=u.deg, sep=':')
+            print "%16s : %32s" % (key, val)
+
+
+        print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
+        if self.data is not None:
+            print "%16s : %32s" % ("Data shape", self.file_shape)
+        if self.freqs is not None:
+            print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
+            print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
+
+    def __setup_time_axis(self,t_start=None, t_stop=None):
+        """  Setup time axis.
+        """
+
+        # now check to see how many integrations requested
+        ii_start, ii_stop = 0, self.n_ints_in_file
+        if t_start:
+            ii_start = t_start
+        if t_stop:
+            ii_stop = t_stop
+        n_ints = ii_stop - ii_start
+
+        ## Setup time axis
+        t0 = self.header['tstart']
+        t_delt = self.header['tsamp']
+        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
     def __load_data(self):
         """
@@ -342,6 +377,31 @@ class Filterbank2(Filterbank):
             logger.warning('File format not know. Will use autoblobing.')
             chunk_dim = True
             return chunk_dim
+
+    def calc_n_coarse_chan(self):
+        ''' This makes an attempt to calculate the number of coarse channels in a given freq selection.
+            It assumes for now that a single coarse channel is 2.9296875 MHz
+        '''
+
+        n_coarse_chan = self.container.calc_n_coarse_chan()
+
+        return n_coarse_chan
+
+    def blank_dc(self, n_coarse_chan):
+        """ Blank DC bins in coarse channels.
+
+        Note: currently only works if entire filterbank file is read
+        """
+
+        n_chan = self.data.shape[-1]
+        n_chan_per_coarse = n_chan / n_coarse_chan
+
+        mid_chan = (n_chan_per_coarse / 2) - 1
+
+        for ii in range(n_coarse_chan):
+            ss = ii*n_chan_per_coarse
+            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+1:ss+mid_chan+10])
+
 
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on filterbank files """
