@@ -74,8 +74,8 @@ class  H5_reader(object):
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
 
-            self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
-            self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
+            self.c_start = lambda: int(np.roud((self.f_start - self.f_begin )/ abs(self.header['foff'])))
+            self.c_stop = lambda: int(np.roud((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
 
             self.__setup_time_axis()
 
