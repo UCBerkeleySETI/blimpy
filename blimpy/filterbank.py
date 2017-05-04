@@ -328,7 +328,7 @@ class Filterbank(object):
 
         return freqs[::-1]
 
-    def grab_data(self, f_start=None, f_stop=None, if_id=0):
+    def grab_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
 
         Args:
@@ -522,7 +522,7 @@ class Filterbank(object):
         if MJD_time:
             plt.ylabel("Time [MJD]")
         else:
-            plt.ylabel("Time from tstart [s]")
+            plt.ylabel("Time [s]")
 
     def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None , **kwargs):
         """ Plot the time series.
@@ -766,6 +766,14 @@ class Filterbank(object):
             # Copy over header information as attributes
             for key, value in self.header.items():
                 dset.attrs[key] = value
+
+
+    def calibrate_band_pass_N1(self, f_start=None, f_stop=None):
+        '''One way to calibrate the band pass is to take the median value for every frequency fine channel, and devide by it.
+        '''
+
+        band_pass = np.median(self.data.squeeze(),axis=0)
+        self.data = self.data/band_pass
 
 
 def cmd_tool(args=None):
