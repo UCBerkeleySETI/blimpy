@@ -768,7 +768,7 @@ class Filterbank(object):
                 dset.attrs[key] = value
 
 
-    def calibrate_band_pass_N1(self, f_start=None, f_stop=None):
+    def calibrate_band_pass_N1(self):
         '''One way to calibrate the band pass is to take the median value for every frequency fine channel, and devide by it.
         '''
 
@@ -806,6 +806,8 @@ def cmd_tool(args=None):
                        help='Turn off plotting of data and only save to file.')
     parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
                        help='Use to not blank DC bin.')
+    parser.add_argument('-c', action='store_true', default=False, dest='calibrate_band_pass', type=str,
+                        help='Calibrate band pass.')
     args = parser.parse_args()
 
     # Open blimpy data
@@ -853,6 +855,10 @@ def cmd_tool(args=None):
             print "Blanking DC bin"
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
+
+        if args.calibrate_band_pass:
+            print "Blanking DC bin"
+            fil.calibrate_band_pass_N1()
 
         if args.what_to_plot == "w":
             plt.figure("waterfall", figsize=(8, 6))
