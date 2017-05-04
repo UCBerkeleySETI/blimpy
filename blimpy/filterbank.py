@@ -806,7 +806,7 @@ def cmd_tool(args=None):
                        help='Turn off plotting of data and only save to file.')
     parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
                        help='Use to not blank DC bin.')
-    parser.add_argument('-c', action='store_true', default=False, dest='calibrate_band_pass', type=str,
+    parser.add_argument('-c', action='store_true', default=False, dest='calibrate_band_pass',
                         help='Calibrate band pass.')
     args = parser.parse_args()
 
