@@ -857,7 +857,7 @@ def cmd_tool(args=None):
             fil.blank_dc(n_coarse_chan)
 
         if args.calibrate_band_pass:
-            print "Blanking DC bin"
+            print "Calibrating the band pass."
             fil.calibrate_band_pass_N1()
 
         if args.what_to_plot == "w":
