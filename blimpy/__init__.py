@@ -4,6 +4,7 @@ from .filterbank import Filterbank, read_header, fix_header
 from .guppi import GuppiRaw
 from . import utils
 from . import fil2hdf
+from . import fil2h5
 from . import gup2hdf
 from . import waterfall
 from . import file_wrapper
