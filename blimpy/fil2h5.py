@@ -5,7 +5,7 @@
     ..author: Emilio Enriquez (jeenriquez@gmail.com)
 '''
 
-from blimpy import Waterfall
+from waterfall import Waterfall
 from optparse import OptionParser
 import sys
 
@@ -14,7 +14,7 @@ def make_h5_file():
     '''
 
     p = OptionParser()
-    p.set_usage('python fil2h5.py <FULL_PATH_TO_FIL_FILE> [options]')
+    p.set_usage('Command line utility for creating HDF5 Waterfall files \n >>fil2h5 <FULL_PATH_TO_FIL_FILE> [options]')
     p.add_option('-o', '--out_dir', dest='out_dir', type='str', default='./', help='Location for output files. Default: local dir. ')
     opts, args = p.parse_args(sys.argv[1:])
 
