@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-# bl_waterfall.py
+# waterfall.py
 
 Python class and command line utility for reading and plotting waterfall files.
 
@@ -36,8 +36,7 @@ except ImportError:
     HAS_BITSHUFFLE = False
     pass
 
-#import pdb
-#pdb.set_trace()
+#import pdb #pdb.set_trace()
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if os.environ.has_key('DISPLAY'):
@@ -326,11 +325,15 @@ class Waterfall(Filterbank):
 
             dset = h5.create_dataset('data',
                               data=self.data,
-                              compression='lzf')
+#                              compression='lzf')
+                              compression=bs_compression,
+                              compression_opts=bs_compression_opts)
 
             dset_mask = h5.create_dataset('mask',
                                      shape=self.file_shape,
-                                     compression='lzf',
+#                                     compression='lzf',
+                                     compression=bs_compression,
+                                     compression_opts=bs_compression_opts,
                                      dtype='uint8')
 
             dset.dims[0].label = "frequency"
@@ -366,7 +369,7 @@ class Waterfall(Filterbank):
             return chunk_dim
         elif 'gpuspec.0001.' in self.filename:
             logger.info('Detecting high time resolution data.')
-            chunk_dim = (512,1,2048)
+            chunk_dim = (2048,1,512)
             return chunk_dim
         elif 'gpuspec.0002.' in self.filename:
             logger.info('Detecting intermediate frequency and time resolution data.')
@@ -403,6 +406,7 @@ class Waterfall(Filterbank):
             self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+1:ss+mid_chan+10])
 
 
+#EE Needs update
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on waterfall files """
 

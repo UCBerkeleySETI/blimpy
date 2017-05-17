@@ -739,7 +739,7 @@ class  FIL_reader(object):
 
 #    def __calc_n_blobs(self,blob_dim):
     def calc_n_blobs(self,blob_dim):
-        """ Given a the blob dimensions, calculate how many fit in the data selection.
+        """ Given the blob dimensions, calculate how many fit in the data selection.
         """
 
         n_blobs = int(np.ceil(self.__flat_array_dimmention(self.selection_shape)/float(self.__flat_array_dimmention(blob_dim))))
