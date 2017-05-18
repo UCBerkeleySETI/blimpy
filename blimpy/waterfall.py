@@ -26,8 +26,8 @@ import sys
 import time
 import h5py
 
-from .filterbank import Filterbank
-from . import file_wrapper as fw
+from filterbank import Filterbank
+import file_wrapper as fw
 
 try:
     HAS_BITSHUFFLE = True
