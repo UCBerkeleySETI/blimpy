@@ -323,6 +323,17 @@ class Waterfall(Filterbank):
 
         with h5py.File(filename_out, 'w') as h5:
 
+            h5.attrs['CLASS'] = 'FILTERBANK'
+
+            if HAS_BITSHUFFLE:
+                bs_compression = bitshuffle.h5.H5FILTER
+                bs_compression_opts = (block_size, bitshuffle.h5.H5_COMPRESS_LZ4)
+            else:
+                bs_compression = None
+                bs_compression_opts = None
+                print("Warning: bitshuffle not found. No compression applied.")
+
+
             dset = h5.create_dataset('data',
                               data=self.data,
 #                              compression='lzf')
