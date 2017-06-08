@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/UCBerkeleySETI/blimpy.svg?branch=master)](https://travis-ci.org/UCBerkeleySETI/blimpy)
+
 ## Filterbank + RAW file readers
 
 This repository contains basic python readers for interacting with filterbank (.fil) and guppi raw (.raw) files generated
