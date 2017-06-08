@@ -13,7 +13,10 @@ install:
   - pip install .
 
 # command to install dependencies
-script: python tests/test_blimpy.py
+script: 
+    - python tests/test_filterbank.py
+    - python tests/test_guppi.py
+    
 branches:
   only:
     - master
