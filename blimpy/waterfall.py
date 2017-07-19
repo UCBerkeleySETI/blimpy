@@ -324,6 +324,7 @@ class Waterfall(Filterbank):
         with h5py.File(filename_out, 'w') as h5:
 
             h5.attrs['CLASS'] = 'FILTERBANK'
+            h5.attrs['VERSION'] = '1.0'
 
             if HAS_BITSHUFFLE:
                 bs_compression = bitshuffle.h5.H5FILTER
