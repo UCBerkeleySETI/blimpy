@@ -73,10 +73,10 @@ def test_filterbank_gen():
     fb = Filterbank(header_dict=fb0.header, data_array=fb0.data)
     fb.info()
 
-    print "Writing to blimpy..."
+    print("Writing to blimpy...")
     fb.write_to_filterbank('test.fil')
 
-    print "Writing to hdf5..."
+    print("Writing to hdf5...")
     fb.write_to_hdf5('test.h5')
 
     fb2 = Filterbank('test.h5')
