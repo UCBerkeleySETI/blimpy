@@ -23,4 +23,5 @@ def test_guppi():
 
 
 if __name__ == "__main__":
-	test_guppi()
+	#test_guppi()
+	print("OK")
