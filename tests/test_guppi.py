@@ -1,4 +1,4 @@
-from guppi import *
+from blimpy import GuppiRaw
 from pprint import pprint
 
 def test_guppi():
