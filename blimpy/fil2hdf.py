@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from filterbank import Filterbank
+from .filterbank import Filterbank
 import h5py
 import bitshuffle.h5
 import time
