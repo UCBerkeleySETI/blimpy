@@ -238,8 +238,8 @@ class Filterbank(object):
         if load_data:
 
             if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
-                print "Error: data array is too large to load. Either select fewer"
-                print "points or manually increase MAX_DATA_ARRAY_SIZE."
+                print("Error: data array is too large to load. Either select fewer")
+                print("points or manually increase MAX_DATA_ARRAY_SIZE.")
                 exit()
 
             self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
@@ -264,7 +264,7 @@ class Filterbank(object):
 
                     f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
         else:
-            print "Skipping data load..."
+            print("Skipping data load...")
             self.data = np.array([0])
 
         # Finally add some other info to the class as objects
@@ -298,12 +298,12 @@ class Filterbank(object):
                 val = val.to_string(unit=u.hour, sep=':')
             if key == 'src_dej':
                 val = val.to_string(unit=u.deg, sep=':')
-            print "%16s : %32s" % (key, val)
+            print("%16s : %32s" % (key, val))
 
-        print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
-        print "%16s : %32s" % ("Data shape", self.data.shape)
-        print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
-        print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
+        print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
+        print("%16s : %32s" % ("Data shape", self.data.shape))
+        print("%16s : %32s" % ("Start freq (MHz)", self.freqs[0]))
+        print("%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1]))
 
     def generate_freqs(self, f_start, f_stop):
         """
