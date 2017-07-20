@@ -102,7 +102,7 @@ class  H5_reader(object):
                     self.read_data()
 
             else:
-                print "Skipping data load..."
+                print("Skipping data load...")
                 self.data = np.array([0],dtype='float32')
                 self.freqs = np.array([0],dtype='float32')
 
@@ -331,7 +331,7 @@ class  FIL_reader(object):
                 else:
                     self.read_data()
             else:
-                print "Skipping data load..."
+                print("Skipping data load...")
                 self.data = np.array([0],dtype='float32')
                 self.freqs = np.array([0],dtype='float32')
 
@@ -600,12 +600,12 @@ class  FIL_reader(object):
                 val = val.to_string(unit=u.hour, sep=':')
             if key == 'src_dej':
                 val = val.to_string(unit=u.deg, sep=':')
-            print "%16s : %32s" % (key, val)
+            print("%16s : %32s" % (key, val))
 
-        print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
+        print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
 #        print "%16s : %32s" % ("Data shape", self.data.shape)
-        print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
-        print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
+        print("%16s : %32s" % ("Start freq (MHz)", self.freqs[0]))
+        print("%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1]))
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         """ Read data.
@@ -675,7 +675,7 @@ class  FIL_reader(object):
 
                     f.seek(self.__n_bytes  * (n_chans - i1), 1)  # Seek to start of next block
         else:
-            print "Skipping data load..."
+            print("Skipping data load...")
             self.data = np.array([0])
 
         ## Setup time axis
@@ -832,7 +832,7 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
     """
     if not os.path.isfile(filename):
         type(filename)
-        print filename
+        print(filename)
         raise IOError("No such directory: " + filename)
 
     filename = os.path.expandvars(os.path.expanduser(filename))

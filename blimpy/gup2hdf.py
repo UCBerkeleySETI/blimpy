@@ -26,14 +26,14 @@ def cmd_tool(args=None):
     r = GuppiRaw(filelist[0])
     header, data = r.read_next_data_block()
     dshape = data.shape #r.read_next_data_block_shape()
-    print dshape
+    print(dshape)
 
     n_blocks_total = 0
     for filename in filelist:
-        print filename
+        print(filename)
         r = GuppiRaw(filename)
         n_blocks_total += r.n_blocks
-    print n_blocks_total
+    print(n_blocks_total)
 
     full_dshape = np.concatenate(((n_blocks_total,), dshape))
 
@@ -50,7 +50,7 @@ def cmd_tool(args=None):
 
     h5_idx = 0
     for filename in filelist:
-        print "\nReading %s header..." % filename
+        print("\nReading %s header..." % filename)
         r = GuppiRaw(filename)
         h5 = h5py.File(filename + '.h5', 'w')
     
@@ -58,15 +58,15 @@ def cmd_tool(args=None):
         
         for ii in range(0, r.n_blocks):
             t0 = time.time()
-            print "Reading block %i of %i" % (h5_idx+1, full_dshape[0])
+            print("Reading block %i of %i" % (h5_idx+1, full_dshape[0]))
             header, data = r.read_next_data_block()
             t1 = time.time()
         
             t2 = time.time()
-            print "Writing block %i of %i" % (h5_idx+1, full_dshape[0])
+            print("Writing block %i of %i" % (h5_idx+1, full_dshape[0]))
             dset[h5_idx, :] = data
             t3 = time.time()
-            print "Read: %2.2fs, Write %2.2fs" % ((t1-t0), (t3-t2))
+            print("Read: %2.2fs, Write %2.2fs" % ((t1-t0), (t3-t2)))
         
             h5_idx += 1
 
@@ -77,7 +77,7 @@ def cmd_tool(args=None):
         h5.close()
 
         t1 = time.time()
-        print "Conversion time: %2.2fs" % (t1- t0)
+        print("Conversion time: %2.2fs" % (t1- t0))
 
 if __name__ == "__main__":
     cmd_tool()

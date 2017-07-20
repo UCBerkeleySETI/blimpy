@@ -139,15 +139,15 @@ class Waterfall(Filterbank):
                 val = val.to_string(unit=u.hour, sep=':')
             if key == 'src_dej':
                 val = val.to_string(unit=u.deg, sep=':')
-            print "%16s : %32s" % (key, val)
+            print("%16s : %32s" % (key, val))
 
 
-        print "\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file)
+        print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
         if self.data is not None:
-            print "%16s : %32s" % ("Data shape", self.file_shape)
+            print("%16s : %32s" % ("Data shape", self.file_shape))
         if self.freqs is not None:
-            print "%16s : %32s" % ("Start freq (MHz)", self.freqs[0])
-            print "%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1])
+            print("%16s : %32s" % ("Start freq (MHz)", self.freqs[0]))
+            print("%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1]))
 
     def __setup_time_axis(self,t_start=None, t_stop=None):
         """  Setup time axis.
@@ -491,7 +491,7 @@ def cmd_tool(args=None):
     # And if we want to plot data, then plot data.
 
     if not info_only:
-        print ''
+        print('')
 
         # check start & stop frequencies make sense
         #try:
@@ -508,7 +508,7 @@ def cmd_tool(args=None):
         #    exit()
 
         if parse_args.blank_dc:
-            print "Blanking DC bin"
+            print("Blanking DC bin")
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
 
@@ -541,7 +541,7 @@ def cmd_tool(args=None):
             if os.environ.has_key('DISPLAY'):
                 plt.show()
             else:
-                print "No $DISPLAY available."
+                print("No $DISPLAY available.")
 
 
     else:
@@ -555,9 +555,9 @@ def cmd_tool(args=None):
             elif '.h5' not in filename_out:
                 filename_out = filename_out.replace('.fil','')+'.h5'
 
-            print 'Writing file : %s'%(filename_out)
+            print('Writing file : %s'%(filename_out))
             fil.write_to_hdf5(filename_out)
-            print 'File written.'
+            print('File written.')
 
         if parse_args.to_fil:
             if not filename_out:
@@ -565,9 +565,9 @@ def cmd_tool(args=None):
             elif '.fil' not in filename_out:
                 filename_out = filename_out.replace('.h5','')+'.fil'
 
-            print 'Writing file : %s'%(filename_out)
+            print('Writing file : %s'%(filename_out))
             fil.write_to_fil(filename_out)
-            print 'File written.'
+            print('File written.')
 
 
 if __name__ == "__main__":

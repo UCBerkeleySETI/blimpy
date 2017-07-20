@@ -24,15 +24,15 @@ def cmd_tool(args=None):
     for filename in filelist:
         if not os.path.exists(filename + '.h5'):
             t0 = time.time()
-            print "\nReading %s header..." % filename
+            print("\nReading %s header..." % filename)
             fb = Filterbank(filename, load_data=False)
 
             data_shape = (fb.n_ints_in_file, fb.header['nifs'], fb.header['nchans'])
             data_dtype = fb.data.dtype
-            print data_dtype
+            print(data_dtype)
 
 
-            print "Creating new dataset, %s" % str(data_shape)
+            print("Creating new dataset, %s" % str(data_shape))
             block_size = 0
             h5 = h5py.File(filename + '.h5', 'w')
 
@@ -66,21 +66,21 @@ def cmd_tool(args=None):
 
             if filesize >= MAX_SIZE:
                 n_int_per_read = int(filesize / MAX_SIZE / 2)
-                print "Filling in with data over %i reads..." % n_int_per_read
+                print("Filling in with data over %i reads..." % n_int_per_read)
                 for ii in range(0, n_int_per_read):
-                    print "Reading %i of %i" % (ii + 1, n_int_per_read)
+                    print("Reading %i of %i" % (ii + 1, n_int_per_read))
                     #print  ii*n_int_per_read, (ii+1)*n_int_per_read
                     fb = Filterbank(filename, t_start=ii*n_int_per_read, t_stop=(ii+1) * n_int_per_read)
                     dset[ii*n_int_per_read:(ii+1)*n_int_per_read] = fb.data[:]
             else:
                 fb = Filterbank(filename)
-                print dset.shape, " -> ", fb.data.shape
+                print(dset.shape, " -> ", fb.data.shape)
                 dset[:] = fb.data[:]
 
             h5.close()
 
             t1 = time.time()
-            print "Conversion time: %2.2fs" % (t1- t0)
+            print("Conversion time: %2.2fs" % (t1- t0))
 
 if __name__ == "__main__":
     cmd_tool()

@@ -126,11 +126,11 @@ class GuppiRaw(object):
 
                 header_dict[key] = val
         except ValueError:
-            print "CURRENT LINE: ", line
-            print "BLOCK START IDX: ",  start_idx
-            print "FILE SIZE: ",  self.filesize
-            print "NEXT 512 BYTES: \n"
-            print self.file_obj.read(512)
+            print("CURRENT LINE: ", line)
+            print("BLOCK START IDX: ",  start_idx)
+            print("FILE SIZE: ",  self.filesize)
+            print("NEXT 512 BYTES: \n")
+            print(self.file_obj.read(512))
             raise
 
         data_idx = self.file_obj.tell()
@@ -228,7 +228,7 @@ class GuppiRaw(object):
         d = d.reshape((n_chan, n_samples, n_pol))    # Real, imag
         d2 = d2.reshape((n_chan, n_samples, n_pol))
         d = np.concatenate((d, d2), axis=1)        
-        print d.shape
+        print(d.shape)
 
         if self._d_x.shape != (n_chan, n_samples*2, n_pol):
                 self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
@@ -313,10 +313,10 @@ class GuppiRaw(object):
         header, data = self.read_next_data_block()
         data = data.view('float32')
 
-        print "AVG: %2.3f" % data.mean()
-        print "STD: %2.3f" % data.std()
-        print "MAX: %2.3f" % data.max()
-        print "MIN: %2.3f" % data.min()
+        print("AVG: %2.3f" % data.mean())
+        print("STD: %2.3f" % data.std())
+        print("MAX: %2.3f" % data.max())
+        print("MIN: %2.3f" % data.min())
 
         import pylab as plt
 
@@ -335,7 +335,7 @@ class GuppiRaw(object):
         """ Do a (slow) numpy FFT and take power of data """
         header, data = self.read_next_data_block()
 
-        print "Computing FFT..."
+        print("Computing FFT...")
         d_xx_fft = np.abs(np.fft.fft(data[..., 0]))
         d_xx_fft = d_xx_fft.flatten()
 
@@ -346,7 +346,7 @@ class GuppiRaw(object):
 
         d_xx_fft  = rebin(d_xx_fft, dec_fac_x)
 
-        print "Plotting..."
+        print("Plotting...")
         if plot_db:
             plt.plot(10 * np.log10(d_xx_fft))
             plt.ylabel("Power [dB]")
