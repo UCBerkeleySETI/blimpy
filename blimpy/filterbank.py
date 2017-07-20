@@ -32,7 +32,7 @@ from astropy.coordinates import Angle
 import scipy.stats
 from matplotlib.ticker import NullFormatter
 
-from utils import db, lin, rebin, closest
+from .utils import db, lin, rebin, closest
 
 try:
     import h5py
