@@ -49,7 +49,7 @@ else:
     import pylab as plt
 
 
-from sigproc_header import *
+from .sigproc_header import *
 
 ###
 # Config values

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from guppi import GuppiRaw
+from .guppi import GuppiRaw
 import h5py
 import bitshuffle.h5
 import time

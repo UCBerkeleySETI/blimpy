@@ -5,7 +5,7 @@
     ..author: Emilio Enriquez (jeenriquez@gmail.com)
 '''
 
-from waterfall import Waterfall
+from .waterfall import Waterfall
 from optparse import OptionParser
 import sys
 

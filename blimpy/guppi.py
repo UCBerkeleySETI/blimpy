@@ -14,7 +14,7 @@ import time
 from pprint import pprint
 from astropy.coordinates import Angle
 
-from utils import unpack, rebin
+from .utils import unpack, rebin
 
 try:
     import seaborn as sns
