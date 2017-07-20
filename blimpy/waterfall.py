@@ -28,6 +28,7 @@ import h5py
 
 from .filterbank import Filterbank
 from . import file_wrapper as fw
+from .sigproc_header import *
 
 try:
     HAS_BITSHUFFLE = True
@@ -74,7 +75,7 @@ MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte b
 MAX_BLOB_MB         = 1024                    # Max size of blob in MB
 
 
-from sigproc_header import *
+
 
 ###
 # Main blimpy class
