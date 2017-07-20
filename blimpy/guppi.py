@@ -23,7 +23,7 @@ except:
     pass
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
-if os.environ.has_key('DISPLAY'):
+if 'DISPLAY' in os.environ.keys():
 
     try:
         import matplotlib

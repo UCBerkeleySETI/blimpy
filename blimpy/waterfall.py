@@ -39,7 +39,7 @@ except ImportError:
 #import pdb #pdb.set_trace()
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
-if os.environ.has_key('DISPLAY'):
+if 'DISPLAY' in os.environ.keys():
     import pylab as plt
 else:
     import matplotlib
@@ -538,7 +538,7 @@ def cmd_tool(args=None):
             plt.savefig(parse_args.plt_filename)
 
         if not parse_args.save_only:
-            if os.environ.has_key('DISPLAY'):
+            if 'DISPLAY' in os.environ.keys():
                 plt.show()
             else:
                 print("No $DISPLAY available.")
