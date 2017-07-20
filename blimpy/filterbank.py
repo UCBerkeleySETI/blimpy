@@ -382,10 +382,10 @@ class Filterbank(object):
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
         if isinstance(t, int):
-            print "extracting integration %i..." % t
+            print("extracting integration %i..." % t)
             plot_data = plot_data[t]
         elif t == 'all':
-            print "averaging along time axis..."
+            print("averaging along time axis...")
             plot_data = plot_data.mean(axis=0)
         else:
             raise RuntimeError("Unknown integration %s" % t)
@@ -435,7 +435,7 @@ class Filterbank(object):
         fig_max = plot_data[0].max()
         fig_min = plot_data[0].min()
 
-        print "averaging along time axis..."
+        print("averaging along time axis...")
         plot_max = plot_data.max(axis=0)
         plot_min = plot_data.min(axis=0)
         plot_data = plot_data.mean(axis=0)
@@ -609,7 +609,7 @@ class Filterbank(object):
 
         # --------
         axWaterfall = plt.axes(rect_waterfall)
-        print 'Ploting Waterfall'
+        print('Plotting Waterfall')
         self.plot_waterfall(f_start=f_start, f_stop=f_stop, cb=False)
         plt.xlabel('')
 
@@ -635,7 +635,7 @@ class Filterbank(object):
 
         # --------
         axSpectrum = plt.axes(rect_spectrum)
-        print 'Ploting Spectrum'
+        print('Plotting Spectrum')
         self.plot_spectrum(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
         axSpectrum.yaxis.tick_right()
@@ -645,7 +645,7 @@ class Filterbank(object):
 
         # --------
         axTimeseries = plt.axes(rect_timeseries)
-        print 'Plotting Timeseries'
+        print('Plotting Timeseries')
         self.plot_time_series(f_start=f_start, f_stop=f_stop, orientation='v')
         axTimeseries.yaxis.set_major_formatter(nullfmt)
         axTimeseries.xaxis.set_major_formatter(nullfmt)
@@ -654,12 +654,12 @@ class Filterbank(object):
         # Could exclude since it takes much longer to run than the other plots.
         if kutosis:
             axKurtosis = plt.axes(rect_kurtosis)
-            print 'Plotting Kurtosis'
+            print('Plotting Kurtosis')
             self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
 
         # --------
         axMinMax = plt.axes(rect_min_max)
-        print 'Plotting Min Max'
+        print('Plotting Min Max')
         self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
         axMinMax.yaxis.tick_right()
@@ -667,7 +667,7 @@ class Filterbank(object):
 
         # --------
         axHeader = plt.axes(rect_header)
-        print 'Plotting Header'
+        print('Plotting Header')
         # Generate nicer header
         telescopes = {0: 'Fake data',
                       1: 'Arecibo',
@@ -889,7 +889,7 @@ def cmd_tool(args=None):
             if os.environ.has_key('DISPLAY'):
                 plt.show()
             else:
-                print "No $DISPLAY available."
+                print("No $DISPLAY available.")
 
 
 if __name__ == "__main__":
