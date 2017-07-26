@@ -2,7 +2,11 @@
 
 from .filterbank import Filterbank
 import h5py
-import bitshuffle.h5
+try:
+    HAS_BITSHUFFLE = True
+    import bitshuffle.h5
+except ImportError:
+    HAS_BITSHUFFLE = False
 import time
 import os
 import glob
@@ -18,6 +22,10 @@ def cmd_tool(args=None):
     parser = ArgumentParser(description="Command line utility for creating HDF5 Filterbank files.")
     parser.add_argument('dirname', type=str, help='Name of directory to read')
     args = parser.parse_args()
+    
+    if not HAS_BITSHUFFLE:
+        print("Error: the bitshuffle library is required to run this script.")
+        exit()
 
     filelist = glob.glob(os.path.join(args.dirname, '*.fil'))
 

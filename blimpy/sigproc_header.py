@@ -48,29 +48,29 @@ except ImportError:
 #   * ibeam (int): number of the beam in this file (?)
 
 header_keyword_types = {
-    'telescope_id' : '<l',
-    'machine_id'   : '<l',
-    'data_type'    : '<l',
-    'barycentric'  : '<l',
-    'pulsarcentric': '<l',
-    'nbits'        : '<l',
-    'nsamples'     : '<l',
-    'nchans'       : '<l',
-    'nifs'         : '<l',
-    'nbeams'       : '<l',
-    'ibeam'        : '<l',
-    'rawdatafile'  : 'str',
-    'source_name'  : 'str',
-    'az_start'     : '<d',
-    'za_start'     : '<d',
-    'tstart'       : '<d',
-    'tsamp'        : '<d',
-    'fch1'         : '<d',
-    'foff'         : '<d',
-    'refdm'        : '<d',
-    'period'       : '<d',
-    'src_raj'      : 'angle',
-    'src_dej'      : 'angle',
+    b'telescope_id' : b'<l',
+    b'machine_id'   : b'<l',
+    b'data_type'    : b'<l',
+    b'barycentric'  : b'<l',
+    b'pulsarcentric': b'<l',
+    b'nbits'        : b'<l',
+    b'nsamples'     : b'<l',
+    b'nchans'       : b'<l',
+    b'nifs'         : b'<l',
+    b'nbeams'       : b'<l',
+    b'ibeam'        : b'<l',
+    b'rawdatafile'  : b'str',
+    b'source_name'  : b'str',
+    b'az_start'     : b'<d',
+    b'za_start'     : b'<d',
+    b'tstart'       : b'<d',
+    b'tsamp'        : b'<d',
+    b'fch1'         : b'<d',
+    b'foff'         : b'<d',
+    b'refdm'        : b'<d',
+    b'period'       : b'<d',
+    b'src_raj'      : b'angle',
+    b'src_dej'      : b'angle',
     }
 
 def grab_header(filename):
@@ -90,13 +90,13 @@ def grab_header(filename):
     while not eoh_found:
         header_sub = f.read(512)
         header_sub_count += 1
-        if 'HEADER_START' in header_sub:
-            idx_start = header_sub.index('HEADER_START') + len('HEADER_START')
+        if b'HEADER_START' in header_sub:
+            idx_start = header_sub.index(b'HEADER_START') + len(b'HEADER_START')
             header_sub = header_sub[idx_start:]
 
-        if 'HEADER_END' in header_sub:
+        if b'HEADER_END' in header_sub:
             eoh_found = True
-            idx_end = header_sub.index('HEADER_END')
+            idx_end = header_sub.index(b'HEADER_END')
             header_sub = header_sub[:idx_end]
 
         if header_sub_count >= MAX_HEADER_BLOCKS:
@@ -121,8 +121,8 @@ def len_header(filename):
         while not eoh_found:
             header_sub = f.read(512)
             header_sub_count += 1
-            if 'HEADER_END' in header_sub:
-                idx_end = header_sub.index('HEADER_END') + len('HEADER_END')
+            if b'HEADER_END' in header_sub:
+                idx_end = header_sub.index(b'HEADER_END') + len(b'HEADER_END')
                 eoh_found = True
                 break
 
@@ -146,27 +146,27 @@ def parse_header(filename):
     #print header
     for keyword in header_keyword_types.keys():
         if keyword in header:
-            dtype = header_keyword_types.get(keyword, 'str')
+            dtype = header_keyword_types.get(keyword, b'str')
             idx = header.index(keyword) + len(keyword)
             dtype = header_keyword_types[keyword]
-            if dtype == '<l':
+            if dtype == b'<l':
                 val = struct.unpack(dtype, header[idx:idx+4])[0]
                 header_dict[keyword] = val
-            if dtype == '<d':
+            if dtype == b'<d':
                 val = struct.unpack(dtype, header[idx:idx+8])[0]
                 header_dict[keyword] = val
-            if dtype == 'str':
+            if dtype == b'str':
                 str_len = struct.unpack('<L', header[idx:idx+4])[0]
                 str_val = header[idx+4:idx+4+str_len]
                 header_dict[keyword] = str_val
-            if dtype == 'angle':
+            if dtype == b'angle':
                 val = struct.unpack('<d', header[idx:idx+8])[0]
                 val = fil_double_to_angle(val)
 
-                if keyword == 'src_raj':
+                if keyword == b'src_raj':
                     val = Angle(val, unit=u.hour)
                 else:
-                    val = Angle(val, unit=u.deg)
+                   val = Angle(val, unit=u.deg)
                 header_dict[keyword] = val
 
     return header_dict
@@ -189,20 +189,20 @@ def read_next_header_keyword(fh):
 
     #print keyword
 
-    if keyword == 'HEADER_START' or keyword == 'HEADER_END':
+    if keyword == b'HEADER_START' or keyword == b'HEADER_END':
         return keyword, 0, fh.tell()
     else:
         dtype = header_keyword_types[keyword]
         #print dtype
         idx = fh.tell()
-        if dtype == '<l':
+        if dtype == b'<l':
             val = struct.unpack(dtype, fh.read(4))[0]
-        if dtype == '<d':
+        if dtype == b'<d':
             val = struct.unpack(dtype, fh.read(8))[0]
-        if dtype == 'str':
+        if dtype == b'str':
             str_len = np.fromstring(fh.read(4), dtype='int32')[0]
             val = fh.read(str_len)
-        if dtype == 'angle':
+        if dtype == b'angle':
             val = struct.unpack('<d', fh.read(8))[0]
             val = fil_double_to_angle(val)
             if keyword == 'src_raj':
@@ -232,13 +232,13 @@ def read_header(filename, return_idxs=False):
         keyword, value, idx = read_next_header_keyword(fh)
 
         try:
-            assert keyword == 'HEADER_START'
+            assert keyword == b'HEADER_START'
         except AssertionError:
             raise RuntimeError("Not a valid blimpy file.")
 
         while True:
             keyword, value, idx = read_next_header_keyword(fh)
-            if keyword == 'HEADER_END':
+            if keyword == b'HEADER_END':
                 break
             else:
                 header_dict[keyword] = value
@@ -273,14 +273,14 @@ def fix_header(filename, keyword, new_value):
 
     # Find out the datatype for the given keyword
     dtype = header_keyword_types[keyword]
-    dtype_to_type = {'<l'  : np.int32,
-                     'str' : str,
-                     '<d'  : np.float64,
-                     'angle' : to_sigproc_angle}
+    dtype_to_type = {b'<l'  : np.int32,
+                     b'str' : bytes,
+                     b'<d'  : np.float64,
+                     b'angle' : to_sibgproc_angle}
     value_dtype = dtype_to_type[dtype]
 
     # Generate the new string
-    if value_dtype is str:
+    if isinstance(value_dtype, bytes):
         if len(hd[keyword]) == len(new_value):
             val_str = np.int32(len(new_value)).tostring() + new_value
         else:
@@ -337,10 +337,10 @@ def to_sigproc_keyword(keyword, value=None):
     else:
         dtype = header_keyword_types[keyword]
 
-        dtype_to_type = {'<l'  : np.int32,
-                         'str' : str,
-                         '<d'  : np.float64,
-                         'angle' : to_sigproc_angle}
+        dtype_to_type = {b'<l'  : np.int32,
+                         b'str' : str,
+                         b'<d'  : np.float64,
+                         b'angle' : to_sigproc_angle}
 
         value_dtype = dtype_to_type[dtype]
 
@@ -359,22 +359,22 @@ def generate_sigproc_header(f):
         header_str (str): Serialized string corresponding to header
     """
 
-    header_string = ''
-    header_string += to_sigproc_keyword('HEADER_START')
+    header_string = b''
+    header_string += to_sigproc_keyword(b'HEADER_START')
 
     for keyword in f.header.keys():
-        if keyword == 'src_raj':
-            header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
-        elif keyword == 'src_dej':
-            header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
-        elif keyword == 'az_start' or keyword == 'za_start':
+        if keyword == b'src_raj':
+            header_string += to_sigproc_keyword(b'src_raj')  + to_sigproc_angle(f.header[b'src_raj'])
+        elif keyword == b'src_dej':
+            header_string += to_sigproc_keyword(b'src_dej')  + to_sigproc_angle(f.header[b'src_dej'])
+        elif keyword == b'az_start' or keyword == b'za_start':
             header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
         elif keyword not in header_keyword_types.keys():
             pass
         else:
             header_string += to_sigproc_keyword(keyword, f.header[keyword])
 
-    header_string += to_sigproc_keyword('HEADER_END')
+    header_string += to_sigproc_keyword(b'HEADER_END')
     return header_string
 
 def to_sigproc_angle(angle_val):

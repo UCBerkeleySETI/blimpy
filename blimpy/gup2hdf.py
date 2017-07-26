@@ -2,7 +2,12 @@
 
 from .guppi import GuppiRaw
 import h5py
-import bitshuffle.h5
+try:
+    import bitshuffle.h5
+    HAS_BITSHUFFLE = True
+except ImportError:
+    HAS_BITSHUFFLE = False
+    
 import time
 import os
 import glob
@@ -11,6 +16,10 @@ import numpy as np
 def cmd_tool(args=None):
     """ Command line tool for converting guppi raw into HDF5 versions of guppi raw """
     from argparse import ArgumentParser
+
+    if not HAS_BITSHUFFLE:
+        print("Error: the bitshuffle library is required to run this script.")
+        exit()
 
     parser = ArgumentParser(description="Command line utility for creating HDF5 Raw files.")
     parser.add_argument('filename', type=str, help='Name of filename to read')

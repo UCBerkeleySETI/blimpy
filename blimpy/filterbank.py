@@ -109,7 +109,7 @@ class Filterbank(object):
 
     def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
-        self.filename = ''
+        self.filename = b''
         self.header = header_dict
         self.data = data_array
         self.n_ints_in_file = 0
@@ -121,15 +121,15 @@ class Filterbank(object):
         self.header = {}
         self.filename = filename
         self.h5 = h5py.File(filename)
-        for key, val in self.h5['data'].attrs.items():
-            if key == 'src_raj':
+        for key, val in self.h5[b'data'].attrs.items():
+            if key == b'src_raj':
                 self.header[key] = Angle(val, unit='hr')
-            elif key == 'src_dej':
+            elif key == b'src_dej':
                 self.header[key] = Angle(val, unit='deg')
             else:
                 self.header[key] = val
 
-        self.data = self.h5["data"][:]
+        self.data = self.h5[b"data"][:]
         self._setup_freqs()
 
         self.n_ints_in_file  = self.data.shape[0]
@@ -137,10 +137,10 @@ class Filterbank(object):
 
     def _setup_freqs(self, f_start=None, f_stop=None):
         ## Setup frequency axis
-        f0 = self.header['fch1']
-        f_delt = self.header['foff']
+        f0 = self.header[b'fch1']
+        f_delt = self.header[b'foff']
 
-        i_start, i_stop = 0, self.header['nchans']
+        i_start, i_stop = 0, self.header[b'nchans']
         if f_start:
             i_start = (f_start - f0) / f_delt
         if f_stop:
@@ -176,8 +176,8 @@ class Filterbank(object):
         n_ints = ii_stop - ii_start
 
         ## Setup time axis
-        t0 = self.header['tstart']
-        t_delt = self.header['tsamp']
+        t0 = self.header[b'tstart']
+        t_delt = self.header[b'tsamp']
 
     def read_filterbank(self, filename=None, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
@@ -188,8 +188,8 @@ class Filterbank(object):
         self.header = read_header(filename)
 
         ## Setup frequency axis
-        f0 = self.header['fch1']
-        f_delt = self.header['foff']
+        f0 = self.header[b'fch1']
+        f_delt = self.header[b'foff']
 
         # keep this seperate!
         # file_freq_mapping =  np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
@@ -198,10 +198,10 @@ class Filterbank(object):
 
         i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start, f_stop)
 
-        n_bytes  = self.header['nbits'] / 8
-        n_chans = self.header['nchans']
+        n_bytes  = int(self.header[b'nbits'] / 8)
+        n_chans = self.header[b'nchans']
         n_chans_selected = self.freqs.shape[0]
-        n_ifs   = self.header['nifs']
+        n_ifs   = self.header[b'nifs']
 
 
         # Load binary data
@@ -210,7 +210,7 @@ class Filterbank(object):
         f.seek(self.idx_data)
         filesize = os.path.getsize(self.filename)
         n_bytes_data = filesize - self.idx_data
-        n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
+        n_ints_in_file = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
 
         # now check to see how many integrations requested
         ii_start, ii_stop = 0, n_ints_in_file
@@ -229,11 +229,11 @@ class Filterbank(object):
 
         #Set up the data type (taken out of loop for speed)
         if n_bytes == 4:
-            dd_type = 'float32'
+            dd_type = b'float32'
         elif n_bytes == 2:
-            dd_type = 'int16'
+            dd_type = b'int16'
         elif n_bytes == 1:
-            dd_type = 'int8'
+            dd_type = b'int8'
 
         if load_data:
 
@@ -272,8 +272,8 @@ class Filterbank(object):
         self.file_size_bytes = filesize
 
         ## Setup time axis
-        t0 = self.header['tstart']
-        t_delt = self.header['tsamp']
+        t0 = self.header[b'tstart']
+        t_delt = self.header[b'tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
     def blank_dc(self, n_coarse_chan):
@@ -294,9 +294,9 @@ class Filterbank(object):
         """ Print header information """
 
         for key, val in self.header.items():
-            if key == 'src_raj':
+            if key == b'src_raj':
                 val = val.to_string(unit=u.hour, sep=':')
-            if key == 'src_dej':
+            if key == b'src_dej':
                 val = val.to_string(unit=u.deg, sep=':')
             print("%16s : %32s" % (key, val))
 
@@ -310,8 +310,8 @@ class Filterbank(object):
         returns frequency array [f_start...f_stop]
         """
 
-        fch1 = self.header['fch1']
-        foff = self.header['foff']
+        fch1 = self.header[b'fch1']
+        foff = self.header[b'foff']
 
         #convert input frequencies into what their corresponding index would be
         i_start = (f_start - fch1) / foff
@@ -362,7 +362,7 @@ class Filterbank(object):
 
         coarse_chan_bw = 2.9296875
 
-        bandwidth = abs(self.header['nchans']*self.header['foff'])
+        bandwidth = abs(self.header[b'nchans']*self.header[b'foff'])
         n_coarse_chan = int(bandwidth / coarse_chan_bw)
 
         return max(n_coarse_chan, 1)
@@ -384,7 +384,7 @@ class Filterbank(object):
         if isinstance(t, int):
             print("extracting integration %i..." % t)
             plot_data = plot_data[t]
-        elif t == 'all':
+        elif t == b'all':
             print("averaging along time axis...")
             plot_data = plot_data.mean(axis=0)
         else:
@@ -412,7 +412,7 @@ class Filterbank(object):
         plt.legend()
 
         try:
-            plt.title(self.header['source_name'])
+            plt.title(self.header[b'source_name'])
         except KeyError:
             plt.title(self.filename)
 
@@ -465,7 +465,7 @@ class Filterbank(object):
         plt.legend()
 
         try:
-            plt.title(self.header['source_name'])
+            plt.title(self.header[b'source_name'])
         except KeyError:
             plt.title(self.filename)
 
@@ -499,7 +499,7 @@ class Filterbank(object):
         plot_data = rebin(plot_data, dec_fac_x, dec_fac_y)
 
         try:
-            plt.title(self.header['source_name'])
+            plt.title(self.header[b'source_name'])
         except KeyError:
             plt.title(self.filename)
 
@@ -682,17 +682,17 @@ class Filterbank(object):
                       65: 'KAT7'
                       }
 
-        telescope = telescopes.get(self.header["telescope_id"], self.header["telescope_id"])
+        telescope = telescopes.get(self.header[b"telescope_id"], self.header[b"telescope_id"])
 
         plot_header = "%14s: %s\n" % ("TELESCOPE_ID", telescope)
-        for key in ('SRC_RAJ', 'SRC_DEJ', 'TSTART', 'NCHANS', 'NBEAMS', 'NIFS', 'NBITS'):
+        for key in (b'SRC_RAJ', b'SRC_DEJ', b'TSTART', b'NCHANS', b'NBEAMS', b'NIFS', b'NBITS'):
             try:
                 plot_header += "%14s: %s\n" % (key, self.header[key.lower()])
             except KeyError:
                 pass
-        fch1 = "%6.6f MHz" % self.header['fch1']
+        fch1 = "%6.6f MHz" % self.header[b'fch1']
 
-        foff = (self.header['foff'] * 1e6 * u.Hz)
+        foff = (self.header[b'foff'] * 1e6 * u.Hz)
         if np.abs(foff) > 1e6 * u.Hz:
             foff = str(foff.to('MHz'))
         elif np.abs(foff) > 1e3 * u.Hz:
@@ -719,12 +719,12 @@ class Filterbank(object):
         # calibrate data
         # self.data = calibrate(mask(self.data.mean(axis=0)[0]))
         # rewrite header to be consistent with modified data
-        self.header['fch1']   = self.freqs[0]
-        self.header['foff']   = self.freqs[1] - self.freqs[0]
-        self.header['nchans'] = self.freqs.shape[0]
+        self.header[b'fch1']   = self.freqs[0]
+        self.header[b'foff']   = self.freqs[1] - self.freqs[0]
+        self.header[b'nchans'] = self.freqs.shape[0]
         # self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
 
-        n_bytes  = self.header['nbits'] / 8
+        n_bytes  = self.header[b'nbits'] / 8
         with open(filename_out, "w") as fileh:
             fileh.write(generate_sigproc_header(self))
             j = self.data
@@ -746,22 +746,22 @@ class Filterbank(object):
 
         with h5py.File(filename_out, 'w') as h5:
 
-            dset = h5.create_dataset('data',
+            dset = h5.create_dataset(b'data',
                               data=self.data,
                               compression='lzf')
 
-            dset_mask = h5.create_dataset('mask',
+            dset_mask = h5.create_dataset(b'mask',
                                      shape=self.data.shape,
                                      compression='lzf',
                                      dtype='uint8')
 
-            dset.dims[0].label = "frequency"
-            dset.dims[1].label = "feed_id"
-            dset.dims[2].label = "time"
+            dset.dims[0].label = b"frequency"
+            dset.dims[1].label = b"feed_id"
+            dset.dims[2].label = b"time"
 
-            dset_mask.dims[0].label = "frequency"
-            dset_mask.dims[1].label = "feed_id"
-            dset_mask.dims[2].label = "time"
+            dset_mask.dims[0].label = b"frequency"
+            dset_mask.dims[1].label = b"feed_id"
+            dset_mask.dims[2].label = b"time"
 
             # Copy over header information as attributes
             for key, value in self.header.items():
