@@ -77,6 +77,12 @@ class  H5_reader(object):
             self.c_start = lambda: int(np.round((self.f_start - self.f_begin )/ abs(self.header['foff'])))
             self.c_stop = lambda: int(np.round((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
 
+            # These values will be modified once code for multi_beam and multi_stokes observations are possible.
+            self.freq_axis = 2
+            self.time_axis = 0
+            self.beam_axis = 1  # Place holder
+            self.stokes_axis = 4  # Place holder
+
             self.__setup_time_axis()
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
@@ -257,9 +263,52 @@ class  H5_reader(object):
         coarse_chan_bw = 2.9296875
 
         bandwith = abs(self.f_stop - self.f_start)
+#        bandwith = abs(self.c_stop() - self.c_start())
         n_coarse_chan = int(bandwith / coarse_chan_bw)
 
         return max(n_coarse_chan, 1)
+
+    def calc_n_blobs(self,blob_dim):
+        """ Given the blob dimensions, calculate how many fit in the data selection.
+        """
+
+        n_blobs = int(np.ceil(self.__flat_array_dimmention(self.selection_shape)/float(self.__flat_array_dimmention(blob_dim))))
+
+        return n_blobs
+
+    def read_blob(self,blob_dim,n_blob=0):
+        """Read blob from a selection.
+        """
+
+        n_blobs = self.calc_n_blobs(blob_dim)
+        if n_blob > n_blobs or n_blob < 0:
+            raise ValueError('Please provide correct n_blob value. Given %i, but max values is %i'%(n_blob,n_blobs))
+
+        blob_start = self.__find_blob_start(blob_dim,n_blob)
+        blob_end = blob_start + np.array(blob_dim)
+
+        blob = np.zeros(blob_dim,dtype='float32') #EE could remove.
+        blob = self.h5["data"][blob_start[self.time_axis]:blob_end[self.time_axis],:,blob_start[self.freq_axis]:blob_end[self.freq_axis]]
+
+        if self.header['foff'] < 0 :
+            blob = blob[:,:,::-1]
+
+        return blob
+
+    def __find_blob_start(self,blob_dim,n_blob):
+        """Find first blob from selection.
+        """
+
+        #Check which is the blob time offset
+        blob_time_start = self.t_start + blob_dim[self.time_axis]*n_blob
+
+        #Check which is the blob frequency offset (in channels)
+        blob_freq_start = self.c_start() + (blob_dim[self.freq_axis]*n_blob)%self.n_channels_in_file
+
+        blob_start = np.array([blob_time_start,0,blob_freq_start])
+
+        return blob_start
+
 
 class  FIL_reader(object):
     """ This class handles .fil files.

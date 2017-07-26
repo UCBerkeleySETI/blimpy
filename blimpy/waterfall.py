@@ -4,7 +4,7 @@
 
 Python class and command line utility for reading and plotting waterfall files.
 
-This provides a class, Waterfall(), which can be used to read a .fil file:
+This provides a class, Waterfall(), which can be used to read a blimpy file (.fil or .h5):
 
     ````
     fil = Waterfall('test_psr.fil')
@@ -82,7 +82,7 @@ MAX_BLOB_MB         = 1024                    # Max size of blob in MB
 ###
 
 class Waterfall(Filterbank):
-    """ Class for loading and plotting blimpy data """
+    """ Class for loading and writing blimpy data (.fil, .h5) """
 
     def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True,header_dict=None, data_array=None):
         """ Class for loading and plotting blimpy data.
@@ -183,8 +183,66 @@ class Waterfall(Filterbank):
 
         self.__load_data()
 
-    def write_to_fil(self, filename_out):
-        """ Write data to blimpy file.
+
+    def write_to_fil(self, filename_out, *args, **kwargs):
+        """ Write data to .fil file.
+            It check the file size then decides how to write the file.
+
+        Args:
+            filename_out (str): Name of output file
+        """
+
+        if self.heavy:
+            self.__write_to_fil_heavy(filename_out)
+        else:
+            self.__write_to_fil_light(filename_out)
+
+    def __write_to_fil_heavy(self, filename_out, *args, **kwargs):
+        """ Write data to .fil file.
+
+        Args:
+            filename_out (str): Name of output file
+        """
+
+        t0 = time.time()
+        block_size = 0
+
+        #Note that a chunk is not a blob!!
+        chunk_dim = self.__get_chunk_dimentions()
+        blob_dim = self.__get_blob_dimentions(chunk_dim)
+        n_blobs = self.container.calc_n_blobs(blob_dim)
+
+        #calibrate data
+        #self.data = calibrate(mask(self.data.mean(axis=0)[0]))
+        #rewrite header to be consistent with modified data
+        self.header['fch1']   = self.freqs[0]
+        self.header['foff']   = self.freqs[1] - self.freqs[0]
+        self.header['nchans'] = self.freqs.shape[0]
+        #self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
+
+        #Write header of .fil file
+        n_bytes  = self.header['nbits'] / 8
+        with open(filename_out, "w") as fileh:
+            fileh.write(generate_sigproc_header(self))
+
+        logger.info('Using %i n_blobs to write the data.'% n_blobs)
+        for ii in range(0, n_blobs):
+            logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+
+            bob = self.container.read_blob(blob_dim,n_blob=ii)
+
+            #Write data of .fil file.
+            with open(filename_out, "a") as fileh:
+                j = bob
+                if n_bytes == 4:
+                    np.float32(j[:, ::-1].ravel()).tofile(fileh)
+                elif n_bytes == 2:
+                    np.int16(j[:, ::-1].ravel()).tofile(fileh)
+                elif n_bytes == 1:
+                    np.int8(j[:, ::-1].ravel()).tofile(fileh)
+
+    def __write_to_fil_light(self, filename_out, *args, **kwargs):
+        """ Write data to .fil file.
 
         Args:
             filename_out (str): Name of output file
@@ -232,7 +290,7 @@ class Waterfall(Filterbank):
         t0 = time.time()
         block_size = 0
 
-        #Note that I make the intentional difference between a chunk and a blob here.
+        #Note that a chunk is not a blob!!
         chunk_dim = self.__get_chunk_dimentions()
         blob_dim = self.__get_blob_dimentions(chunk_dim)
         n_blobs = self.container.calc_n_blobs(blob_dim)
@@ -240,6 +298,7 @@ class Waterfall(Filterbank):
         with h5py.File(filename_out, 'w') as h5:
 
             h5.attrs['CLASS'] = 'FILTERBANK'
+            h5.attrs['VERSION'] = '1.0'
 
             if HAS_BITSHUFFLE:
                 bs_compression = bitshuffle.h5.H5FILTER
@@ -247,7 +306,7 @@ class Waterfall(Filterbank):
             else:
                 bs_compression = None
                 bs_compression_opts = None
-                print("Warning: bitshuffle not found. No compression applied.")
+                logger.warning("Warning: bitshuffle not found. No compression applied.")
 
             dset = h5.create_dataset('data',
                             shape=self.file_shape,
@@ -283,6 +342,7 @@ class Waterfall(Filterbank):
 
                     bob = self.container.read_blob(blob_dim,n_blob=ii)
 
+                    #-----
                     # Reverse array if frequency axis is flipped
                     c_start = self.container.c_start() + ii*blob_dim[self.freq_axis]
                     t_start = self.container.t_start + (c_start/self.n_channels_in_file)*blob_dim[self.time_axis]
@@ -294,6 +354,7 @@ class Waterfall(Filterbank):
                     else:
                         c_start = (c_start)%self.n_channels_in_file
                         c_stop = c_start + blob_dim[self.freq_axis]
+                    #-----
 
                     logger.debug(t_start,t_stop,c_start,c_stop)
 
@@ -333,7 +394,7 @@ class Waterfall(Filterbank):
             else:
                 bs_compression = None
                 bs_compression_opts = None
-                print("Warning: bitshuffle not found. No compression applied.")
+                logger.warning("Warning: bitshuffle not found. No compression applied.")
 
 
             dset = h5.create_dataset('data',
@@ -378,15 +439,15 @@ class Waterfall(Filterbank):
 
         if 'gpuspec.0000.' in self.filename:
             logger.info('Detecting high frequency resolution data.')
-            chunk_dim = (1,1,1048576)
+            chunk_dim = (1,1,1048576) #1048576 is the number of channels in a coarse channel.
             return chunk_dim
         elif 'gpuspec.0001.' in self.filename:
             logger.info('Detecting high time resolution data.')
-            chunk_dim = (2048,1,512)
+            chunk_dim = (2048,1,512) #512 is the total number of channels per single band (ie. blc00)
             return chunk_dim
         elif 'gpuspec.0002.' in self.filename:
             logger.info('Detecting intermediate frequency and time resolution data.')
-            chunk_dim = (10,1,65536)
+            chunk_dim = (10,1,65536)  #65536 is the total number of channels per single band (ie. blc00)
 #            chunk_dim = (1,1,65536/4)
             return chunk_dim
         else:
@@ -509,7 +570,7 @@ def cmd_tool(args=None):
         #    exit()
 
         if parse_args.blank_dc:
-            print("Blanking DC bin")
+            logger.info("Blanking DC bin")
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
 
@@ -542,7 +603,7 @@ def cmd_tool(args=None):
             if 'DISPLAY' in os.environ.keys():
                 plt.show()
             else:
-                print("No $DISPLAY available.")
+                logger.warning("No $DISPLAY available.")
 
 
     else:
@@ -556,9 +617,9 @@ def cmd_tool(args=None):
             elif '.h5' not in filename_out:
                 filename_out = filename_out.replace('.fil','')+'.h5'
 
-            print('Writing file : %s'%(filename_out))
+            logger.info('Writing file : %s'%(filename_out))
             fil.write_to_hdf5(filename_out)
-            print('File written.')
+            logger.info('File written.')
 
         if parse_args.to_fil:
             if not filename_out:
@@ -566,9 +627,9 @@ def cmd_tool(args=None):
             elif '.fil' not in filename_out:
                 filename_out = filename_out.replace('.h5','')+'.fil'
 
-            print('Writing file : %s'%(filename_out))
+            logger.info('Writing file : %s'%(filename_out))
             fil.write_to_fil(filename_out)
-            print('File written.')
+            logger.info('File written.')
 
 
 if __name__ == "__main__":
