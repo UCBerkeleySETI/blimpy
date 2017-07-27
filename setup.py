@@ -4,7 +4,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-version = '1.1.2'
+version = '1.1.3'
 
 # create entry points
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
@@ -15,7 +15,8 @@ entry_points = {
          'rawutil = blimpy.guppi:cmd_tool',
          'fil2hdf = blimpy.fil2hdf:cmd_tool',
          'gup2hdf = blimpy.gup2hdf:cmd_tool',
-         'fil2h5 = blimpy.fil2h5:make_h5_file'
+         'fil2h5 = blimpy.fil2h5:make_h5_file',
+         'h52fil = blimpy.h52fil:make_fil_file'
      ]
     }
 
@@ -24,7 +25,7 @@ setup(name='blimpy',
       description='Python utilities for Breakthrough Listen SETI observations',
       install_requires=['astropy', 'numpy', 'cython', 'h5py'],
       url='https://github.com/ucberkeleyseti/blimpy',
-      author='Danny Price',
+      author='Danny Price & Emilio Enriquez',
       author_email='dancpr@berkeley.edu',
       license='MIT',
       entry_points=entry_points,
