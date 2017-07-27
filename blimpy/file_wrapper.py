@@ -309,6 +309,18 @@ class  H5_reader(object):
 
         return blob_start
 
+    def __flat_array_dimmention(self,array_dim):
+        """Multiplies all the dimentions of an array.
+        """
+
+        array_flat_size = 1
+
+        for a_dim in array_dim:
+            array_flat_size*=a_dim
+
+        return array_flat_size
+
+
 
 class  FIL_reader(object):
     """ This class handles .fil files.

@@ -212,14 +212,6 @@ class Waterfall(Filterbank):
         blob_dim = self.__get_blob_dimentions(chunk_dim)
         n_blobs = self.container.calc_n_blobs(blob_dim)
 
-        #calibrate data
-        #self.data = calibrate(mask(self.data.mean(axis=0)[0]))
-        #rewrite header to be consistent with modified data
-        self.header['fch1']   = self.freqs[0]
-        self.header['foff']   = self.freqs[1] - self.freqs[0]
-        self.header['nchans'] = self.freqs.shape[0]
-        #self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
-
         #Write header of .fil file
         n_bytes  = self.header['nbits'] / 8
         with open(filename_out, "w") as fileh:
