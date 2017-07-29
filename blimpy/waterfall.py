@@ -233,6 +233,10 @@ class Waterfall(Filterbank):
                 elif n_bytes == 1:
                     np.int8(j[:, ::-1].ravel()).tofile(fileh)
 
+        t1 = time.time()
+        logger.info('Conversion time: %2.2fsec' % (t1- t0))
+
+
     def __write_to_fil_light(self, filename_out, *args, **kwargs):
         """ Write data to .fil file.
 
