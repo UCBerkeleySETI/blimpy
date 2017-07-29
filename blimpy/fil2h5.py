@@ -19,7 +19,9 @@ def make_h5_file(filename,out_dir='./'):
     new_filename = out_dir+filename.replace('.fil','.h5').split('/')[-1]
     fil_file.write_to_hdf5(new_filename)
 
-if __name__ == "__main__":
+def cmd_tool():
+    '''
+    '''
 
     p = OptionParser()
     p.set_usage('Command line utility for converting Sigproc filterbank (.fil) to  HDF5 (.h5) format  \n >>fil2h5 <FULL_PATH_TO_FIL_FILE> [options]')
@@ -33,3 +35,7 @@ if __name__ == "__main__":
         filename = args[0]
 
     make_h5_file(filename, out_dir = opts.out_dir)
+
+if __name__ == "__main__":
+
+    cmd_tool()

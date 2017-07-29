@@ -15,8 +15,8 @@ entry_points = {
          'rawutil = blimpy.guppi:cmd_tool',
          'fil2hdf = blimpy.fil2hdf:cmd_tool',
          'gup2hdf = blimpy.gup2hdf:cmd_tool',
-         'fil2h5 = blimpy.fil2h5:make_h5_file',
-         'h52fil = blimpy.h52fil:make_fil_file'
+         'fil2h5 = blimpy.fil2h5:cmd_tool',
+         'h52fil = blimpy.h52fil:cmd_tool'
      ]
     }
 
