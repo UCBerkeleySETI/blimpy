@@ -205,7 +205,6 @@ class Waterfall(Filterbank):
         """
 
         t0 = time.time()
-        block_size = 0
 
         #Note that a chunk is not a blob!!
         chunk_dim = self.__get_chunk_dimentions()
@@ -236,13 +235,14 @@ class Waterfall(Filterbank):
         t1 = time.time()
         logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
-
     def __write_to_fil_light(self, filename_out, *args, **kwargs):
         """ Write data to .fil file.
 
         Args:
             filename_out (str): Name of output file
         """
+
+        t0 = time.time()
 
         #calibrate data
         #self.data = calibrate(mask(self.data.mean(axis=0)[0]))
@@ -262,6 +262,9 @@ class Waterfall(Filterbank):
                 np.int16(j[:, ::-1].ravel()).tofile(fileh)
             elif n_bytes == 1:
                 np.int8(j[:, ::-1].ravel()).tofile(fileh)
+
+        t1 = time.time()
+        logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
     def write_to_hdf5(self, filename_out, *args, **kwargs):
         """ Write data to HDF5 file.
@@ -378,6 +381,8 @@ class Waterfall(Filterbank):
             filename_out (str): Name of output file
         """
 
+        t0 = time.time()
+        block_size = 0
 
         with h5py.File(filename_out, 'w') as h5:
 
@@ -417,6 +422,9 @@ class Waterfall(Filterbank):
             # Copy over header information as attributes
             for key, value in self.header.items():
                 dset.attrs[key] = value
+
+        t1 = time.time()
+        logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
     def __get_blob_dimentions(self,chunk_dim):
         """ Sets the blob dimmentions, trying to read around 256 MiB at a time. This is assuming chunk is about 1 MiB.
