@@ -11,7 +11,7 @@ from .waterfall import Waterfall
 from optparse import OptionParser
 import sys
 
-def make_fil_file(filename,out_dir='./', new_name=None):
+def make_fil_file(filename,out_dir='./', new_filename=None):
     ''' Converts file to Sigproc filterbank (.fil) format.  Default saves output in current dir.
     '''
 
@@ -27,7 +27,7 @@ def cmd_tool():
     p = OptionParser()
     p.set_usage('Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
     p.add_option('-o', '--out_dir', dest='out_dir', type='str', default='./', help='Location for output files. Default: local dir. ')
-    p.add_option('-n', '--new_name', dest='new_name', type='str', default='', help='New name. Default: replaces extention to .fil')
+    p.add_option('-n', '--new_filename', dest='new_filename', type='str', default='', help='New filename. Default: replaces extention to .fil')
     opts, args = p.parse_args(sys.argv[1:])
 
     if len(args)!=1:
@@ -36,7 +36,7 @@ def cmd_tool():
     else:
         filename = args[0]
 
-    make_fil_file(filename, out_dir = opts.out_dir, new_name=opts.new_name)
+    make_fil_file(filename, out_dir = opts.out_dir, new_filename=opts.new_filename)
 
 if __name__ == "__main__":
 
