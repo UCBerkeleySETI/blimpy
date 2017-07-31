@@ -441,15 +441,15 @@ class Waterfall(Filterbank):
         """ Sets the chunking dimmentions depending on the file type.
         """
 
-        if 'gpuspec.0000.' in self.filename:
+        if '.0000.' in self.filename:
             logger.info('Detecting high frequency resolution data.')
             chunk_dim = (1,1,1048576) #1048576 is the number of channels in a coarse channel.
             return chunk_dim
-        elif 'gpuspec.0001.' in self.filename:
+        elif '.0001.' in self.filename:
             logger.info('Detecting high time resolution data.')
             chunk_dim = (2048,1,512) #512 is the total number of channels per single band (ie. blc00)
             return chunk_dim
-        elif 'gpuspec.0002.' in self.filename:
+        elif '.0002.' in self.filename:
             logger.info('Detecting intermediate frequency and time resolution data.')
             chunk_dim = (10,1,65536)  #65536 is the total number of channels per single band (ie. blc00)
 #            chunk_dim = (1,1,65536/4)
