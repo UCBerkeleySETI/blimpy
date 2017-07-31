@@ -455,8 +455,8 @@ class Waterfall(Filterbank):
 #            chunk_dim = (1,1,65536/4)
             return chunk_dim
         else:
-            logger.warning('File format not know. Will use autoblobing.')
-            chunk_dim = True
+            logger.warning('File format not know. Will use minimum chunking. NOT OPTIMAL.')
+            chunk_dim = (1,1,512)
             return chunk_dim
 
     def calc_n_coarse_chan(self):
