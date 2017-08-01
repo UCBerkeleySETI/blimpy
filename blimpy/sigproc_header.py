@@ -332,7 +332,7 @@ def to_sigproc_keyword(keyword, value=None):
 
     keyword = str(keyword)
 
-    if not value:
+    if value is None:
         return np.int32(len(keyword)).tostring() + keyword
     else:
         dtype = header_keyword_types[keyword]
