@@ -242,7 +242,7 @@ class Filterbank(object):
                 print("points or manually increase MAX_DATA_ARRAY_SIZE.")
                 exit()
 
-            self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
+            self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype=dd_type)
 
             for ii in range(n_ints):
                 """d = f.read(n_bytes * n_chans * n_ifs)
@@ -265,7 +265,7 @@ class Filterbank(object):
                     f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
         else:
             print("Skipping data load...")
-            self.data = np.array([0])
+            self.data = np.array([0], dtype=dd_type)
 
         # Finally add some other info to the class as objects
         self.n_ints_in_file  = n_ints_in_file
