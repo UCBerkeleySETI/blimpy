@@ -132,40 +132,6 @@ class Waterfall(Filterbank):
         else:
             pass
 
-    def info(self,):
-        """ Print header information """
-
-        for key, val in self.header.items():
-            if key == 'src_raj':
-                val = val.to_string(unit=u.hour, sep=':')
-            if key == 'src_dej':
-                val = val.to_string(unit=u.deg, sep=':')
-            print("%16s : %32s" % (key, val))
-
-
-        print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
-        if self.data is not None:
-            print("%16s : %32s" % ("Data shape", self.file_shape))
-        if self.freqs is not None:
-            print("%16s : %32s" % ("Start freq (MHz)", self.freqs[0]))
-            print("%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1]))
-
-    def __setup_time_axis(self,t_start=None, t_stop=None):
-        """  Setup time axis.
-        """
-
-        # now check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
-
-        ## Setup time axis
-        t0 = self.header['tstart']
-        t_delt = self.header['tsamp']
-        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
     def __load_data(self):
         """
