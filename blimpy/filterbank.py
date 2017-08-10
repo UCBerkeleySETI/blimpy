@@ -184,6 +184,8 @@ class Filterbank(object):
 
         if filename is None:
             filename = self.filename
+        else:
+            self.filename = filename
 
         self.header = read_header(filename)
 
