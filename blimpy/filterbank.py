@@ -353,9 +353,9 @@ class Filterbank(object):
         return plot_f, plot_data
 
     def calc_n_coarse_chan(self):
-        ''' This makes an attempt to calculate the number of coarse channels in a given file.
+        """ This makes an attempt to calculate the number of coarse channels in a given file.
             It assumes for now that a single coarse channel is 2.9296875 MHz
-        '''
+        """
 
         # Could add a telescope based coarse channel bandwidth, or other discriminative.
         # if telescope_id == 'GBT':
