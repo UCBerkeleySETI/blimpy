@@ -28,7 +28,7 @@ import h5py
 
 from .filterbank import Filterbank
 from . import file_wrapper as fw
-from .sigproc_header import *
+from .sigproc import *
 
 try:
     HAS_BITSHUFFLE = True
@@ -173,8 +173,8 @@ class Waterfall(Filterbank):
         t0 = time.time()
 
         #Note that a chunk is not a blob!!
-        chunk_dim = self.__get_chunk_dimentions()
-        blob_dim = self.__get_blob_dimentions(chunk_dim)
+        chunk_dim = self.__get_chunk_dimensions()
+        blob_dim = self.__get_blob_dimensions(chunk_dim)
         n_blobs = self.container.calc_n_blobs(blob_dim)
 
         #Write header of .fil file
@@ -256,8 +256,8 @@ class Waterfall(Filterbank):
         block_size = 0
 
         #Note that a chunk is not a blob!!
-        chunk_dim = self.__get_chunk_dimentions()
-        blob_dim = self.__get_blob_dimentions(chunk_dim)
+        chunk_dim = self.__get_chunk_dimensions()
+        blob_dim = self.__get_blob_dimensions(chunk_dim)
         n_blobs = self.container.calc_n_blobs(blob_dim)
 
         with h5py.File(filename_out, 'w') as h5:
@@ -392,7 +392,7 @@ class Waterfall(Filterbank):
         t1 = time.time()
         logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
-    def __get_blob_dimentions(self,chunk_dim):
+    def __get_blob_dimensions(self, chunk_dim):
         """ Sets the blob dimmentions, trying to read around 256 MiB at a time. This is assuming chunk is about 1 MiB.
         """
 
@@ -403,7 +403,7 @@ class Waterfall(Filterbank):
 
         return blob_dim
 
-    def __get_chunk_dimentions(self):
+    def __get_chunk_dimensions(self):
         """ Sets the chunking dimmentions depending on the file type.
         """
 

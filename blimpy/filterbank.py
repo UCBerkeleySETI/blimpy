@@ -49,7 +49,7 @@ else:
     import pylab as plt
 
 
-from .sigproc_header import *
+from .sigproc import *
 
 ###
 # Config values
@@ -771,8 +771,9 @@ class Filterbank(object):
 
 
     def calibrate_band_pass_N1(self):
-        '''One way to calibrate the band pass is to take the median value for every frequency fine channel, and devide by it.
-        '''
+        """ One way to calibrate the band pass is to take the median value
+            for every frequency fine channel, and divide by it.
+        """
 
         band_pass = np.median(self.data.squeeze(),axis=0)
         self.data = self.data/band_pass
