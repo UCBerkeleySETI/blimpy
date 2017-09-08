@@ -83,7 +83,7 @@ class  H5_reader(object):
             self.beam_axis = 1  # Place holder
             self.stokes_axis = 4  # Place holder
 
-            self.__setup_time_axis()
+            self.setup_time_axis()
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.heavy = True
@@ -161,12 +161,17 @@ class  H5_reader(object):
             else:
                 self.header[key] = val
 
-    def __setup_time_axis(self,):
+    def setup_time_axis(self,):
         """  Setup time axis.
         """
 
-        # now check to see how many integrations requested
-        n_ints = self.t_stop - self.t_start
+        #Check to see how many integrations requested
+        ii_start, ii_stop = 0, self.n_ints_in_file
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
+        n_ints = ii_stop - ii_start
 
         ## Setup time axis
         t0 = self.header['tstart']
@@ -376,7 +381,7 @@ class  FIL_reader(object):
             self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
             self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
 
-            self.__setup_time_axis()
+            self.setup_time_axis()
 
 #EE ie.
 #           spec = np.squeeze(fil_file.data)
@@ -663,12 +668,17 @@ class  FIL_reader(object):
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
-    def __setup_time_axis(self):
+    def setup_time_axis(self):
         """  Setup time axis.
         """
 
-        # now check to see how many integrations requested
-        n_ints = self.t_stop - self.t_start
+        #Check to see how many integrations requested
+        ii_start, ii_stop = 0, self.n_ints_in_file
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
+        n_ints = ii_stop - ii_start
 
         ## Setup time axis
         t0 = self.header['tstart']

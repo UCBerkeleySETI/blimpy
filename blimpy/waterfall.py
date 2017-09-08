@@ -112,8 +112,8 @@ class Waterfall(Filterbank):
             self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
-            self.__setup_time_axis()
-            self.heavy =  lambda x: self.container.isheavy()
+            self.setup_time_axis()
+#            self.heavy =  lambda x: self.container.isheavy()
             self.file_shape = self.container.file_shape
             self.file_size_bytes = self.container.file_size_bytes
             self.selection_shape = self.container.selection_shape
