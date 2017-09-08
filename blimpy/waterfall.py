@@ -113,7 +113,7 @@ class Waterfall(Filterbank):
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
             self.__setup_time_axis()
-            self.heavy =  self.container.heavy
+            self.heavy =  lambda x: self.container.isheavy()
             self.file_shape = self.container.file_shape
             self.file_size_bytes = self.container.file_size_bytes
             self.selection_shape = self.container.selection_shape
@@ -158,7 +158,7 @@ class Waterfall(Filterbank):
             filename_out (str): Name of output file
         """
 
-        if self.heavy:
+        if self.container.isheavy():
             self.__write_to_fil_heavy(filename_out)
         else:
             self.__write_to_fil_light(filename_out)
@@ -240,7 +240,7 @@ class Waterfall(Filterbank):
             filename_out (str): Name of output file
         """
 
-        if self.heavy:
+        if self.container.isheavy():
             self.__write_to_hdf5_heavy(filename_out)
         else:
             self.__write_to_hdf5_light(filename_out)
@@ -516,8 +516,7 @@ def cmd_tool(args=None):
     fil.info()
 
     #Check the size of selection.
-
-    if fil.heavy or parse_args.to_hdf5 or parse_args.to_fil:
+    if fil.container.isheavy() or parse_args.to_hdf5 or parse_args.to_fil:
         info_only = True
 
     # And if we want to plot data, then plot data.
