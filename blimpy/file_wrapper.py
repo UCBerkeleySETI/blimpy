@@ -196,7 +196,7 @@ class  H5_reader(object):
         """ Check if the current selection if too large.
         """
 
-        selection_size = self.__calc_selection_size()
+        selection_size_bytes = self.__calc_selection_size()
 
         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
             return True
