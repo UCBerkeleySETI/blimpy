@@ -210,11 +210,9 @@ class Waterfall(Filterbank):
 
         t0 = time.time()
 
-        #calibrate data
-        #self.data = calibrate(mask(self.data.mean(axis=0)[0]))
         #rewrite header to be consistent with modified data
-        self.header['fch1']   = self.freqs[0]
-        self.header['foff']   = self.freqs[1] - self.freqs[0]
+        self.header['fch1']   = self.freqs[-1]
+        self.header['foff']   = self.freqs[-1] - self.freqs[-2]
         self.header['nchans'] = self.freqs.shape[0]
         #self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
 
@@ -365,17 +363,17 @@ class Waterfall(Filterbank):
 
 
             dset = h5.create_dataset('data',
-                              data=self.data,
-#                              compression='lzf')
-                              compression=bs_compression,
-                              compression_opts=bs_compression_opts)
+                        data=self.data,
+#                          compression='lzf')
+                        compression=bs_compression,
+                        compression_opts=bs_compression_opts)
 
             dset_mask = h5.create_dataset('mask',
-                                     shape=self.file_shape,
-#                                     compression='lzf',
-                                     compression=bs_compression,
-                                     compression_opts=bs_compression_opts,
-                                     dtype='uint8')
+                        shape=self.file_shape,
+#                                 compression='lzf',
+                        compression=bs_compression,
+                        compression_opts=bs_compression_opts,
+                        dtype='uint8')
 
             dset.dims[0].label = "frequency"
             dset.dims[1].label = "feed_id"
