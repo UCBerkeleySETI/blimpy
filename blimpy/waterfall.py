@@ -212,7 +212,7 @@ class Waterfall(Filterbank):
 
         #rewrite header to be consistent with modified data
         self.header['fch1']   = self.freqs[-1]
-        self.header['foff']   = self.freqs[-1] - self.freqs[-2]
+        self.header['foff']   = self.freqs[0] - self.freqs[1]
         self.header['nchans'] = self.freqs.shape[0]
         #self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
 
