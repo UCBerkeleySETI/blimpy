@@ -51,15 +51,18 @@ def cmd_tool(args=None):
     headersize1 = find_header_size(file1)
     file_size1 = os.path.getsize(file1)
 
-    command=['tail','-c',str(file_size1-headersize1),file1,'|','md5sum']
+    #Strip header from file, and calculate the md5sum of the rest.
+    #command=['tail','-c',str(file_size1-headersize1),file1,'|','md5sum']
+    command=['./tail_sum.sh',file1,str(file_size1-headersize1)]
     print '[matchfils] '+' '.join(command)
 
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
 
     check_sum1 = out.split()[0]
     print '[matchfils] Checksum is:', check_sum1
 
+    #---
     out,err = reset_outs()
 
     command=[header_loc,file1]
@@ -79,15 +82,18 @@ def cmd_tool(args=None):
     headersize2 = find_header_size(file2)
     file_size2 = os.path.getsize(file2)
 
-    command=['tail','-c',str(file_size2-headersize2),file2,'|','md5sum']
+    #Strip header from file, and calculate the md5sum of the rest.
+    command=['./tail_sum.sh',file2,str(file_size2-headersize2)]
     print '[matchfils] '+' '.join(command)
 
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
 
     check_sum2 = out.split()[0]
+#    if not check_sum2:
     print '[matchfils] Checksum is:', check_sum2
 
+    #---
     out,err = reset_outs()
 
     command=[header_loc,file2]
