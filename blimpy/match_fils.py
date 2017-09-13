@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-from argparse import ArgumentParser
+from optparse import OptionParser
 import socket
 import subprocess
-from blimpy import Waterfall
-from optparse import OptionParser
 import sys
 import os
+from .waterfall import Waterfall
 
 #import pdb #pdb.set_trace()
 
