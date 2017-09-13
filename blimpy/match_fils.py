@@ -48,8 +48,21 @@ def cmd_tool(args=None):
     #------------------------------------
     #First checksum
 
+    headersize1 = find_header_size(file1)
+    file_size1 = os.path.getsize(file1)
+
+    command=['tail','-c',str(file_size1-headersize1),file1,'|','md5sum']
+    print '[matchfils] '+' '.join(command)
+
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = proc.communicate()
+
+    check_sum1 = out.split()[0]
+
+    out,err = reset_outs()
+
     command=[header_loc,file1]
-    print ' '.join(command)
+    print '[matchfils] Header information:'
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
@@ -57,32 +70,8 @@ def cmd_tool(args=None):
     header1 = out
     print header1
 
-    out,err = reset_outs()
-
-    headersize1 = find_header_size(file1)
-    file_size1 = os.path.getsize(file1)
-
-    command=['tail','-c',str(file_size1-headersize1),file1,'|','md5sum']
-    print ' '.join(command)
-
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = proc.communicate()
-
-    check_sum1 = out.split()[0]
-
     #------------------------------------
     #Second checksum
-
-    out,err = reset_outs()
-
-    command=[header_loc,file2]
-    print ' '.join(command)
-
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = proc.communicate()
-
-    header2 = out
-    print header2
 
     out,err = reset_outs()
 
@@ -90,20 +79,31 @@ def cmd_tool(args=None):
     file_size2 = os.path.getsize(file2)
 
     command=['tail','-c',str(file_size2-headersize2),file2,'|','md5sum']
-    print ' '.join(command)
+    print '[matchfils] '+' '.join(command)
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
 
     check_sum2 = out.split()[0]
 
+    out,err = reset_outs()
+
+    command=[header_loc,file2]
+    print '[matchfils] Header information:'
+
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = proc.communicate()
+
+    header2 = out
+    print header2
+
     #------------------------------------
     #check the checksums
 
     if check_sum1 != check_sum2:
-        print 'Booo! Checksum does not match between files.'
+        print '[matchfils] Booo! Checksum does not match between files.'
     else:
-        print 'Hooray! Checksum matches between files.'
+        print '[matchfils] Hooray! Checksum matches between files.'
 
 if __name__ == "__main__":
     cmd_tool()
