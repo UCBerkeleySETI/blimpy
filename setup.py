@@ -13,10 +13,11 @@ entry_points = {
         ['filutil = blimpy.filterbank:cmd_tool',
          'watutil = blimpy.waterfall:cmd_tool',
          'rawutil = blimpy.guppi:cmd_tool',
-         'fil2hdf = blimpy.fil2hdf:cmd_tool',
-         'gup2hdf = blimpy.gup2hdf:cmd_tool',
+#         'fil2hdf = blimpy.fil2hdf:cmd_tool',  #EE deprecating until tested
+#         'gup2hdf = blimpy.gup2hdf:cmd_tool',  #EE deprecating until tested
          'fil2h5 = blimpy.fil2h5:cmd_tool',
-         'h52fil = blimpy.h52fil:cmd_tool'
+         'h52fil = blimpy.h52fil:cmd_tool',
+         'matchfils = blimpy.match_fils:cmd_tool'
      ]
     }
 

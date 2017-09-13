@@ -9,6 +9,7 @@ from . import h52fil
 from . import gup2hdf
 from . import waterfall
 from . import file_wrapper
+from . import match_fils
 
 try:
     from .waterfall import Waterfall
