@@ -58,6 +58,7 @@ def cmd_tool(args=None):
     (out, err) = proc.communicate()
 
     check_sum1 = out.split()[0]
+    print '[matchfils] Checksum is:', check_sum1
 
     out,err = reset_outs()
 
@@ -85,6 +86,7 @@ def cmd_tool(args=None):
     (out, err) = proc.communicate()
 
     check_sum2 = out.split()[0]
+    print '[matchfils] Checksum is:', check_sum2
 
     out,err = reset_outs()
 
