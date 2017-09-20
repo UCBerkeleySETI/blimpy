@@ -14,11 +14,6 @@ except:
 
 local_host = socket.gethostname()
 
-if 'bl' in local_host:
-    header_loc = '/usr/local/sigproc/bin/header' #Current location of header command in GBT.
-else:
-    raise IOError('Spcript only able to run in BL systems.')
-
 def reset_outs():
     '''
     '''
@@ -51,6 +46,11 @@ def find_header_size(filename):
 def cmd_tool(args=None):
     """ Command line tool to make a md5sum comparison of two .fil files. """
 
+    if 'bl' in local_host:
+        header_loc = '/usr/local/sigproc/bin/header' #Current location of header command in GBT.
+    else:
+        raise IOError('Script only able to run in BL systems.')
+    
     p = OptionParser()
     p.set_usage('compare_fils <FIL_FILE1> <FIL_FILE2>')
     opts, args = p.parse_args(sys.argv[1:])
