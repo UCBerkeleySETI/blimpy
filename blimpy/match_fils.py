@@ -72,13 +72,13 @@ def cmd_tool(args=None):
     #Strip header from file, and calculate the md5sum of the rest.
     #command=['tail','-c',str(file_size1-headersize1),file1,'|','md5sum']
     command=['./tail_sum.sh',file1,str(file_size1-headersize1)]
-    print '[matchfils] '+' '.join(command)
+    print('[matchfils] '+' '.join(command))
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
 
     check_sum1 = out.split()[0]
-    print '[matchfils] Checksum is:', check_sum1
+    print('[matchfils] Checksum is:', check_sum1)
 
     if err:
         raise Error('There is an error.')
@@ -87,13 +87,13 @@ def cmd_tool(args=None):
     out,err = reset_outs()
 
     command=[header_loc,file1]
-    print '[matchfils] Header information:'
+    print('[matchfils] Header information:')
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
 
     header1 = out
-    print header1
+    print(header1)
 
     #------------------------------------
     #Second checksum
@@ -105,13 +105,13 @@ def cmd_tool(args=None):
 
     #Strip header from file, and calculate the md5sum of the rest.
     command=['./tail_sum.sh',file2,str(file_size2-headersize2)]
-    print '[matchfils] '+' '.join(command)
+    print('[matchfils] '+' '.join(command))
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
 
     check_sum2 = out.split()[0]
-    print '[matchfils] Checksum is:', check_sum2
+    print('[matchfils] Checksum is:', check_sum2)
 
     if err:
         raise Error('There is an error.')
@@ -120,21 +120,21 @@ def cmd_tool(args=None):
     out,err = reset_outs()
 
     command=[header_loc,file2]
-    print '[matchfils] Header information:'
+    print('[matchfils] Header information:')
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
 
     header2 = out
-    print header2
+    print(header2)
 
     #------------------------------------
     #check the checksums
 
     if check_sum1 != check_sum2:
-        print '[matchfils] Booo! Checksum does not match between files.'
+        print('[matchfils] Booo! Checksum does not match between files.')
     else:
-        print '[matchfils] Hooray! Checksum matches between files.'
+        print('[matchfils] Hooray! Checksum matches between files.')
 
     #------------------------------------
     #Remove batch script
