@@ -28,7 +28,7 @@ def make_batch_script():
     with open('tail_sum.sh', 'w') as batch_script:
         batch_script.write(script_text)
 
-    os.chmod('tail_sum.sh', 0775)
+    os.chmod('tail_sum.sh', 775)
 
 def find_header_size(filename):
     ''' Script to find the header size of a filterbank file'''
