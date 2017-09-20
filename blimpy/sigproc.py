@@ -381,12 +381,21 @@ def to_sigproc_angle(angle_val):
     """ Convert an astropy.Angle to the ridiculous sigproc angle format string. """
     x = str(angle_val)
 
-    if 'h' in x:
-        d, m, s, ss = int(x[0:x.index('h')]), int(x[x.index('h')+1:x.index('m')]), \
-        int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
-    if 'd' in x:
-        d, m, s, ss = int(x[0:x.index('d')]), int(x[x.index('d')+1:x.index('m')]), \
-        int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
+    if '.' in x:
+        if 'h' in x:
+                d, m, s, ss = int(x[0:x.index('h')]), int(x[x.index('h')+1:x.index('m')]), \
+                int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
+        if 'd' in x:
+            d, m, s, ss = int(x[0:x.index('d')]), int(x[x.index('d')+1:x.index('m')]), \
+            int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
+    else:
+        if 'h' in x:
+            d, m, s = int(x[0:x.index('h')]), int(x[x.index('h')+1:x.index('m')]), \
+            int(x[x.index('m')+1:x.index('s')])
+        if 'd' in x:
+            d, m, s = int(x[0:x.index('d')]), int(x[x.index('d')+1:x.index('m')]), \
+            int(x[x.index('m')+1:x.index('s')])
+        ss = 0
     num = str(d).zfill(2) + str(m).zfill(2) + str(s).zfill(2)+ '.' + str(ss).split(".")[-1]
     return np.float64(num).tostring()
 
