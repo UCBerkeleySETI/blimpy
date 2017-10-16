@@ -73,7 +73,7 @@ class Filterbank(object):
 
     def __init__(self, filename=None, f_start=None, f_stop=None,
                  t_start=None, t_stop=None, load_data=True,
-                 header_dict=None, data_array=None, blank_dc=False,cal_band_pass):
+                 header_dict=None, data_array=None, blank_dc=False,cal_band_pass=False):
         """ Class for loading and plotting blimpy data.
 
         This class parses the blimpy file and stores the header and data
