@@ -73,7 +73,7 @@ class Filterbank(object):
 
     def __init__(self, filename=None, f_start=None, f_stop=None,
                  t_start=None, t_stop=None, load_data=True,
-                 header_dict=None, data_array=None):
+                 header_dict=None, data_array=None, blank_dc=False):
         """ Class for loading and plotting blimpy data.
 
         This class parses the blimpy file and stores the header and data
@@ -91,6 +91,7 @@ class Filterbank(object):
             load_data (bool): load data. If set to False, only header will be read.
             header_dict (dict): Create blimpy from header dictionary + data array
             data_array (np.array): Create blimpy from header dict + data array
+            blank_dc (bool): Blanks the DC bin or not.
         """
 
         if filename:
@@ -106,6 +107,11 @@ class Filterbank(object):
             self.gen_from_header(header_dict, data_array)
         else:
             pass
+
+        if blank_dc:
+            print("Blanking DC bin")
+            n_coarse_chan = self.calc_n_coarse_chan()
+            self.blank_dc(n_coarse_chan)
 
     def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
@@ -835,7 +841,7 @@ def cmd_tool(args=None):
 
     fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,
                      t_start=t_start, t_stop=t_stop,
-                     load_data=load_data)
+                     load_data=load_data,blank_dc=args.blank_dc)
     fil.info()
 
     # And if we want to plot data, then plot data.
@@ -853,11 +859,6 @@ def cmd_tool(args=None):
         #    print "Error: Start and stop frequencies must lie inside file's frequency range."
         #    print "i.e. between %2.2f-%2.2f MHz." % (fil.freqs[0], fil.freqs[-1])
         #    exit()
-
-        if args.blank_dc:
-            print("Blanking DC bin")
-            n_coarse_chan = fil.calc_n_coarse_chan()
-            fil.blank_dc(n_coarse_chan)
 
         if args.calibrate_band_pass:
             print("Calibrating the band pass.")
