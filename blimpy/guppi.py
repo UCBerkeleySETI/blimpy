@@ -154,7 +154,15 @@ class GuppiRaw(object):
         n_chan = int(header['OBSNCHAN'])
         n_pol  = int(header['NPOL'])
         n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
-        dshape = (n_chan, n_samples, n_pol)
+        
+        is_chanmaj = False
+        if 'CHANMAJ' in header.keys():
+            if int(header['CHANMAJ']) == 1:
+                is_chanmaj = True
+        if is_chanmaj:
+            dshape = (n_samples, n_chan, n_pol)
+        else:
+            dshape = (n_chan, n_samples, n_pol)
         return dshape
 
     def read_next_data_block_int8(self):
@@ -255,8 +263,10 @@ class GuppiRaw(object):
         # Handle 2-bit and 4-bit data
         if n_bit != 8:
             d = unpack(d, n_bit)
-
-        d = d.reshape((n_chan, n_samples, n_pol))    # Real, imag
+        
+        dshape = self.read_next_data_block_shape()
+        
+        d = d.reshape(dshape)    # Real, imag
 
         if self._d.shape != d.shape:
             self._d = np.zeros(d.shape, dtype='float32')
