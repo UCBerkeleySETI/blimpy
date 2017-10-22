@@ -12,11 +12,11 @@ try:
 except:
     print("Warning: Cannot import HDF5 utilities")
     
-from . import waterfall
 from . import file_wrapper
 from . import match_fils
 
 try:
+    from . import waterfall
     from .waterfall import Waterfall
 except ImportError:
     pass
