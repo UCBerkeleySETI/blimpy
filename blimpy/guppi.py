@@ -150,7 +150,7 @@ class GuppiRaw(object):
         return header_dict
 
     def read_next_data_block_shape(self):
-        header = self.read_first_header()
+        header = self.read_header()
         n_chan = int(header['OBSNCHAN'])
         n_pol  = int(header['NPOL'])
         n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
