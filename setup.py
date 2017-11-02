@@ -4,7 +4,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-version = '1.1.5'
+version = '1.1.6'
 
 # create entry points
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
