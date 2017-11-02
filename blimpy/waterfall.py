@@ -312,8 +312,8 @@ class Waterfall(Filterbank):
                     t_stop = t_start + blob_dim[self.freq_axis]
 
                     if self.header['foff'] < 0:
-                        c_start = self.n_channels_in_file - (c_start)%self.n_channels_in_file
-                        c_stop = c_start - blob_dim[self.freq_axis]
+                        c_stop = self.n_channels_in_file - (c_start)%self.n_channels_in_file
+                        c_start = c_stop - blob_dim[self.freq_axis]
                     else:
                         c_start = (c_start)%self.n_channels_in_file
                         c_stop = c_start + blob_dim[self.freq_axis]
@@ -391,11 +391,18 @@ class Waterfall(Filterbank):
         logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
     def __get_blob_dimensions(self, chunk_dim):
-        """ Sets the blob dimmentions, trying to read around 256 MiB at a time. This is assuming chunk is about 1 MiB.
+        """ Sets the blob dimmentions, trying to read around 256 MiB at a time.
+            This is assuming a chunk is about 1 MiB.
         """
 
-        freq_axis_size = min(self.n_channels_in_file,chunk_dim[self.freq_axis]*MAX_BLOB_MB)
-        time_axis_size = chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size
+        if self.n_channels_in_file > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
+            freq_axis_size = self.n_channels_in_file
+#             while freq_axis_size > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
+#                 freq_axis_size /= 2
+            time_axis_size = 1
+        else:
+            freq_axis_size = self.n_channels_in_file
+            time_axis_size = chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size
 
         blob_dim = (time_axis_size, 1, freq_axis_size)
 
