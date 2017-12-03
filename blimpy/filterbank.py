@@ -162,6 +162,9 @@ class Filterbank(object):
         self._setup_freqs()
         self._setup_time_axis()
         
+        if self.header['foff'] < 0:
+            self.data = self.data[..., ::-1] # Reverse data
+        
         
 
     def _setup_freqs(self, f_start=None, f_stop=None):
