@@ -156,11 +156,13 @@ class Filterbank(object):
                 self.header[key] = val
 
         self.data = self.h5[b"data"][:]
+        self.n_ints_in_file  = self.data.shape[0]
+        self.file_size_bytes = os.path.getsize(self.filename)
+        
         self._setup_freqs()
         self._setup_time_axis()
         
-        self.n_ints_in_file  = self.data.shape[0]
-        self.file_size_bytes = os.path.getsize(self.filename)
+        
 
     def _setup_freqs(self, f_start=None, f_stop=None):
         ## Setup frequency axis
