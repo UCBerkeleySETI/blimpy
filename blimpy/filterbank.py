@@ -157,7 +157,8 @@ class Filterbank(object):
 
         self.data = self.h5[b"data"][:]
         self._setup_freqs()
-
+        self._setup_time_axis()
+        
         self.n_ints_in_file  = self.data.shape[0]
         self.file_size_bytes = os.path.getsize(self.filename)
 
@@ -189,7 +190,7 @@ class Filterbank(object):
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
-    def __setup_time_axis(self,t_start=None, t_stop=None):
+    def _setup_time_axis(self,t_start=None, t_stop=None):
         """  Setup time axis.
         """
 
@@ -204,6 +205,8 @@ class Filterbank(object):
         ## Setup time axis
         t0 = self.header[b'tstart']
         t_delt = self.header[b'tsamp']
+        
+        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
     def read_filterbank(self, filename=None, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
