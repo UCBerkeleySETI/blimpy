@@ -29,6 +29,7 @@ from pprint import pprint
 
 from astropy import units as u
 from astropy.coordinates import Angle
+from astropy.time import Time
 import scipy.stats
 from matplotlib.ticker import NullFormatter
 
@@ -39,6 +40,15 @@ try:
     HAS_HDF5 = True
 except ImportError:
     HAS_HDF5 = False
+
+try:
+    from pyslalib import slalib as s
+    HAS_SLALIB = True
+except ImportError:
+    HAS_SLALIB = False
+
+
+
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if 'DISPLAY' in os.environ.keys():
@@ -59,6 +69,11 @@ MAX_PLT_POINTS      = 65536                  # Max number of points in matplotli
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
 MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
+
+
+# Telescope coordinates (needed for LSR calc)
+parkes_coords = (-32.998370, 148.263659,  324.00)
+gbt_coords    = (38.4331294, 79.8398397, 824.36)
 
 
 ###
@@ -288,6 +303,77 @@ class Filterbank(object):
         t0 = self.header[b'tstart']
         t_delt = self.header[b'tsamp']
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+
+    def compute_lst(self):
+        """ Compute LST for observation """
+        if self.header['telescope_id'] == 6:
+            self.coords = gbt_coords
+        elif self.header['telescope_id'] == 4:
+            self.coords = parkes_coords
+        else:
+            raise RuntimeError("Currently only Parkes and GBT supported")
+        if HAS_SLALIB:
+            # dut1 = (0.2 /3600.0) * np.pi/12.0
+            dut1 = 0.0
+            mjd = self.header['tstart']
+            tellong = np.deg2rad(self.coords[1])
+            last = s.sla_gmst(mjd) - tellong + s.sla_eqeqx(mjd) + dut1
+            # lmst = s.sla_gmst(mjd) - tellong
+            if last < 0.0 : last = last + 2.0*np.pi
+            return last  
+        else:
+            raise RuntimeError("This method requires pySLALIB")
+
+    def compute_lsrk(self):
+        """ Computes the LSR in km/s 
+
+        uses the MJD, RA and DEC of observation to compute
+        along with the telescope location. Requires pyslalib
+        """
+        ra = Angle(self.header['src_raj'], unit='hourangle')
+        dec = Angle(self.header['src_dej'], unit='degree')
+        mjdd = self.header['tstart'] 
+        rarad = ra.to('radian').value
+        dcrad = dec.to('radian').value
+        last = self.compute_lst()      
+        tellat  = np.deg2rad(self.coords[0])
+        tellong = np.deg2rad(self.coords[1])
+ 
+        # convert star position to vector
+        starvect = s.sla_dcs2c(rarad, dcrad)
+
+        # velocity component in ra,dec due to Earth rotation
+        Rgeo = s.sla_rverot( tellat, rarad, dcrad, last)
+
+        # get Barycentric and heliocentric velocity and position of the Earth.
+        evp = s.sla_evp(mjdd, 2000.0)
+        dvb = evp[0]   # barycentric velocity vector, in AU/sec
+        dpb = evp[1]   # barycentric position vector, in AU
+        dvh = evp[2]   # heliocentric velocity vector, in AU/sec
+        dph = evp[3]   # heliocentric position vector, in AU
+
+        # dot product of vector to object and heliocentric velocity
+        # convert AU/sec to km/sec
+        vcorhelio = -s.sla_dvdv( starvect, dvh) *149.597870e6
+        vcorbary  = -s.sla_dvdv( starvect, dvb) *149.597870e6
+
+        # rvlsrd is velocity component in ra,dec direction due to the Sun's
+        # motion with respect to the "dynamical" local standard of rest
+        rvlsrd = s.sla_rvlsrd( rarad,dcrad)
+
+        # rvlsrk is velocity component in ra,dec direction due to i
+        # the Sun's motion w.r.t the "kinematic" local standard of rest
+        rvlsrk = s.sla_rvlsrk( rarad,dcrad)
+
+        # rvgalc is velocity component in ra,dec direction due to 
+        #the rotation of the Galaxy.
+        rvgalc = s.sla_rvgalc( rarad,dcrad)
+        totalhelio = Rgeo + vcorhelio
+        totalbary  = Rgeo + vcorbary
+        totallsrk = totalhelio + rvlsrk
+        totalgal  = totalbary  + rvlsrd + rvgalc
+
+        return totallsrk
 
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
