@@ -33,7 +33,7 @@ from astropy.time import Time
 import scipy.stats
 from matplotlib.ticker import NullFormatter
 
-from .utils import db, lin, rebin, closest
+from .utils import db, lin, rebin, closest, unpack
 
 try:
     import h5py
@@ -158,14 +158,14 @@ class Filterbank(object):
         self.data = self.h5[b"data"][:]
         self.n_ints_in_file  = self.data.shape[0]
         self.file_size_bytes = os.path.getsize(self.filename)
-        
+
         self._setup_freqs()
         self._setup_time_axis()
-        
+
         if self.header['foff'] < 0:
             self.data = self.data[..., ::-1] # Reverse data
-        
-        
+
+
 
     def _setup_freqs(self, f_start=None, f_stop=None):
         ## Setup frequency axis
@@ -210,7 +210,7 @@ class Filterbank(object):
         ## Setup time axis
         t0 = self.header[b'tstart']
         t_delt = self.header[b'tsamp']
-        
+
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
     def read_filterbank(self, filename=None, f_start=None, f_stop=None,
@@ -234,6 +234,7 @@ class Filterbank(object):
 
         i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start, f_stop)
 
+        n_bits  = self.header[b'nbits']
         n_bytes  = int(self.header[b'nbits'] / 8)
         n_chans = self.header[b'nchans']
         n_chans_selected = self.freqs.shape[0]
@@ -246,7 +247,8 @@ class Filterbank(object):
         f.seek(self.idx_data)
         filesize = os.path.getsize(self.filename)
         n_bytes_data = filesize - self.idx_data
-        n_ints_in_file = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
+
+        n_ints_in_file = int(n_bytes_data / (n_bits * 8 * n_chans * n_ifs))
 
         # now check to see how many integrations requested
         ii_start, ii_stop = 0, n_ints_in_file
@@ -264,7 +266,10 @@ class Filterbank(object):
         i1 = np.max((chan_start_idx, chan_stop_idx))
 
         #Set up the data type (taken out of loop for speed)
-        if n_bytes == 4:
+        if n_bits == 2:
+            dd_type = b'uint8'
+            n_chans_selected /= 4
+        elif n_bytes == 4:
             dd_type = b'float32'
         elif n_bytes == 2:
             dd_type = b'int16'
@@ -278,7 +283,10 @@ class Filterbank(object):
                 print("points or manually increase MAX_DATA_ARRAY_SIZE.")
                 exit()
 
-            self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype=dd_type)
+            if n_bits == 2:
+                self.data = np.zeros((n_ints, n_ifs, n_chans_selected*4), dtype=dd_type)
+            else:
+                self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype=dd_type)
 
             for ii in range(n_ints):
                 """d = f.read(n_bytes * n_chans * n_ifs)
@@ -296,6 +304,8 @@ class Filterbank(object):
                     if f_delt < 0:
                         dd = dd[::-1]
 
+                    if n_bits == 2:
+                        dd = unpack(dd, 2)
                     self.data[ii, jj] = dd
 
                     f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
@@ -328,25 +338,25 @@ class Filterbank(object):
             last = s.sla_gmst(mjd) - tellong + s.sla_eqeqx(mjd) + dut1
             # lmst = s.sla_gmst(mjd) - tellong
             if last < 0.0 : last = last + 2.0*np.pi
-            return last  
+            return last
         else:
             raise RuntimeError("This method requires pySLALIB")
 
     def compute_lsrk(self):
-        """ Computes the LSR in km/s 
+        """ Computes the LSR in km/s
 
         uses the MJD, RA and DEC of observation to compute
         along with the telescope location. Requires pyslalib
         """
         ra = Angle(self.header['src_raj'], unit='hourangle')
         dec = Angle(self.header['src_dej'], unit='degree')
-        mjdd = self.header['tstart'] 
+        mjdd = self.header['tstart']
         rarad = ra.to('radian').value
         dcrad = dec.to('radian').value
-        last = self.compute_lst()      
+        last = self.compute_lst()
         tellat  = np.deg2rad(self.coords[0])
         tellong = np.deg2rad(self.coords[1])
- 
+
         # convert star position to vector
         starvect = s.sla_dcs2c(rarad, dcrad)
 
@@ -373,7 +383,7 @@ class Filterbank(object):
         # the Sun's motion w.r.t the "kinematic" local standard of rest
         rvlsrk = s.sla_rvlsrk( rarad,dcrad)
 
-        # rvgalc is velocity component in ra,dec direction due to 
+        # rvgalc is velocity component in ra,dec direction due to
         #the rotation of the Galaxy.
         rvgalc = s.sla_rvgalc( rarad,dcrad)
         totalhelio = Rgeo + vcorhelio
@@ -484,6 +494,9 @@ class Filterbank(object):
             c: color for line
             kwargs: keyword args to be passed to matplotlib plot()
         """
+        if self.header['nbits'] <=2:
+            logged = False
+            t='all'
         ax = plt.gca()
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
@@ -578,7 +591,8 @@ class Filterbank(object):
 
         ax.get_xaxis().get_major_formatter().set_useOffset(False)
         plt.xlim(plot_f[0], plot_f[-1])
-        plt.ylim(db(fig_min),db(fig_max))
+        if logged:
+            plt.ylim(db(fig_min),db(fig_max))
 
     def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True,cb=True,MJD_time=False, **kwargs):
         """ Plot waterfall of data
@@ -694,7 +708,8 @@ class Filterbank(object):
             if_id (int): IF identification (if multiple IF signals in file)
             kwargs: keyword args to be passed to matplotlib plot() and imshow()
         """
-
+        if self.header['nbits'] <=2:
+            logged = False
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
         nullfmt = NullFormatter()  # no labels
@@ -717,7 +732,7 @@ class Filterbank(object):
         # --------
         axWaterfall = plt.axes(rect_waterfall)
         print('Plotting Waterfall')
-        self.plot_waterfall(f_start=f_start, f_stop=f_stop, cb=False)
+        self.plot_waterfall(f_start=f_start, f_stop=f_stop, logged=logged, cb=False)
         plt.xlabel('')
 
         # no labels
