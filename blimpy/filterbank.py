@@ -268,7 +268,7 @@ class Filterbank(object):
         #Set up the data type (taken out of loop for speed)
         if n_bits == 2:
             dd_type = b'uint8'
-            n_chans_selected /= 4
+            n_chans_selected = int(n_chans_selected/4)
         elif n_bytes == 4:
             dd_type = b'float32'
         elif n_bytes == 2:
