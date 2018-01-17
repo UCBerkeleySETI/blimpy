@@ -276,7 +276,7 @@ def fix_header(filename, keyword, new_value):
     dtype_to_type = {b'<l'  : np.int32,
                      b'str' : bytes,
                      b'<d'  : np.float64,
-                     b'angle' : to_sibgproc_angle}
+                     b'angle' : to_sigproc_angle}
     value_dtype = dtype_to_type[dtype]
 
     # Generate the new string
