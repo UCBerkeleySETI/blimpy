@@ -952,7 +952,11 @@ def cmd_tool(args=None):
     else:
         t_start = args.t_start
         t_stop  = args.t_stop
-
+    
+    if args.info_only:
+        args.blank_dc = False
+        args.calibrate_band_pass = False
+        
     fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,
                      t_start=t_start, t_stop=t_stop,
                      load_data=load_data,blank_dc=args.blank_dc,
