@@ -420,8 +420,8 @@ class Filterbank(object):
             if key in ('foff', 'fch1'):
                 val *= u.MHz
             if key == b'tstart':
-                print("%16s : %32s" % (key, Time(val, format='mjd').isot))
-                val = "MJD %f" % val
+                print("%16s : %32s" % ("tstart (ISOT)", Time(val, format='mjd').isot))
+                key = "tstart (MJD)"
             print("%16s : %32s" % (key, val))
 
         print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
