@@ -415,6 +415,13 @@ class Filterbank(object):
                 val = val.to_string(unit=u.hour, sep=':')
             if key == b'src_dej':
                 val = val.to_string(unit=u.deg, sep=':')
+            if key == b'tsamp':
+                val *= u.second
+            if key in ('foff', 'fch1'):
+                val *= u.MHz
+            if key == b'tstart':
+                val = "MJD %f" % val
+                print("%16s : %32s" % (key, Time(val, format='mjd').isot))
             print("%16s : %32s" % (key, val))
 
         print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
