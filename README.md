@@ -9,7 +9,13 @@ by the Breakthrough Listen instruments.
 
 ### Installation
 
-To install, download this repository and then run `python setup.py install` (with sudo if required). You will need numpy, h5py and astropy as dependencies.
+The latest stable release (1.1.6.1) can be installed via pip:
+
+```
+pip install blimpy
+```
+
+Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `python setup.py install` (with sudo if required). You will need numpy, h5py and astropy as dependencies.
 
 ### Command line utilities
 
