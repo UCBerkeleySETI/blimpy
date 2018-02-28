@@ -248,7 +248,7 @@ class Filterbank(object):
         filesize = os.path.getsize(self.filename)
         n_bytes_data = filesize - self.idx_data
 
-        n_ints_in_file = int(n_bytes_data / (n_bits * 8 * n_chans * n_ifs))
+        n_ints_in_file = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
 
         # now check to see how many integrations requested
         ii_start, ii_stop = 0, n_ints_in_file
@@ -959,11 +959,11 @@ def cmd_tool(args=None):
     else:
         t_start = args.t_start
         t_stop  = args.t_stop
-    
+
     if args.info_only:
         args.blank_dc = False
         args.calibrate_band_pass = False
-        
+
     fil = Filterbank(filename, f_start=args.f_start, f_stop=args.f_stop,
                      t_start=t_start, t_stop=t_stop,
                      load_data=load_data,blank_dc=args.blank_dc,
