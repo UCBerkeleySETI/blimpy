@@ -28,7 +28,7 @@ def make_batch_script():
     with open('tail_sum.sh', 'w') as batch_script:
         batch_script.write(script_text)
 
-    os.chmod('tail_sum.sh', 775)
+    os.chmod('tail_sum.sh', 0o775)
 
 def find_header_size(filename):
     ''' Script to find the header size of a filterbank file'''
@@ -50,9 +50,9 @@ def cmd_tool(args=None):
         header_loc = '/usr/local/sigproc/bin/header' #Current location of header command in GBT.
     else:
         raise IOError('Script only able to run in BL systems.')
-    
+
     p = OptionParser()
-    p.set_usage('compare_fils <FIL_FILE1> <FIL_FILE2>')
+    p.set_usage('matchfils <FIL_FILE1> <FIL_FILE2>')
     opts, args = p.parse_args(sys.argv[1:])
 
     file1 = args[0]
