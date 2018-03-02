@@ -197,11 +197,11 @@ class Waterfall(Filterbank):
             with open(filename_out, "a") as fileh:
                 j = bob
                 if n_bytes == 4:
-                    np.float32(j[:, ::-1].ravel()).tofile(fileh)
+                    np.float32(j.ravel()).tofile(fileh)
                 elif n_bytes == 2:
-                    np.int16(j[:, ::-1].ravel()).tofile(fileh)
+                    np.int16(j.ravel()).tofile(fileh)
                 elif n_bytes == 1:
-                    np.int8(j[:, ::-1].ravel()).tofile(fileh)
+                    np.int8(j.ravel()).tofile(fileh)
 
         t1 = time.time()
         logger.info('Conversion time: %2.2fsec' % (t1- t0))
@@ -226,11 +226,11 @@ class Waterfall(Filterbank):
             fileh.write(generate_sigproc_header(self))
             j = self.data
             if n_bytes == 4:
-                np.float32(j[:, ::-1].ravel()).tofile(fileh)
+                np.float32(j.ravel()).tofile(fileh)
             elif n_bytes == 2:
-                np.int16(j[:, ::-1].ravel()).tofile(fileh)
+                np.int16(j.ravel()).tofile(fileh)
             elif n_bytes == 1:
-                np.int8(j[:, ::-1].ravel()).tofile(fileh)
+                np.int8(j.ravel()).tofile(fileh)
 
         t1 = time.time()
         logger.info('Conversion time: %2.2fsec' % (t1- t0))
