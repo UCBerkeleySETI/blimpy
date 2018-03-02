@@ -62,12 +62,12 @@ class  H5_reader(object):
             self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
-#             if self.header['foff'] < 0:
-#                 self.f_end  = self.header['fch1']
-#                 self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
-#             else:
-            self.f_begin  = self.header['fch1']
-            self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+            if self.header['foff'] < 0:
+                self.f_end  = self.header['fch1']
+                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+            else:
+                self.f_begin  = self.header['fch1']
+                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
@@ -366,12 +366,12 @@ class  FIL_reader(object):
             self.__get_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
-#             if self.header['foff'] < 0:
-#                 self.f_end  = self.header['fch1']
-#                 self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
-#             else:
-            self.f_begin  = self.header['fch1']
-            self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+            if self.header['foff'] < 0:
+                self.f_end  = self.header['fch1']
+                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+            else:
+                self.f_begin  = self.header['fch1']
+                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
 
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
