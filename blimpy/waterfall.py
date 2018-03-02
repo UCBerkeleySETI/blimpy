@@ -24,11 +24,16 @@ TODO: check the file seek logic works correctly for multiple IFs
 import os
 import sys
 import time
-import h5py
 
 from .filterbank import Filterbank
 from . import file_wrapper as fw
 from .sigproc import *
+
+try:
+    import h5py
+    HAS_HDF5 = True
+except ImportError:
+    HAS_HDF5 = False
 
 try:
     HAS_BITSHUFFLE = True
