@@ -62,7 +62,7 @@ class  H5_reader(object):
             self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
-            if self.header['foff'] < 0 :
+            if self.header['foff'] < 0:
                 self.f_end  = self.header['fch1']
                 self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
             else:
@@ -308,7 +308,7 @@ class  H5_reader(object):
         blob = np.zeros(blob_dim,dtype='float32') #EE could remove.
         blob = self.h5["data"][blob_start[self.time_axis]:blob_end[self.time_axis],:,blob_start[self.freq_axis]:blob_end[self.freq_axis]]
 
-        if self.header['foff'] < 0 :
+        if self.header['foff'] < 0:
             blob = blob[:,:,::-1]
 
         return blob
@@ -366,7 +366,7 @@ class  FIL_reader(object):
             self.__get_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
-            if self.header['foff'] < 0 :
+            if self.header['foff'] < 0:
                 self.f_end  = self.header['fch1']
                 self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
             else:
@@ -765,8 +765,8 @@ class  FIL_reader(object):
                     dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
                     # Reverse array if frequency axis is flipped
-                    if self.header['foff'] < 0:
-                        dd = dd[::-1]
+#                     if self.header['foff'] < 0:
+#                         dd = dd[::-1]
 
                     self.data[ii, jj] = dd
 
