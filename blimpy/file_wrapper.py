@@ -62,12 +62,12 @@ class  H5_reader(object):
             self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
-            if self.header['foff'] < 0:
-                self.f_end  = self.header['fch1']
-                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
-            else:
-                self.f_begin  = self.header['fch1']
-                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+#             if self.header['foff'] < 0:
+#                 self.f_end  = self.header['fch1']
+#                 self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+#             else:
+            self.f_begin  = self.header['fch1']
+            self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
@@ -109,7 +109,7 @@ class  H5_reader(object):
                     self.read_data()
 
             else:
-                print("Skipping data load...")
+                print("Skipping loading data ...")
                 self.data = np.array([0],dtype='float32')
                 self.freqs = np.array([0],dtype='float32')
 
@@ -263,8 +263,8 @@ class  H5_reader(object):
 
         self.freqs = self.header['foff'] * i_vals + f0
 
-        if self.header['foff'] < 0:
-            self.freqs = self.freqs[::-1]
+#         if self.header['foff'] < 0:
+#             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
@@ -308,8 +308,8 @@ class  H5_reader(object):
         blob = np.zeros(blob_dim,dtype='float32') #EE could remove.
         blob = self.h5["data"][blob_start[self.time_axis]:blob_end[self.time_axis],:,blob_start[self.freq_axis]:blob_end[self.freq_axis]]
 
-        if self.header['foff'] < 0:
-            blob = blob[:,:,::-1]
+#         if self.header['foff'] < 0:
+#             blob = blob[:,:,::-1]
 
         return blob
 
@@ -366,12 +366,12 @@ class  FIL_reader(object):
             self.__get_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
-            if self.header['foff'] < 0:
-                self.f_end  = self.header['fch1']
-                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
-            else:
-                self.f_begin  = self.header['fch1']
-                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+#             if self.header['foff'] < 0:
+#                 self.f_end  = self.header['fch1']
+#                 self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+#             else:
+            self.f_begin  = self.header['fch1']
+            self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
 
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
@@ -663,8 +663,8 @@ class  FIL_reader(object):
 
         self.freqs = self.header['foff'] * i_vals + f0
 
-        if self.header['foff'] < 0:
-            self.freqs = self.freqs[::-1]
+#         if self.header['foff'] < 0:
+#             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
@@ -724,7 +724,6 @@ class  FIL_reader(object):
         if self.isheavy():
             logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
-            load_data = False
 
         #convert input frequencies into what their corresponding index would be
         i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs()
@@ -815,8 +814,8 @@ class  FIL_reader(object):
             logger.debug('DD shape != blob shape.')
             blob = dd.reshape((dd.shape[0]/blob_dim[2],blob_dim[1],blob_dim[2]))
 
-        if self.header['foff'] < 0:
-            blob = blob[:,:,::-1]
+#         if self.header['foff'] < 0:
+#             blob = blob[:,:,::-1]
 
         return blob
 
