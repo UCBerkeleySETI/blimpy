@@ -215,12 +215,6 @@ class Waterfall(Filterbank):
 
         t0 = time.time()
 
-        #rewrite header to be consistent with modified data
-        self.header['fch1']   = self.freqs[-1]
-        self.header['foff']   = self.freqs[0] - self.freqs[1]
-        self.header['nchans'] = self.freqs.shape[0]
-        #self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
-
         n_bytes  = self.header['nbits'] / 8
         with open(filename_out, "w") as fileh:
             fileh.write(generate_sigproc_header(self))
