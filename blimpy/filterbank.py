@@ -864,7 +864,7 @@ class Filterbank(object):
             filename_out (str): Name of output file
         """
 
-        print '[Filterbank] Warning: Non-standard function to write in filterbank (.fil) format. Please use Waterfall.'
+        print("[Filterbank] Warning: Non-standard function to write in filterbank (.fil) format. Please use Waterfall.")
 
         n_bytes  = self.header[b'nbits'] / 8
         with open(filename_out, "w") as fileh:
@@ -884,7 +884,7 @@ class Filterbank(object):
             filename_out (str): Name of output file
         """
 
-        print '[Filterbank] Warning: Non-standard function to write in HDF5 (.h5) format. Please use Waterfall.'
+        print("[Filterbank] Warning: Non-standard function to write in HDF5 (.h5) format. Please use Waterfall.")
 
         if not HAS_HDF5:
             raise RuntimeError("h5py package required for HDF5 output.")
