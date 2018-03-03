@@ -38,8 +38,6 @@ class  H5_reader(object):
     """ This class handles .h5 files.
     """
 
-    #EE check freq axis.
-
     def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
         """ Constructor.
 
@@ -69,10 +67,10 @@ class  H5_reader(object):
                 self.f_begin  = self.header['fch1']
                 self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
 
-            self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
-
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
+
+            self.__setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop)
 
             self.c_start = lambda: int(np.round((self.f_start - self.f_begin )/ abs(self.header['foff'])))
             self.c_stop = lambda: int(np.round((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
@@ -93,8 +91,6 @@ class  H5_reader(object):
             if self.load_data:
                 if self.heavy:
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
-#                         selection_size_bytes = self.__calc_selection_size()
-#                         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
                         if self.isheavy():
                             logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                             self.data = np.array([0],dtype='float32')
@@ -107,7 +103,6 @@ class  H5_reader(object):
                         self.freqs = np.array([0],dtype='float32')
                 else:
                     self.read_data()
-
             else:
                 print("Skipping loading data ...")
                 self.data = np.array([0],dtype='float32')
@@ -121,14 +116,17 @@ class  H5_reader(object):
         """
 
         if t_stop < t_start:
-            logger.error('Please give t_stop > t_start values.')
+            t_stop, t_start = t_start,t_stop
+            logger.warning('Given t_stop < t_start, assuming reversed values.')
         if f_stop < f_start:
-            logger.error('Please give f_stop > f_start values.')
+            f_stop, f_start = f_start,f_stop
+            logger.warning('Given f_stop < f_start, assuming reversed values.')
 
-        if t_start and t_start >= 0:
+        if t_start and t_start >= self.t_begin:
             self.t_start = int(t_start)
         else:
-            self.t_start = 0
+            self.t_start = self.t_begin
+
         if t_stop and t_stop <= self.n_ints_in_file:
             self.t_stop = int(t_stop)
         else:
@@ -220,20 +218,9 @@ class  H5_reader(object):
         """ Read data
         """
 
-        if not f_start:
-            f_start = self.f_begin
-        if not f_stop:
-            f_stop = self.f_end
-        if not t_start:
-            t_start = self.t_begin
-        if not t_stop:
-            t_stop = self.t_end
-
         self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
         #check if selection is small enough.
-#         selection_size_bytes = self.__calc_selection_size()
-#         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
         if self.isheavy():
             logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
@@ -396,8 +383,6 @@ class  FIL_reader(object):
             if self.load_data:
                 if self.heavy:
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
-#                         selection_size_bytes = self.__calc_selection_size()
-#                         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
                         if self.isheavy():
                             logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                             self.data = np.array([0],dtype='float32')
@@ -405,13 +390,13 @@ class  FIL_reader(object):
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %f.2 MB, exceeding our size limit %f.2 MB. Data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("The file is of size %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                         self.data = np.array([0],dtype='float32')
                         self.freqs = np.array([0],dtype='float32')
                 else:
                     self.read_data()
             else:
-                print("Skipping data load...")
+                print("Skipping loading data ...")
                 self.data = np.array([0],dtype='float32')
                 self.freqs = np.array([0],dtype='float32')
 
@@ -423,14 +408,17 @@ class  FIL_reader(object):
         """
 
         if t_stop < t_start:
-            logger.error('Please give t_stop > t_start values.')
+            t_stop, t_start = t_start,t_stop
+            logger.warning('Given t_stop < t_start, assuming reversed values.')
         if f_stop < f_start:
-            logger.error('Please give f_stop > f_start values.')
+            f_stop, f_start = f_start,f_stop
+            logger.warning('Given f_stop < f_start, assuming reversed values.')
 
-        if t_start and t_start >= 0:
+        if t_start and t_start >= self.t_begin:
             self.t_start = int(t_start)
         else:
-            self.t_start = 0
+            self.t_start = self.t_begin
+
         if t_stop and t_stop <= self.n_ints_in_file:
             self.t_stop = int(t_stop)
         else:
@@ -707,20 +695,9 @@ class  FIL_reader(object):
         """ Read data.
         """
 
-        if not f_start:
-            f_start = self.f_start
-        if not f_stop:
-            f_stop = self.f_stop
-        if not t_start:
-            t_start = self.t_start
-        if not t_stop:
-            t_stop = self.t_stop
-
         self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
 
         #check if selection is small enough.
-#         selection_size_bytes = self.__calc_selection_size()
-#         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
         if self.isheavy():
             logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
