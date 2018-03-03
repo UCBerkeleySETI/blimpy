@@ -162,9 +162,8 @@ class Filterbank(object):
         self._setup_freqs()
         self._setup_time_axis()
 
-        if self.header['foff'] < 0:
-            self.data = self.data[..., ::-1] # Reverse data
-
+#         if self.header['foff'] < 0:
+#             self.data = self.data[..., ::-1] # Reverse data
 
 
     def _setup_freqs(self, f_start=None, f_stop=None):
@@ -190,8 +189,8 @@ class Filterbank(object):
 
         self.freqs = f_delt * i_vals + f0
 
-        if f_delt < 0:
-            self.freqs = self.freqs[::-1]
+#         if f_delt < 0:
+#             self.freqs = self.freqs[::-1]
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
@@ -301,8 +300,8 @@ class Filterbank(object):
                     dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
                     # Reverse array if frequency axis is flipped
-                    if f_delt < 0:
-                        dd = dd[::-1]
+#                     if f_delt < 0:
+#                         dd = dd[::-1]
 
                     if n_bits == 2:
                         dd = unpack(dd, 2)
@@ -450,7 +449,7 @@ class Filterbank(object):
 
         freqs = foff * i_vals + fch1
 
-        return freqs[::-1]
+        return freqs
 
     def grab_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
@@ -508,6 +507,11 @@ class Filterbank(object):
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
+        #Using accening frequency for all plots.
+        if self.header[b'foff'] < 0:
+            plot_data = plot_data[..., ::-1] # Reverse data
+            plot_f = plot_f[::-1]
+
         if isinstance(t, int):
             print("extracting integration %i..." % t)
             plot_data = plot_data[t]
@@ -558,6 +562,11 @@ class Filterbank(object):
         ax = plt.gca()
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
+
+        #Using accening frequency for all plots.
+        if self.header[b'foff'] < 0:
+            plot_data = plot_data[..., ::-1] # Reverse data
+            plot_f = plot_f[::-1]
 
         fig_max = plot_data[0].max()
         fig_min = plot_data[0].min()
@@ -611,7 +620,13 @@ class Filterbank(object):
             cb (bool): for plotting the colorbar
             kwargs: keyword args to be passed to matplotlib imshow()
         """
+
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
+
+        #Using accening frequency for all plots.
+        if self.header[b'foff'] < 0:
+            plot_data = plot_data[..., ::-1] # Reverse data
+            plot_f = plot_f[::-1]
 
         if logged:
             plot_data = db(plot_data)
@@ -670,6 +685,7 @@ class Filterbank(object):
 
         plot_data = plot_data.mean(axis=1)
 
+        #Reverse oder if vertical orientation.
         if 'v' in orientation:
             plt.plot(plot_data,range(len(plot_data))[::-1], **kwargs)
         else:
@@ -690,6 +706,11 @@ class Filterbank(object):
         ax = plt.gca()
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
+
+        #Using accening frequency for all plots.
+        if self.header[b'foff'] < 0:
+            plot_data = plot_data[..., ::-1] # Reverse data
+            plot_f = plot_f[::-1]
 
         try:
             plot_kurtosis = scipy.stats.kurtosis(plot_data, axis=0, nan_policy='omit')
@@ -717,7 +738,6 @@ class Filterbank(object):
         """
         if self.header['nbits'] <=2:
             logged = False
-        plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
         nullfmt = NullFormatter()  # no labels
 
@@ -845,24 +865,18 @@ class Filterbank(object):
             filename_out (str): Name of output file
         """
 
-        # calibrate data
-        # self.data = calibrate(mask(self.data.mean(axis=0)[0]))
-        # rewrite header to be consistent with modified data
-        self.header[b'fch1']   = self.freqs[0]
-        self.header[b'foff']   = self.freqs[1] - self.freqs[0]
-        self.header[b'nchans'] = self.freqs.shape[0]
-        # self.header['tsamp']  = self.data.shape[0] * self.header['tsamp']
+        print '[Filterbank] Warning: Non-standard function to write in filterbank (.fil) format. Please use Waterfall.'
 
         n_bytes  = self.header[b'nbits'] / 8
         with open(filename_out, "w") as fileh:
             fileh.write(generate_sigproc_header(self))
             j = self.data
             if n_bytes == 4:
-                np.float32(j[:, ::-1].ravel()).tofile(fileh)
+                np.float32(j.ravel()).tofile(fileh)
             elif n_bytes == 2:
-                np.int16(j[:, ::-1].ravel()).tofile(fileh)
+                np.int16(j.ravel()).tofile(fileh)
             elif n_bytes == 1:
-                np.int8(j[:, ::-1].ravel()).tofile(fileh)
+                np.int8(j.ravel()).tofile(fileh)
 
     def write_to_hdf5(self, filename_out, *args, **kwargs):
         """ Write data to HDF5 file.
@@ -870,6 +884,9 @@ class Filterbank(object):
         Args:
             filename_out (str): Name of output file
         """
+
+        print '[Filterbank] Warning: Non-standard function to write in HDF5 (.h5) format. Please use Waterfall.'
+
         if not HAS_HDF5:
             raise RuntimeError("h5py package required for HDF5 output.")
 

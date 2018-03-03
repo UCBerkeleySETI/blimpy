@@ -305,17 +305,18 @@ class Waterfall(Filterbank):
                     bob = self.container.read_blob(blob_dim,n_blob=ii)
 
                     #-----
-                    # Reverse array if frequency axis is flipped
+                    #Using channels instead of frequency.
                     c_start = self.container.c_start() + ii*blob_dim[self.freq_axis]
                     t_start = self.container.t_start + (c_start/self.n_channels_in_file)*blob_dim[self.time_axis]
                     t_stop = t_start + blob_dim[self.freq_axis]
 
-                    if self.header['foff'] < 0:
-                        c_stop = self.n_channels_in_file - (c_start)%self.n_channels_in_file
-                        c_start = c_stop - blob_dim[self.freq_axis]
-                    else:
-                        c_start = (c_start)%self.n_channels_in_file
-                        c_stop = c_start + blob_dim[self.freq_axis]
+                    # Reverse array if frequency axis is flipped
+#                     if self.header['foff'] < 0:
+#                         c_stop = self.n_channels_in_file - (c_start)%self.n_channels_in_file
+#                         c_start = c_stop - blob_dim[self.freq_axis]
+#                     else:
+                    c_start = (c_start)%self.n_channels_in_file
+                    c_stop = c_start + blob_dim[self.freq_axis]
                     #-----
 
                     logger.debug(t_start,t_stop,c_start,c_stop)
