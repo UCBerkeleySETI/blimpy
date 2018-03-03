@@ -118,7 +118,6 @@ class Waterfall(Filterbank):
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
             self.container.setup_time_axis()
-#            self.heavy =  lambda x: self.container.isheavy()
             self.file_shape = self.container.file_shape
             self.file_size_bytes = self.container.file_size_bytes
             self.selection_shape = self.container.selection_shape

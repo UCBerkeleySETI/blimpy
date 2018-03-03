@@ -43,6 +43,10 @@ class  H5_reader(object):
 
         Args:
             filename (str): filename of blimpy file.
+            f_start (float): start frequency, in MHz
+            f_stop (float): stop frequency, in MHz
+            t_start (int): start time bin
+            t_stop (int): stop time bin
         """
 
         if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
@@ -70,7 +74,7 @@ class  H5_reader(object):
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
 
-            self.__setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop)
+            self.__setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,init=True)
 
             self.c_start = lambda: int(np.round((self.f_start - self.f_begin )/ abs(self.header['foff'])))
             self.c_stop = lambda: int(np.round((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
@@ -84,21 +88,22 @@ class  H5_reader(object):
             self.setup_time_axis()
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
-                self.heavy = True
+                self.large_file = True
             else:
-                self.heavy = False
+                self.large_file = False
 
             if self.load_data:
-                if self.heavy:
+                if self.large_file:
+                    #Only checking the selection, if the file is too large.
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
-                            logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                             self.data = np.array([0],dtype='float32')
                             self.freqs = np.array([0],dtype='float32')
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("The file is of size %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                         self.data = np.array([0],dtype='float32')
                         self.freqs = np.array([0],dtype='float32')
                 else:
@@ -111,9 +116,23 @@ class  H5_reader(object):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None,init=False):
         """Making sure the selection if time and frequency are within the file limits.
+
+        Args:
+            init (bool): If call during __init__
         """
+
+        #This avoids reseting values
+        if not init:
+            if not f_start:
+                f_start = self.f_start
+            if not f_stop:
+                f_stop = self.f_stop
+            if not t_start:
+                t_start = self.t_start
+            if not t_stop:
+                t_stop = self.t_stop
 
         if t_stop < t_start:
             t_stop, t_start = t_start,t_stop
@@ -191,7 +210,7 @@ class  H5_reader(object):
         return selection_size
 
     def isheavy(self):
-        """ Check if the current selection if too large.
+        """ Check if the current selection is too large.
         """
 
         selection_size_bytes = self.__calc_selection_size()
@@ -222,7 +241,9 @@ class  H5_reader(object):
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            self.data = np.array([0],dtype='float32')
+            self.freqs = np.array([0],dtype='float32')
             return None
 
         self.data = self.h5["data"][self.t_start:self.t_stop,:,self.c_start():self.c_stop()]
@@ -336,6 +357,10 @@ class  FIL_reader(object):
 
         Args:
             filename (str): filename of blimpy file.
+            f_start (float): start frequency, in MHz
+            f_stop (float): stop frequency, in MHz
+            t_start (int): start time bin
+            t_stop (int): stop time bin
         """
 
         self.__set_header_keywords_types()
@@ -363,7 +388,7 @@ class  FIL_reader(object):
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
 
-            self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+            self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,init=True)
 
             self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
             self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
@@ -376,21 +401,21 @@ class  FIL_reader(object):
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
-                self.heavy = True
+                self.large_file = True
             else:
-                self.heavy = False
+                self.large_file = False
 
             if self.load_data:
-                if self.heavy:
+                if self.large_file:
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
-                            logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                             self.data = np.array([0],dtype='float32')
                             self.freqs = np.array([0],dtype='float32')
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("The file is of size %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                         self.data = np.array([0],dtype='float32')
                         self.freqs = np.array([0],dtype='float32')
                 else:
@@ -403,9 +428,23 @@ class  FIL_reader(object):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None):
+    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None,init=False):
         """Making sure the selection if time and frequency are within the file limits.
+
+            Args:
+                init (bool): If call during __init__
         """
+
+        #This avoids reseting values
+        if not init:
+            if not f_start:
+                f_start = self.f_start
+            if not f_stop:
+                f_stop = self.f_stop
+            if not t_start:
+                t_start = self.t_start
+            if not t_stop:
+                t_stop = self.t_stop
 
         if t_stop < t_start:
             t_stop, t_start = t_start,t_stop
@@ -452,7 +491,7 @@ class  FIL_reader(object):
         return selection_size
 
     def isheavy(self):
-        """ Check if the current selection if too large.
+        """ Check if the current selection is too large.
         """
 
         selection_size_bytes = self.__calc_selection_size()
@@ -699,7 +738,9 @@ class  FIL_reader(object):
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            self.data = np.array([0],dtype='float32')
+            self.freqs = np.array([0],dtype='float32')
             return None
 
         #convert input frequencies into what their corresponding index would be
