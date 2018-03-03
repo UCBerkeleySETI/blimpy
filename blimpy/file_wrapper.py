@@ -96,13 +96,13 @@ class  H5_reader(object):
 #                         selection_size_bytes = self.__calc_selection_size()
 #                         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
                         if self.isheavy():
-                            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                             self.data = np.array([0],dtype='float32')
                             self.freqs = np.array([0],dtype='float32')
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("The file is of size %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                         self.data = np.array([0],dtype='float32')
                         self.freqs = np.array([0],dtype='float32')
                 else:
@@ -235,7 +235,7 @@ class  H5_reader(object):
 #         selection_size_bytes = self.__calc_selection_size()
 #         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
         if self.isheavy():
-            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
 
         self.data = self.h5["data"][self.t_start:self.t_stop,:,self.c_start():self.c_stop()]
@@ -399,13 +399,13 @@ class  FIL_reader(object):
 #                         selection_size_bytes = self.__calc_selection_size()
 #                         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
                         if self.isheavy():
-                            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                             self.data = np.array([0],dtype='float32')
                             self.freqs = np.array([0],dtype='float32')
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %f MB, exceeding our size limit %f MB. Data not loaded."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("The file is of size %f.2 MB, exceeding our size limit %f.2 MB. Data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                         self.data = np.array([0],dtype='float32')
                         self.freqs = np.array([0],dtype='float32')
                 else:
@@ -722,7 +722,7 @@ class  FIL_reader(object):
 #         selection_size_bytes = self.__calc_selection_size()
 #         if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
         if self.isheavy():
-            logger.warning("Selection size of %f MB, exceeding our size limit %f MB. Data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            logger.warning("Selection size of %f.2 MB, exceeding our size limit %f.2 MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             return None
 
         #convert input frequencies into what their corresponding index would be

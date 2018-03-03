@@ -278,9 +278,8 @@ class Filterbank(object):
         if load_data:
 
             if n_ints * n_ifs * n_chans_selected > MAX_DATA_ARRAY_SIZE:
-                print("Error: data array is too large to load. Either select fewer")
-                print("points or manually increase MAX_DATA_ARRAY_SIZE.")
-                exit()
+                print("[Filterbank]  Error: data array is too large to load. Either select fewer points or manually increase MAX_DATA_ARRAY_SIZE. Large files are now handle with Waterfall .")
+                sys.exit()
 
             if n_bits == 2:
                 self.data = np.zeros((n_ints, n_ifs, n_chans_selected*4), dtype=dd_type)
