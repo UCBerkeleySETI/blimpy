@@ -9,7 +9,7 @@ by the Breakthrough Listen instruments.
 
 ### Installation
 
-The latest stable release (1.1.6.1) can be installed via pip:
+The latest stable release (1.1.7) can be installed via pip:
 
 ```
 pip install blimpy
