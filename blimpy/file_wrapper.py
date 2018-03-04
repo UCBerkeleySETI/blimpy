@@ -258,8 +258,6 @@ class  H5_reader(object):
         chan_start_idx, chan_stop_idx = self.__setup_freqs()
 
         self.data = self.h5["data"][self.t_start:self.t_stop,:,chan_start_idx:chan_stop_idx]
-#        self.data = self.h5["data"][self.t_start:self.t_stop,:,self.c_start():self.c_stop()]
-        self.__setup_freqs()
 
     def __setup_freqs(self):
         ## Setup frequency axis
@@ -285,6 +283,9 @@ class  H5_reader(object):
 
 #         if self.header['foff'] < 0:
 #             self.freqs = self.freqs[::-1]
+
+        if chan_stop_idx < chan_start_idx:
+            chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
 
         return chan_start_idx, chan_stop_idx
 
