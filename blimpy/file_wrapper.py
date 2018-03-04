@@ -141,7 +141,7 @@ class  H5_reader(object):
             f_stop, f_start = f_start,f_stop
             logger.warning('Given f_stop < f_start, assuming reversed values.')
 
-        if t_start and t_start >= self.t_begin and t_start > self.t_end:
+        if t_start and t_start >= self.t_begin and t_start < self.t_end:
             self.t_start = int(t_start)
         else:
             if not init:
@@ -321,7 +321,7 @@ class  H5_reader(object):
         blob_start = self.__find_blob_start(blob_dim,n_blob)
         blob_end = blob_start + np.array(blob_dim)
 
-        blob = np.zeros(blob_dim,dtype='float32') #EE could remove.
+#        blob = np.zeros(blob_dim,dtype='float32') #EE could remove.
         blob = self.h5["data"][blob_start[self.time_axis]:blob_end[self.time_axis],:,blob_start[self.freq_axis]:blob_end[self.freq_axis]]
 
 #         if self.header['foff'] < 0:
@@ -461,7 +461,7 @@ class  FIL_reader(object):
             f_stop, f_start = f_start,f_stop
             logger.warning('Given f_stop < f_start, assuming reversed values.')
 
-        if t_start and t_start >= self.t_begin and t_start > self.t_end:
+        if t_start and t_start >= self.t_begin and t_start < self.t_end:
             self.t_start = int(t_start)
         else:
             if not init:
