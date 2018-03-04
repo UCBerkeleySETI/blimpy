@@ -254,7 +254,11 @@ class  H5_reader(object):
             self.freqs = np.array([0],dtype='float32')
             return None
 
-        self.data = self.h5["data"][self.t_start:self.t_stop,:,self.c_start():self.c_stop()]
+        #convert input frequencies into what their corresponding index would be
+        chan_start_idx, chan_stop_idx = self.__setup_freqs()
+
+        self.data = self.h5["data"][self.t_start:self.t_stop,:,chan_start_idx:chan_stop_idx]
+#        self.data = self.h5["data"][self.t_start:self.t_stop,:,self.c_start():self.c_stop()]
         self.__setup_freqs()
 
     def __setup_freqs(self):
@@ -282,7 +286,7 @@ class  H5_reader(object):
 #         if self.header['foff'] < 0:
 #             self.freqs = self.freqs[::-1]
 
-        return i_start, i_stop, chan_start_idx, chan_stop_idx
+        return chan_start_idx, chan_stop_idx
 
     def calc_n_coarse_chan(self):
         """ This makes an attempt to calculate the number of coarse channels in a given file.
@@ -709,7 +713,7 @@ class  FIL_reader(object):
 #         if self.header['foff'] < 0:
 #             self.freqs = self.freqs[::-1]
 
-        return i_start, i_stop, chan_start_idx, chan_stop_idx
+        return chan_start_idx, chan_stop_idx
 
     def setup_time_axis(self):
         """  Setup time axis.
@@ -732,7 +736,7 @@ class  FIL_reader(object):
         """ Print header information and other derived information. """
 
         if not self.freqs:
-            i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs()
+            chan_start_idx, chan_stop_idx = self.__setup_freqs()
 
         for key, val in self.header.items():
             if key == 'src_raj':
@@ -760,7 +764,7 @@ class  FIL_reader(object):
             return None
 
         #convert input frequencies into what their corresponding index would be
-        i_start, i_stop, chan_start_idx, chan_stop_idx = self.__setup_freqs()
+        chan_start_idx, chan_stop_idx = self.__setup_freqs()
 
         n_chans = self.header['nchans']
         n_chans_selected = self.freqs.shape[0]
