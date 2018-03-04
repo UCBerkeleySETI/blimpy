@@ -5,13 +5,12 @@ from .guppi import GuppiRaw
 from . import utils
 
 try:
-    from . import fil2hdf
     from . import fil2h5
     from . import h52fil
     from . import gup2hdf
 except:
     print("Warning: Cannot import HDF5 utilities")
-    
+
 from . import file_wrapper
 from . import match_fils
 
