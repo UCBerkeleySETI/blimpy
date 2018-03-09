@@ -153,6 +153,21 @@ class Waterfall(Filterbank):
 
         self.__load_data()
 
+    def __update_header(self):
+        """ Updates the header information from the original file to the selection.
+        """
+
+        #Updating frequency of first channel from selection
+        if self.header['foff'] < 0:
+            self.header['fch1'] = self.container.f_stop
+        else:
+            self.header['fch1'] = self.container.f_start
+
+        #Updating number of coarse channels.
+        self.header['nchans'] = self.container.freqs.shape
+
+        #Updating time stamp for first time bin from selection
+        self.header['tstart'] = self.container.timestamps[0]
 
     def write_to_fil(self, filename_out, *args, **kwargs):
         """ Write data to .fil file.
@@ -162,10 +177,19 @@ class Waterfall(Filterbank):
             filename_out (str): Name of output file
         """
 
+        #For timing how long it takes to write a file.
+        t0 = time.time()
+
+        #Update header
+        self.__update_header()
+
         if self.container.isheavy():
             self.__write_to_fil_heavy(filename_out)
         else:
             self.__write_to_fil_light(filename_out)
+
+        t1 = time.time()
+        logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
     def __write_to_fil_heavy(self, filename_out, *args, **kwargs):
         """ Write data to .fil file.
@@ -173,8 +197,6 @@ class Waterfall(Filterbank):
         Args:
             filename_out (str): Name of output file
         """
-
-        t0 = time.time()
 
         #Note that a chunk is not a blob!!
         chunk_dim = self.__get_chunk_dimensions()
@@ -202,8 +224,6 @@ class Waterfall(Filterbank):
                 elif n_bytes == 1:
                     np.int8(j.ravel()).tofile(fileh)
 
-        t1 = time.time()
-        logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
     def __write_to_fil_light(self, filename_out, *args, **kwargs):
         """ Write data to .fil file.
@@ -211,8 +231,6 @@ class Waterfall(Filterbank):
         Args:
             filename_out (str): Name of output file
         """
-
-        t0 = time.time()
 
         n_bytes  = self.header['nbits'] / 8
         with open(filename_out, "w") as fileh:
@@ -225,9 +243,6 @@ class Waterfall(Filterbank):
             elif n_bytes == 1:
                 np.int8(j.ravel()).tofile(fileh)
 
-        t1 = time.time()
-        logger.info('Conversion time: %2.2fsec' % (t1- t0))
-
     def write_to_hdf5(self, filename_out, *args, **kwargs):
         """ Write data to HDF5 file.
             It check the file size then decides how to write the file.
@@ -236,10 +251,20 @@ class Waterfall(Filterbank):
             filename_out (str): Name of output file
         """
 
+        #For timing how long it takes to write a file.
+        t0 = time.time()
+
+        #Update header
+        self.__update_header()
+
         if self.container.isheavy():
             self.__write_to_hdf5_heavy(filename_out)
         else:
             self.__write_to_hdf5_light(filename_out)
+
+        t1 = time.time()
+        logger.info('Conversion time: %2.2fsec' % (t1- t0))
+
 
     def __write_to_hdf5_heavy(self, filename_out, *args, **kwargs):
         """ Write data to HDF5 file.
@@ -248,7 +273,6 @@ class Waterfall(Filterbank):
             filename_out (str): Name of output file
         """
 
-        t0 = time.time()
         block_size = 0
 
         #Note that a chunk is not a blob!!
@@ -334,9 +358,6 @@ class Waterfall(Filterbank):
 
                     dset[t_start:t_stop] = bob[:]
 
-        t1 = time.time()
-        logger.info('Conversion time: %2.2fsec' % (t1- t0))
-
     def __write_to_hdf5_light(self, filename_out, *args, **kwargs):
         """ Write data to HDF5 file in one go.
 
@@ -344,7 +365,6 @@ class Waterfall(Filterbank):
             filename_out (str): Name of output file
         """
 
-        t0 = time.time()
         block_size = 0
 
         with h5py.File(filename_out, 'w') as h5:
@@ -385,9 +405,6 @@ class Waterfall(Filterbank):
             # Copy over header information as attributes
             for key, value in self.header.items():
                 dset.attrs[key] = value
-
-        t1 = time.time()
-        logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
     def __get_blob_dimensions(self, chunk_dim):
         """ Sets the blob dimmentions, trying to read around 256 MiB at a time.
