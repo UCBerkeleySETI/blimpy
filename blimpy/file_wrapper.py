@@ -85,7 +85,9 @@ class  H5_reader(object):
             self.beam_axis = 1  # Place holder
             self.stokes_axis = 4  # Place holder
 
+            #Setup time and frequency axis
             self.timestamps = self.__setup_time_axis()
+            self.__setup_freqs()
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
@@ -99,19 +101,16 @@ class  H5_reader(object):
                         if self.isheavy():
                             logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                             self.data = np.array([0],dtype='float32')
-                            self.freqs = np.array([0],dtype='float32')
                         else:
                             self.read_data()
                     else:
                         logger.warning("The file is of size %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                         self.data = np.array([0],dtype='float32')
-                        self.freqs = np.array([0],dtype='float32')
                 else:
                     self.read_data()
             else:
                 print("Skipping loading data ...")
                 self.data = np.array([0],dtype='float32')
-                self.freqs = np.array([0],dtype='float32')
 
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -254,7 +253,6 @@ class  H5_reader(object):
         if self.isheavy():
             logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             self.data = np.array([0],dtype='float32')
-            self.freqs = np.array([0],dtype='float32')
             return None
 
         #convert input frequencies into what their corresponding index would be
@@ -262,8 +260,9 @@ class  H5_reader(object):
 
         self.data = self.h5["data"][self.t_start:self.t_stop,:,chan_start_idx:chan_stop_idx]
 
-        ## Setup time axis
+        #Setup time and frequency axis
         self.timestamps = self.__setup_time_axis()
+        self.__setup_freqs()
 
     def __setup_freqs(self):
         ## Setup frequency axis
@@ -412,7 +411,9 @@ class  FIL_reader(object):
             self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
             self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
 
+            #Setup time and frequency axis
             self.timestamps = self.__setup_time_axis()
+            self.__setup_freqs()
 
 #EE ie.
 #           spec = np.squeeze(fil_file.data)
@@ -430,19 +431,16 @@ class  FIL_reader(object):
                         if self.isheavy():
                             logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                             self.data = np.array([0],dtype='float32')
-                            self.freqs = np.array([0],dtype='float32')
                         else:
                             self.read_data()
                     else:
                         logger.warning("The file is of size %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
                         self.data = np.array([0],dtype='float32')
-                        self.freqs = np.array([0],dtype='float32')
                 else:
                     self.read_data()
             else:
                 print("Skipping loading data ...")
                 self.data = np.array([0],dtype='float32')
-                self.freqs = np.array([0],dtype='float32')
 
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -770,7 +768,6 @@ class  FIL_reader(object):
         if self.isheavy():
             logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
             self.data = np.array([0],dtype='float32')
-            self.freqs = np.array([0],dtype='float32')
             return None
 
         #convert input frequencies into what their corresponding index would be
@@ -822,8 +819,9 @@ class  FIL_reader(object):
             print("Skipping data load...")
             self.data = np.array([0])
 
-        ## Setup time axis
+        #Setup time and frequency axis
         self.timestamps = self.__setup_time_axis()
+        self.__setup_freqs()
 
 #    def __read_blob(self,blob_dim,n_blob=0):
     def read_blob(self,blob_dim,n_blob=0):

@@ -117,7 +117,6 @@ class Waterfall(Filterbank):
             self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
-            self.container.setup_time_axis()
             self.file_shape = self.container.file_shape
             self.file_size_bytes = self.container.file_size_bytes
             self.selection_shape = self.container.selection_shape
@@ -164,7 +163,7 @@ class Waterfall(Filterbank):
             self.header['fch1'] = self.container.f_start
 
         #Updating number of coarse channels.
-        self.header['nchans'] = self.container.freqs.shape
+        self.header['nchans'] = self.container.freqs.shape[0]
 
         #Updating time stamp for first time bin from selection
         self.header['tstart'] = self.container.timestamps[0]
