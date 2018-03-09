@@ -85,7 +85,7 @@ class  H5_reader(object):
             self.beam_axis = 1  # Place holder
             self.stokes_axis = 4  # Place holder
 
-            self.setup_time_axis()
+            self.timestamps = self.__setup_time_axis()
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
@@ -186,7 +186,7 @@ class  H5_reader(object):
             else:
                 self.header[key] = val
 
-    def setup_time_axis(self,):
+    def __setup_time_axis(self):
         """  Setup time axis.
         """
 
@@ -201,7 +201,10 @@ class  H5_reader(object):
         ## Setup time axis
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
-        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+
+        timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+
+        return timestamps
 
     def __calc_selection_size(self):
         """Calculate size of data of interest.
@@ -258,6 +261,9 @@ class  H5_reader(object):
         chan_start_idx, chan_stop_idx = self.__setup_freqs()
 
         self.data = self.h5["data"][self.t_start:self.t_stop,:,chan_start_idx:chan_stop_idx]
+
+        ## Setup time axis
+        self.timestamps = self.__setup_time_axis()
 
     def __setup_freqs(self):
         ## Setup frequency axis
@@ -406,7 +412,7 @@ class  FIL_reader(object):
             self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
             self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
 
-            self.setup_time_axis()
+            self.timestamps = self.__setup_time_axis()
 
 #EE ie.
 #           spec = np.squeeze(fil_file.data)
@@ -716,7 +722,7 @@ class  FIL_reader(object):
 
         return chan_start_idx, chan_stop_idx
 
-    def setup_time_axis(self):
+    def __setup_time_axis(self):
         """  Setup time axis.
         """
 
@@ -731,7 +737,10 @@ class  FIL_reader(object):
         ## Setup time axis
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
-        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+
+        timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+
+        return timestamps
 
     def info(self):
         """ Print header information and other derived information. """
@@ -814,9 +823,7 @@ class  FIL_reader(object):
             self.data = np.array([0])
 
         ## Setup time axis
-        t0 = self.header['tstart']
-        t_delt = self.header['tsamp']
-        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+        self.timestamps = self.__setup_time_axis()
 
 #    def __read_blob(self,blob_dim,n_blob=0):
     def read_blob(self,blob_dim,n_blob=0):
