@@ -141,8 +141,6 @@ class Waterfall(Filterbank):
         """
 
         self.data = self.container.data
-        self.freqs = self.container.freqs
-        self.timestamps = self.container.timestamps
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Reads data selection if small enough.

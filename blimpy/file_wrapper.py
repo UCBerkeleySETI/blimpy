@@ -171,8 +171,6 @@ class  H5_reader(object):
         """
 
         self.data = np.array([0],dtype='float32')
-        self.freqs = np.array([0],dtype='float32')
-        self.timestamps = np.array([0],dtype='float32')
 
     def __read_header(self):
         """ Read header and return a Python dictionary of key:value pairs
@@ -526,8 +524,6 @@ class  FIL_reader(object):
         """
 
         self.data = np.array([0],dtype='float32')
-        self.freqs = np.array([0],dtype='float32')
-        self.timestamps = np.array([0],dtype='float32')
 
     def __calc_selection_size(self):
         """Calculate size of data of interest.
