@@ -266,7 +266,9 @@ class  H5_reader(object):
         self.data = self.h5["data"][self.t_start:self.t_stop,:,chan_start_idx:chan_stop_idx]
 
     def __setup_chans(self):
-        ## Setup frequency axis
+        """Setup channel borders
+        """
+
         f0 = self.header['fch1']
 
         i_start, i_stop = 0, self.n_channels_in_file
@@ -429,6 +431,10 @@ class  FIL_reader(object):
 
             self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
             self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
+
+            self.freq_axis = 2
+            self.time_axis = 0
+            self.beam_axis = 1  # Place holder
 
 #EE ie.
 #           spec = np.squeeze(fil_file.data)
@@ -716,7 +722,9 @@ class  FIL_reader(object):
           return dd
 
     def __setup_chans(self):
-        ## Setup frequency axis
+        """Setup channel borders
+        """
+
         f0 = self.header['fch1']
 
         i_start, i_stop = 0, self.n_channels_in_file
@@ -802,7 +810,7 @@ class  FIL_reader(object):
         chan_start_idx, chan_stop_idx = self.__setup_chans()
 
         n_chans = self.header['nchans']
-        n_chans_selected = self.freqs.shape[0]
+        n_chans_selected = self.selection_shape[self.freq_axis]
         n_ifs   = self.header['nifs']
 
         # Load binary data
