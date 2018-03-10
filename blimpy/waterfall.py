@@ -534,8 +534,6 @@ def cmd_tool(args=None):
 
     parse_args = parser.parse_args()
 
-    raise NotImplementedError('To be implemented')
-
     # Open blimpy data
     filename = parse_args.filename
     load_data = not parse_args.info_only
@@ -569,20 +567,6 @@ def cmd_tool(args=None):
 
     if not info_only:
         print('')
-
-        # check start & stop frequencies make sense
-        #try:
-        #    if parse_args.f_start:
-        #        print "Start freq: %2.2f" % parse_args.f_start
-        #        assert parse_args.f_start >= fil.freqs[0] or np.isclose(parse_args.f_start, fil.freqs[0])
-        #
-        #    if parse_args.f_stop:
-        #        print "Stop freq: %2.2f" % parse_args.f_stop
-        #        assert parse_args.f_stop <= fil.freqs[-1] or np.isclose(parse_args.f_stop, fil.freqs[-1])
-        #except AssertionError:
-        #    print "Error: Start and stop frequencies must lie inside file's frequency range."
-        #    print "i.e. between %2.2f-%2.2f MHz." % (fil.freqs[0], fil.freqs[-1])
-        #    exit()
 
         if parse_args.blank_dc:
             logger.info("Blanking DC bin")
