@@ -163,10 +163,38 @@ class Waterfall(Filterbank):
             self.header['fch1'] = self.container.f_start
 
         #Updating number of coarse channels.
-        self.header['nchans'] = self.container.freqs.shape[0]
+        self.header['nchans'] = self.container.selection_shape[self.freq_axis]
 
         #Updating time stamp for first time bin from selection
-        self.header['tstart'] = self.container.timestamps[0]
+        self.header['tstart'] = self.container.populate_timestamps(update_header=True)
+
+
+    def populate_freqs(self):
+        """
+        """
+
+        return self.container.populate_freqs()
+
+    def populate_timestamps(self):
+        """
+        """
+
+        return self.container.populate_timestamps()
+
+    def info(self):
+        """ Print header information and other derived information. """
+
+        for key, val in self.header.items():
+            if key == 'src_raj':
+                val = val.to_string(unit=u.hour, sep=':')
+            if key == 'src_dej':
+                val = val.to_string(unit=u.deg, sep=':')
+            print("%16s : %32s" % (key, val))
+
+        print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
+        print("%16s : %32s" % ("Data shape", self.file_shape))
+        print("%16s : %32s" % ("Start freq (MHz)", self.container.f_start))
+        print("%16s : %32s" % ("Stop freq (MHz)", self.container.f_stop))
 
     def write_to_fil(self, filename_out, *args, **kwargs):
         """ Write data to .fil file.
@@ -223,7 +251,6 @@ class Waterfall(Filterbank):
                 elif n_bytes == 1:
                     np.int8(j.ravel()).tofile(fileh)
 
-
     def __write_to_fil_light(self, filename_out, *args, **kwargs):
         """ Write data to .fil file.
 
@@ -263,7 +290,6 @@ class Waterfall(Filterbank):
 
         t1 = time.time()
         logger.info('Conversion time: %2.2fsec' % (t1- t0))
-
 
     def __write_to_hdf5_heavy(self, filename_out, *args, **kwargs):
         """ Write data to HDF5 file.
@@ -509,6 +535,8 @@ def cmd_tool(args=None):
                         help='Filename output (if not probided, the name will be the same but with apropiate extension).')
 
     parse_args = parser.parse_args()
+
+    raise NotImplementedError('To be implemented')
 
     # Open blimpy data
     filename = parse_args.filename

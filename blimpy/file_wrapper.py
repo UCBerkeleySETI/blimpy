@@ -85,10 +85,6 @@ class  H5_reader(object):
             self.beam_axis = 1  # Place holder
             self.stokes_axis = 4  # Place holder
 
-            #Setup time and frequency axis
-            self.timestamps = self.__setup_time_axis()
-            self.__setup_freqs()
-
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
             else:
@@ -100,18 +96,17 @@ class  H5_reader(object):
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
                             logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                            self.data = np.array([0],dtype='float32')
+                            self.__init_empty_selection()
                         else:
                             self.read_data()
                     else:
                         logger.warning("The file is of size %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                        self.data = np.array([0],dtype='float32')
+                        self.__init_empty_selection()
                 else:
                     self.read_data()
             else:
                 print("Skipping loading data ...")
-                self.data = np.array([0],dtype='float32')
-
+                self.__init_empty_selection()
         else:
             raise IOError("Need a file to open, please give me one!")
 
@@ -171,6 +166,14 @@ class  H5_reader(object):
         #calculate shape of selection
         self.selection_shape = self.__calc_selection_shape()
 
+    def __init_empty_selection(self):
+        """
+        """
+
+        self.data = np.array([0],dtype='float32')
+        self.freqs = np.array([0],dtype='float32')
+        self.timestamps = np.array([0],dtype='float32')
+
     def __read_header(self):
         """ Read header and return a Python dictionary of key:value pairs
         """
@@ -185,8 +188,8 @@ class  H5_reader(object):
             else:
                 self.header[key] = val
 
-    def __setup_time_axis(self):
-        """  Setup time axis.
+    def populate_timestamps(self):
+        """  Populate time axis.
         """
 
         #Check to see how many integrations requested
@@ -195,13 +198,15 @@ class  H5_reader(object):
             ii_start = self.t_start
         if self.t_stop:
             ii_stop = self.t_stop
-        n_ints = ii_stop - ii_start
 
         ## Setup time axis
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
 
-        timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+        if update_header:
+            timestamps = ii_start * t_delt / 24./60./60 + t0
+        else:
+            timestamps = np.arange(ii_start, ii_stop) * t_delt / 24./60./60 + t0
 
         return timestamps
 
@@ -256,16 +261,33 @@ class  H5_reader(object):
             return None
 
         #convert input frequencies into what their corresponding index would be
-        chan_start_idx, chan_stop_idx = self.__setup_freqs()
+        chan_start_idx, chan_stop_idx = self.__setup_chans()
 
         self.data = self.h5["data"][self.t_start:self.t_stop,:,chan_start_idx:chan_stop_idx]
 
-        #Setup time and frequency axis
-        self.timestamps = self.__setup_time_axis()
-        self.__setup_freqs()
-
-    def __setup_freqs(self):
+    def __setup_chans(self):
         ## Setup frequency axis
+        f0 = self.header['fch1']
+
+        i_start, i_stop = 0, self.n_channels_in_file
+        if self.f_start:
+            i_start = (self.f_start - f0) / self.header['foff']
+        if self.f_stop:
+            i_stop  = (self.f_stop - f0)  / self.header['foff']
+
+        #calculate closest true index value
+        chan_start_idx = np.int(i_start)
+        chan_stop_idx  = np.int(i_stop)
+
+        if chan_stop_idx < chan_start_idx:
+            chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
+
+        return chan_start_idx, chan_stop_idx
+
+    def populate_freqs(self):
+        """
+         Populate frequency axis
+        """
         f0 = self.header['fch1']
 
         i_start, i_stop = 0, self.n_channels_in_file
@@ -284,15 +306,12 @@ class  H5_reader(object):
         else:
             i_vals = np.arange(chan_stop_idx, chan_start_idx)
 
-        self.freqs = self.header['foff'] * i_vals + f0
+        freqs = self.header['foff'] * i_vals + f0
 
 #         if self.header['foff'] < 0:
 #             self.freqs = self.freqs[::-1]
 
-        if chan_stop_idx < chan_start_idx:
-            chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
-
-        return chan_start_idx, chan_stop_idx
+        return freqs
 
     def calc_n_coarse_chan(self):
         """ This makes an attempt to calculate the number of coarse channels in a given file.
@@ -411,10 +430,6 @@ class  FIL_reader(object):
             self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
             self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
 
-            #Setup time and frequency axis
-            self.timestamps = self.__setup_time_axis()
-            self.__setup_freqs()
-
 #EE ie.
 #           spec = np.squeeze(fil_file.data)
             # set start of data, at real length of header  (future development.)
@@ -430,18 +445,17 @@ class  FIL_reader(object):
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
                             logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                            self.data = np.array([0],dtype='float32')
+                            self.__init_empty_selection()
                         else:
                             self.read_data()
                     else:
                         logger.warning("The file is of size %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
-                        self.data = np.array([0],dtype='float32')
+                        self.__init_empty_selection()
                 else:
                     self.read_data()
             else:
                 print("Skipping loading data ...")
-                self.data = np.array([0],dtype='float32')
-
+                self.__init_empty_selection()
         else:
             raise IOError("Need a file to open, please give me one!")
 
@@ -500,6 +514,14 @@ class  FIL_reader(object):
 
         #calculate shape of selection
         self.selection_shape = self.__calc_selection_shape()
+
+    def __init_empty_selection(self):
+        """
+        """
+
+        self.data = np.array([0],dtype='float32')
+        self.freqs = np.array([0],dtype='float32')
+        self.timestamps = np.array([0],dtype='float32')
 
     def __calc_selection_size(self):
         """Calculate size of data of interest.
@@ -693,8 +715,29 @@ class  FIL_reader(object):
 
           return dd
 
-    def __setup_freqs(self,):
+    def __setup_chans(self):
         ## Setup frequency axis
+        f0 = self.header['fch1']
+
+        i_start, i_stop = 0, self.n_channels_in_file
+        if self.f_start:
+            i_start = (self.f_start - f0) / self.header['foff']
+        if self.f_stop:
+            i_stop  = (self.f_stop - f0)  / self.header['foff']
+
+        #calculate closest true index value
+        chan_start_idx = np.int(i_start)
+        chan_stop_idx  = np.int(i_stop)
+
+        if chan_stop_idx < chan_start_idx:
+            chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
+
+        return chan_start_idx, chan_stop_idx
+
+    def populate_freqs(self):
+        """
+         Populate frequency axis
+        """
         f0 = self.header['fch1']
 
         i_start, i_stop = 0, self.n_channels_in_file
@@ -713,15 +756,16 @@ class  FIL_reader(object):
         else:
             i_vals = np.arange(chan_stop_idx, chan_start_idx)
 
-        self.freqs = self.header['foff'] * i_vals + f0
+        freqs = self.header['foff'] * i_vals + f0
 
 #         if self.header['foff'] < 0:
 #             self.freqs = self.freqs[::-1]
 
-        return chan_start_idx, chan_stop_idx
+        return freqs
 
-    def __setup_time_axis(self):
-        """  Setup time axis.
+    def populate_timestamps(self,update_header=False):
+        """ Populate time axis.
+            IF update_header then only return tstart
         """
 
         #Check to see how many integrations requested
@@ -730,33 +774,17 @@ class  FIL_reader(object):
             ii_start = self.t_start
         if self.t_stop:
             ii_stop = self.t_stop
-        n_ints = ii_stop - ii_start
 
         ## Setup time axis
         t0 = self.header['tstart']
         t_delt = self.header['tsamp']
 
-        timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
+        if update_header:
+            timestamps = ii_start * t_delt / 24./60./60 + t0
+        else:
+            timestamps = np.arange(ii_start, ii_stop) * t_delt / 24./60./60 + t0
 
         return timestamps
-
-    def info(self):
-        """ Print header information and other derived information. """
-
-        if not self.freqs:
-            chan_start_idx, chan_stop_idx = self.__setup_freqs()
-
-        for key, val in self.header.items():
-            if key == 'src_raj':
-                val = val.to_string(unit=u.hour, sep=':')
-            if key == 'src_dej':
-                val = val.to_string(unit=u.deg, sep=':')
-            print("%16s : %32s" % (key, val))
-
-        print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
-#        print "%16s : %32s" % ("Data shape", self.data.shape)
-        print("%16s : %32s" % ("Start freq (MHz)", self.freqs[0]))
-        print("%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1]))
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
         """ Read data.
@@ -771,7 +799,7 @@ class  FIL_reader(object):
             return None
 
         #convert input frequencies into what their corresponding index would be
-        chan_start_idx, chan_stop_idx = self.__setup_freqs()
+        chan_start_idx, chan_stop_idx = self.__setup_chans()
 
         n_chans = self.header['nchans']
         n_chans_selected = self.freqs.shape[0]
@@ -819,11 +847,6 @@ class  FIL_reader(object):
             print("Skipping data load...")
             self.data = np.array([0])
 
-        #Setup time and frequency axis
-        self.timestamps = self.__setup_time_axis()
-        self.__setup_freqs()
-
-#    def __read_blob(self,blob_dim,n_blob=0):
     def read_blob(self,blob_dim,n_blob=0):
         """Read blob from a selection.
         """
@@ -877,7 +900,6 @@ class  FIL_reader(object):
 
         return blob_start
 
-#    def __calc_n_blobs(self,blob_dim):
     def calc_n_blobs(self,blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
         """
