@@ -246,7 +246,7 @@ class  H5_reader(object):
 
         return selection_shape
 
-    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Read data
         """
 
@@ -790,7 +790,7 @@ class  FIL_reader(object):
 
         return timestamps
 
-    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+    def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Read data.
         """
 
@@ -831,25 +831,21 @@ class  FIL_reader(object):
         elif self.__n_bytes  == 1:
             dd_type = 'int8'
 
-        #EE Could add reading all in one go if file is small...then reshape. Unless actually reading a subsection.
-        if load_data:
-            self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
+        #Loading  data
+        self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
 
-            for ii in range(n_ints):
-                for jj in range(n_ifs):
-                    f.seek(self.__n_bytes  * i0, 1) # 1 = from current location
-                    dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
+        for ii in range(n_ints):
+            for jj in range(n_ifs):
+                f.seek(self.__n_bytes  * i0, 1) # 1 = from current location
+                dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
-                    # Reverse array if frequency axis is flipped
+                # Reverse array if frequency axis is flipped
 #                     if self.header['foff'] < 0:
 #                         dd = dd[::-1]
 
-                    self.data[ii, jj] = dd
+                self.data[ii, jj] = dd
 
-                    f.seek(self.__n_bytes  * (n_chans - i1), 1)  # Seek to start of next block
-        else:
-            print("Skipping data load...")
-            self.data = np.array([0])
+                f.seek(self.__n_bytes  * (n_chans - i1), 1)  # Seek to start of next block
 
     def read_blob(self,blob_dim,n_blob=0):
         """Read blob from a selection.
