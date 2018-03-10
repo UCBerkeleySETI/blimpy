@@ -135,7 +135,7 @@ class  H5_reader(object):
             f_stop, f_start = f_start,f_stop
             logger.warning('Given f_stop < f_start, assuming reversed values.')
 
-        if t_start and t_start >= self.t_begin and t_start < self.t_end:
+        if t_start != None and t_start >= self.t_begin and t_start < self.t_end:
             self.t_start = int(t_start)
         else:
             if not init:
@@ -488,7 +488,7 @@ class  FIL_reader(object):
             f_stop, f_start = f_start,f_stop
             logger.warning('Given f_stop < f_start, assuming reversed values.')
 
-        if t_start and t_start >= self.t_begin and t_start < self.t_end:
+        if t_start != None and t_start >= self.t_begin and t_start < self.t_end:
             self.t_start = int(t_start)
         else:
             if not init:
