@@ -460,7 +460,7 @@ class Filterbank(object):
         ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         plot_f    = self.freqs
-        plot_data = self.data[ii_start:ii_stop, if_id, chan_stop_idx:chan_start_idx]
+        plot_data = self.data[ii_start:ii_stop, if_id, chan_start_idx:chan_stop_idx]
 
         return plot_f, plot_data
 
