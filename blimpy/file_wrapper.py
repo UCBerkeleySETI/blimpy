@@ -85,11 +85,11 @@ class  H5_reader(object):
             #Applying data size limit to load.
             if max_load > 1:
                 logger.warning('Setting data limit > 1GB, please handle with care!')
-                MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
+                self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
-                MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
+                self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
 
-            if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
+            if self.file_size_bytes > self.MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
             else:
                 self.large_file = False
@@ -99,12 +99,12 @@ class  H5_reader(object):
                     #Only checking the selection, if the file is too large.
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
-                            logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
                             self.__init_empty_selection()
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("The file is of size %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
                         self.__init_empty_selection()
                 else:
                     self.read_data()
@@ -232,7 +232,7 @@ class  H5_reader(object):
 
         selection_size_bytes = self.__calc_selection_size()
 
-        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+        if selection_size_bytes > self.MAX_DATA_ARRAY_SIZE:
             return True
         else:
             return False
@@ -258,7 +258,7 @@ class  H5_reader(object):
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
             self.data = np.array([0],dtype='float32')
             return None
 
@@ -444,16 +444,16 @@ class  FIL_reader(object):
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
             # Max size of data array to load into memory (1GB in bytes)
-            MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
+            self.MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
 
             #Applying data size limit to load.
             if max_load > 1:
                 logger.warning('Setting data limit > 1GB, please handle with care!')
-                MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
+                self.MAX_DATA_ARRAY_SIZE = max_load * self.MAX_DATA_ARRAY_SIZE_UNIT
             else:
-                MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
+                self.MAX_DATA_ARRAY_SIZE = self.MAX_DATA_ARRAY_SIZE_UNIT
 
-            if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
+            if self.file_size_bytes > self.MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
             else:
                 self.large_file = False
@@ -462,12 +462,12 @@ class  FIL_reader(object):
                 if self.large_file:
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
-                            logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
                             self.__init_empty_selection()
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+                        logger.warning("The file is of size %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
                         self.__init_empty_selection()
                 else:
                     self.read_data()
@@ -559,7 +559,7 @@ class  FIL_reader(object):
 
         selection_size_bytes = self.__calc_selection_size()
 
-        if selection_size_bytes > MAX_DATA_ARRAY_SIZE:
+        if selection_size_bytes > self.MAX_DATA_ARRAY_SIZE:
             return True
         else:
             return False
@@ -812,7 +812,7 @@ class  FIL_reader(object):
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %.2f MB, exceeding our size limit %.2f MB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**2), MAX_DATA_ARRAY_SIZE/(1024.**2)))
+            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
             self.data = np.array([0],dtype='float32')
             return None
 
