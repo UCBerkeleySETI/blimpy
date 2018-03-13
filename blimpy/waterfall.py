@@ -89,7 +89,7 @@ MAX_BLOB_MB         = 1024                   # Max size of blob in MB
 class Waterfall(Filterbank):
     """ Class for loading and writing blimpy data (.fil, .h5) """
 
-    def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True,header_dict=None, data_array=None):
+    def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None, header_dict=None, data_array=None):
         """ Class for loading and plotting blimpy data.
 
         This class parses the blimpy file and stores the header and data
@@ -105,6 +105,7 @@ class Waterfall(Filterbank):
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
+            max_load (bool): maximum data amount to load Default:1GB.
             header_dict (dict): Create blimpy from header dictionary + data array
             data_array (np.array): Create blimpy from header dict + data array
         """
@@ -114,7 +115,7 @@ class Waterfall(Filterbank):
         if filename:
             self.filename = filename
             self.ext = filename.split(".")[-1].strip().lower()  #File extension
-            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
+            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data,max_load=max_load)
             self.header = self.container.header
             self.n_ints_in_file = self.container.n_ints_in_file
             self.file_shape = self.container.file_shape
@@ -530,8 +531,8 @@ def cmd_tool(args=None):
                        help='Write file to .fil format.')
     parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
                         help='Filename output (if not probided, the name will be the same but with apropiate extension).')
-    parser.add_argument('-l', action='store', default=1., dest='max_load', type=float,
-                        help='Maximum data limit to load.')
+    parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
+                        help='Maximum data limit to load. Default:1GB')
     parse_args = parser.parse_args()
 
     # Open blimpy data
