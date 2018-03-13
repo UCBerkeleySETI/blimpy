@@ -27,18 +27,12 @@ else:
 
 logging.basicConfig(format=format,stream=stream,level = level_log)
 
-###
-# Config values
-###
-
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024.        # Max size of data array to load into memory (in bytes)
-
 
 class  H5_reader(object):
     """ This class handles .h5 files.
     """
 
-    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True):
+    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=1.):
         """ Constructor.
 
         Args:
@@ -79,11 +73,21 @@ class  H5_reader(object):
             self.c_start = lambda: int(np.round((self.f_start - self.f_begin )/ abs(self.header['foff'])))
             self.c_stop = lambda: int(np.round((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
 
-            # These values will be modified once code for multi_beam and multi_stokes observations are possible.
+            #These values will be modified once code for multi_beam and multi_stokes observations are possible.
             self.freq_axis = 2
             self.time_axis = 0
             self.beam_axis = 1  # Place holder
             self.stokes_axis = 4  # Place holder
+
+            # Max size of data array to load into memory (1GB in bytes)
+            MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
+
+            #Applying data size limit to load.
+            if max_load > 1:
+                logger.warning('Setting data limit > 1GB, please handle with care!')
+                MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
+            else:
+                MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
 
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
@@ -105,7 +109,7 @@ class  H5_reader(object):
                 else:
                     self.read_data()
             else:
-                print("Skipping loading data ...")
+                logger.info("Skipping loading data ...")
                 self.__init_empty_selection()
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -389,7 +393,7 @@ class  FIL_reader(object):
     """ This class handles .fil files.
     """
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=1.):
         """ Constructor.
 
         Args:
@@ -439,6 +443,16 @@ class  FIL_reader(object):
             # set start of data, at real length of header  (future development.)
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
+            # Max size of data array to load into memory (1GB in bytes)
+            MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
+
+            #Applying data size limit to load.
+            if max_load > 1:
+                logger.warning('Setting data limit > 1GB, please handle with care!')
+                MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
+            else:
+                MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
+
             if self.file_size_bytes > MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
             else:
@@ -458,7 +472,7 @@ class  FIL_reader(object):
                 else:
                     self.read_data()
             else:
-                print("Skipping loading data ...")
+                logger.info("Skipping loading data ...")
                 self.__init_empty_selection()
         else:
             raise IOError("Need a file to open, please give me one!")
@@ -980,7 +994,7 @@ class  FIL_reader(object):
         return data
 
 
-def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=1.):
     """Open a supported file type or fall back to Python built in open function.
 
     ================== ==================================================
@@ -995,7 +1009,7 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
     if not os.path.isfile(filename):
         type(filename)
         print(filename)
-        raise IOError("No such directory: " + filename)
+        raise IOError("No such file or directory: " + filename)
 
     filename = os.path.expandvars(os.path.expanduser(filename))
     # Get file extension to determine type

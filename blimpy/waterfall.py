@@ -77,7 +77,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
-MAX_BLOB_MB         = 1024                    # Max size of blob in MB
+MAX_BLOB_MB         = 1024                   # Max size of blob in MB
 
 
 
@@ -135,7 +135,6 @@ class Waterfall(Filterbank):
         else:
             pass
 
-
     def __load_data(self):
         """
         """
@@ -165,7 +164,6 @@ class Waterfall(Filterbank):
 
         #Updating time stamp for first time bin from selection
         self.header['tstart'] = self.container.populate_timestamps(update_header=True)
-
 
     def populate_freqs(self):
         """
@@ -497,11 +495,11 @@ class Waterfall(Filterbank):
 
 #EE Needs update
 def cmd_tool(args=None):
-    """ Command line tool for plotting and viewing info on waterfall files """
+    """ Command line tool for plotting and viewing info on blimpy files """
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description="Command line utility for reading and plotting waterfall files.")
+    parser = ArgumentParser(description="Command line utility for reading and plotting blimpy files.")
 
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
@@ -532,7 +530,8 @@ def cmd_tool(args=None):
                        help='Write file to .fil format.')
     parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
                         help='Filename output (if not probided, the name will be the same but with apropiate extension).')
-
+    parser.add_argument('-l', action='store', default=1., dest='max_load', type=float,
+                        help='Maximum data limit to load.')
     parse_args = parser.parse_args()
 
     # Open blimpy data
@@ -541,23 +540,7 @@ def cmd_tool(args=None):
     info_only = parse_args.info_only
     filename_out = parse_args.filename_out
 
-    # only load one integration if looking at spectrum
-    wtp = parse_args.what_to_plot
-    if not wtp or 's' in wtp:
-        if parse_args.t_start == None:
-            t_start = 0
-        else:
-            t_start = parse_args.t_start
-        t_stop  = t_start + 1
-
-        if parse_args.average:
-            t_start = None
-            t_stop  = None
-    else:
-        t_start = parse_args.t_start
-        t_stop  = parse_args.t_stop
-
-    fil = Waterfall(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop,t_start=parse_args.t_start, t_stop=parse_args.t_stop,load_data=load_data)
+    fil = Waterfall(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t_start=parse_args.t_start, t_stop=parse_args.t_stop, load_data=load_data, max_load=parse_args.max_load)
     fil.info()
 
     #Check the size of selection.
@@ -604,7 +587,6 @@ def cmd_tool(args=None):
                 plt.show()
             else:
                 logger.warning("No $DISPLAY available.")
-
 
     else:
 
