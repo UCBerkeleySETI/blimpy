@@ -32,7 +32,7 @@ class  H5_reader(object):
     """ This class handles .h5 files.
     """
 
-    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=1.):
+    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=None):
         """ Constructor.
 
         Args:
@@ -393,7 +393,7 @@ class  FIL_reader(object):
     """ This class handles .fil files.
     """
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=1.):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None):
         """ Constructor.
 
         Args:
@@ -994,7 +994,7 @@ class  FIL_reader(object):
         return data
 
 
-def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=1.):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=None):
     """Open a supported file type or fall back to Python built in open function.
 
     ================== ==================================================
@@ -1017,10 +1017,10 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
 
     if ext == 'h5':
         # Open HDF5 file
-        return H5_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
+        return H5_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data,max_load=max_load)
     elif ext == 'fil':
         # Open FIL file
-        return FIL_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data)
+        return FIL_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data,max_load=max_load)
     else:
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)
