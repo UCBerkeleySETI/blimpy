@@ -145,7 +145,7 @@ class Filterbank(object):
     def read_hdf5(self, filename, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
 
-        print("Warning: this function will be deprecated in the future. Please use Waterfall to open HDF5 files.')
+        print("Warning: this function will be deprecated in the future. Please use Waterfall to open HDF5 files.")
 #        raise DeprecationWarning('Please use Waterfall to open HDF5 files.')
 
         self.header = {}
