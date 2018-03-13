@@ -190,7 +190,7 @@ class  H5_reader(object):
             else:
                 self.header[key] = val
 
-    def populate_timestamps(self):
+    def populate_timestamps(self,update_header=False):
         """  Populate time axis.
         """
 
