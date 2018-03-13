@@ -212,6 +212,8 @@ class Filterbank(object):
 
         self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
+        return ii_start, ii_stop, n_ints
+
     def read_filterbank(self, filename=None, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
 
@@ -223,22 +225,16 @@ class Filterbank(object):
         self.header = read_header(filename)
 
         ## Setup frequency axis
-        f0 = self.header[b'fch1']
-        f_delt = self.header[b'foff']
-
-        # keep this seperate!
-        # file_freq_mapping =  np.arange(0, self.header['nchans'], 1, dtype='float64') * f_delt + f0
+        ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         #convert input frequencies into what their corresponding index would be
-
-        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start, f_stop)
+        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start=f_start, f_stop=f_stop)
 
         n_bits  = self.header[b'nbits']
         n_bytes  = int(self.header[b'nbits'] / 8)
         n_chans = self.header[b'nchans']
         n_chans_selected = self.freqs.shape[0]
         n_ifs   = self.header[b'nifs']
-
 
         # Load binary data
         self.idx_data = len_header(filename)
@@ -248,14 +244,6 @@ class Filterbank(object):
         n_bytes_data = filesize - self.idx_data
 
         n_ints_in_file = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
-
-        # now check to see how many integrations requested
-        ii_start, ii_stop = 0, n_ints_in_file
-        if t_start:
-            ii_start = t_start
-        if t_stop:
-            ii_stop = t_stop
-        n_ints = ii_stop - ii_start
 
         # Seek to first integration
         f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
@@ -314,11 +302,6 @@ class Filterbank(object):
         # Finally add some other info to the class as objects
         self.n_ints_in_file  = n_ints_in_file
         self.file_size_bytes = filesize
-
-        ## Setup time axis
-        t0 = self.header[b'tstart']
-        t_delt = self.header[b'tsamp']
-        self.timestamps = np.arange(0, n_ints) * t_delt / 24./60./60 + t0
 
     def compute_lst(self):
         """ Compute LST for observation """
@@ -461,15 +444,13 @@ class Filterbank(object):
         Returns:
             (freqs, data) (np.arrays): frequency axis in MHz and data subset
         """
-        i_start, i_stop = 0, None
 
-        if f_start:
-            i_start = closest(self.freqs, f_start)
-        if f_stop:
-            i_stop = closest(self.freqs, f_stop)
+        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start=f_start, f_stop=f_stop)
+        ii_start, ii_stop = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
-        plot_f    = self.freqs[i_start:i_stop]
-        plot_data = self.data[:, if_id, i_start:i_stop]
+        plot_f    = self.freqs
+        plot_data = self.data[ii_start:ii_stop, if_id, i_start:i_stop]
+
         return plot_f, plot_data
 
     def calc_n_coarse_chan(self):
@@ -506,7 +487,7 @@ class Filterbank(object):
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        #Using accening frequency for all plots.
+        #Using accending frequency for all plots.
         if self.header[b'foff'] < 0:
             plot_data = plot_data[..., ::-1] # Reverse data
             plot_f = plot_f[::-1]
@@ -562,7 +543,7 @@ class Filterbank(object):
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        #Using accening frequency for all plots.
+        #Using accending frequency for all plots.
         if self.header[b'foff'] < 0:
             plot_data = plot_data[..., ::-1] # Reverse data
             plot_f = plot_f[::-1]
@@ -622,7 +603,7 @@ class Filterbank(object):
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        #Using accening frequency for all plots.
+        #Using accending frequency for all plots.
         if self.header[b'foff'] < 0:
             plot_data = plot_data[..., ::-1] # Reverse data
             plot_f = plot_f[::-1]
@@ -706,7 +687,7 @@ class Filterbank(object):
 
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        #Using accening frequency for all plots.
+        #Using accending frequency for all plots.
         if self.header[b'foff'] < 0:
             plot_data = plot_data[..., ::-1] # Reverse data
             plot_f = plot_f[::-1]
