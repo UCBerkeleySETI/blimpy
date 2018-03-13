@@ -190,9 +190,10 @@ class Waterfall(Filterbank):
             print("%16s : %32s" % (key, val))
 
         print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
-        print("%16s : %32s" % ("Data shape", self.file_shape))
-        print("%16s : %32s" % ("Start freq (MHz)", self.container.f_start))
-        print("%16s : %32s" % ("Stop freq (MHz)", self.container.f_stop))
+        print("%16s : %32s" % ("File shape", self.file_shape))
+        print("%16s : %32s" % ("Data selection shape", self.selection_shape))
+        print("%16s : %32s" % ("Minimum freq (MHz)", self.container.f_start))
+        print("%16s : %32s" % ("Maximum freq (MHz)", self.container.f_stop))
 
     def write_to_fil(self, filename_out, *args, **kwargs):
         """ Write data to .fil file.
@@ -317,14 +318,14 @@ class Waterfall(Filterbank):
                 logger.warning("Warning: bitshuffle not found. No compression applied.")
 
             dset = h5.create_dataset('data',
-                            shape=self.file_shape,
+                            shape=self.selection_shape,
                             chunks=chunk_dim,
                             compression=bs_compression,
                             compression_opts=bs_compression_opts,
                             dtype=self.data.dtype)
 
             dset_mask = h5.create_dataset('mask',
-                            shape=self.file_shape,
+                            shape=self.selection_shape,
                             chunks=chunk_dim,
                             compression=bs_compression,
                             compression_opts=bs_compression_opts,
