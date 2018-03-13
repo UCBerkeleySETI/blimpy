@@ -155,16 +155,20 @@ class Filterbank(object):
             else:
                 self.header[key] = val
 
-        self.data = self.h5[b"data"][:]
-        self.n_ints_in_file  = self.data.shape[0]
-        self.file_size_bytes = os.path.getsize(self.filename)
+        if load_data:
+            self.data = self.h5[b"data"][:]
+            self.n_ints_in_file  = self.data.shape[0]
+            self.file_size_bytes = os.path.getsize(self.filename)
 
-        self._setup_freqs()
-        self._setup_time_axis()
+            self._setup_freqs()
+            self._setup_time_axis()
 
 #         if self.header['foff'] < 0:
 #             self.data = self.data[..., ::-1] # Reverse data
 
+        else:
+            print("Skipping data load...")
+            self.data = np.array([0], dtype=dd_type)
 
     def _setup_freqs(self, f_start=None, f_stop=None):
         ## Setup frequency axis
@@ -449,7 +453,7 @@ class Filterbank(object):
         ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         plot_f    = self.freqs
-        plot_data = self.data[ii_start:ii_stop, if_id, i_start:i_stop]
+        plot_data = self.data[ii_start:ii_stop, if_id, chan_stop_idx:chan_start_idx]
 
         return plot_f, plot_data
 
