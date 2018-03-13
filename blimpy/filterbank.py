@@ -144,6 +144,10 @@ class Filterbank(object):
 
     def read_hdf5(self, filename, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
+
+        print("Warning: this function will be deprecated in the future. Please use Waterfall to open HDF5 files.')
+#        raise DeprecationWarning('Please use Waterfall to open HDF5 files.')
+
         self.header = {}
         self.filename = filename
         self.h5 = h5py.File(filename)
@@ -160,15 +164,18 @@ class Filterbank(object):
             self.n_ints_in_file  = self.data.shape[0]
             self.file_size_bytes = os.path.getsize(self.filename)
 
-            self._setup_freqs()
-            self._setup_time_axis()
-
 #         if self.header['foff'] < 0:
 #             self.data = self.data[..., ::-1] # Reverse data
 
         else:
             print("Skipping data load...")
-            self.data = np.array([0], dtype=dd_type)
+            self.data = np.array([0])
+            self.n_ints_in_file  = 0
+            self.file_size_bytes = os.path.getsize(self.filename)
+
+        self._setup_freqs()
+        self._setup_time_axis()
+
 
     def _setup_freqs(self, f_start=None, f_stop=None):
         ## Setup frequency axis
