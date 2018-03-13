@@ -342,7 +342,7 @@ class Waterfall(Filterbank):
             for key, value in self.header.items():
                 dset.attrs[key] = value
 
-            if blob_dim[self.freq_axis] < self.n_channels_in_file:
+            if blob_dim[self.freq_axis] < self.selection_shape[self.freq_axis]:
 
                 logger.info('Using %i n_blobs to write the data.'% n_blobs)
                 for ii in range(0, n_blobs):
@@ -353,15 +353,15 @@ class Waterfall(Filterbank):
                     #-----
                     #Using channels instead of frequency.
                     c_start = self.container.c_start() + ii*blob_dim[self.freq_axis]
-                    t_start = self.container.t_start + (c_start/self.n_channels_in_file)*blob_dim[self.time_axis]
+                    t_start = self.container.t_start + (c_start/self.selection_shape[self.freq_axis])*blob_dim[self.time_axis]
                     t_stop = t_start + blob_dim[self.freq_axis]
 
                     # Reverse array if frequency axis is flipped
 #                     if self.header['foff'] < 0:
-#                         c_stop = self.n_channels_in_file - (c_start)%self.n_channels_in_file
+#                         c_stop = self.selection_shape[self.freq_axis] - (c_start)%self.selection_shape[self.freq_axis]
 #                         c_start = c_stop - blob_dim[self.freq_axis]
 #                     else:
-                    c_start = (c_start)%self.n_channels_in_file
+                    c_start = (c_start)%self.selection_shape[self.freq_axis]
                     c_stop = c_start + blob_dim[self.freq_axis]
                     #-----
 
@@ -430,17 +430,17 @@ class Waterfall(Filterbank):
                 dset.attrs[key] = value
 
     def __get_blob_dimensions(self, chunk_dim):
-        """ Sets the blob dimmentions, trying to read around 256 MiB at a time.
+        """ Sets the blob dimmentions, trying to read around 1024 MiB at a time.
             This is assuming a chunk is about 1 MiB.
         """
 
-        if self.n_channels_in_file > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
-            freq_axis_size = self.n_channels_in_file
+        if self.selection_shape[self.freq_axis] > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
+            freq_axis_size = self.selection_shape[self.freq_axis]
 #             while freq_axis_size > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
 #                 freq_axis_size /= 2
             time_axis_size = 1
         else:
-            freq_axis_size = self.n_channels_in_file
+            freq_axis_size = self.selection_shape[self.freq_axis]
             time_axis_size = chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size
 
         blob_dim = (time_axis_size, 1, freq_axis_size)
@@ -492,6 +492,26 @@ class Waterfall(Filterbank):
         for ii in range(n_coarse_chan):
             ss = ii*n_chan_per_coarse
             self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+1:ss+mid_chan+10])
+
+    def grab_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, if_id=0):
+        """ Extract a portion of data by frequency range.
+
+        Args:
+            f_start (float): start frequency in MHz
+            f_stop (float): stop frequency in MHz
+            if_id (int): IF input identification (req. when multiple IFs in file)
+
+        Returns:
+            (freqs, data) (np.arrays): frequency axis in MHz and data subset
+        """
+
+        self.freqs = self.populate_freqs()
+
+        plot_f    = self.freqs
+        plot_data = self.data
+
+        return plot_f, plot_data
+
 
 
 #EE Needs update
