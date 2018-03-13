@@ -508,7 +508,7 @@ class Waterfall(Filterbank):
         self.freqs = self.populate_freqs()
 
         plot_f    = self.freqs
-        plot_data = self.data
+        plot_data = np.squeeze(self.data)
 
         return plot_f, plot_data
 
