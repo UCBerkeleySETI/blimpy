@@ -506,6 +506,7 @@ class Waterfall(Filterbank):
         """
 
         self.freqs = self.populate_freqs()
+        self.timestamps = self.populate_timestamps()
 
         plot_f    = self.freqs
         plot_data = np.squeeze(self.data)
