@@ -845,7 +845,7 @@ class Filterbank(object):
 
         plt.text(0.05, .95, plot_header, ha='left', va='top', wrap=True)
 
-        axHeader.set_axis_bgcolor('white')
+        axHeader.set_facecolor('white')
         axHeader.xaxis.set_major_formatter(nullfmt)
         axHeader.yaxis.set_major_formatter(nullfmt)
 
