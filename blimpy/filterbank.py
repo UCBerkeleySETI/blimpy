@@ -48,8 +48,6 @@ except ImportError:
     HAS_SLALIB = False
 
 
-
-
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if 'DISPLAY' in os.environ.keys():
     import pylab as plt
@@ -176,7 +174,6 @@ class Filterbank(object):
         self._setup_freqs()
         self._setup_time_axis()
 
-
     def _setup_freqs(self, f_start=None, f_stop=None):
         ## Setup frequency axis
         f0 = self.header[b'fch1']
@@ -202,6 +199,9 @@ class Filterbank(object):
 
 #         if f_delt < 0:
 #             self.freqs = self.freqs[::-1]
+
+        if chan_stop_idx < chan_start_idx:
+            chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
@@ -235,9 +235,6 @@ class Filterbank(object):
 
         self.header = read_header(filename)
 
-        ## Setup frequency axis
-        ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
-
         #convert input frequencies into what their corresponding index would be
         i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start=f_start, f_stop=f_stop)
 
@@ -255,6 +252,13 @@ class Filterbank(object):
         n_bytes_data = filesize - self.idx_data
 
         n_ints_in_file = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
+
+        # Finally add some other info to the class as objects
+        self.n_ints_in_file  = n_ints_in_file
+        self.file_size_bytes = filesize
+
+        ## Setup frequency axis
+        ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         # Seek to first integration
         f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
@@ -309,10 +313,6 @@ class Filterbank(object):
         else:
             print("Skipping data load...")
             self.data = np.array([0], dtype=dd_type)
-
-        # Finally add some other info to the class as objects
-        self.n_ints_in_file  = n_ints_in_file
-        self.file_size_bytes = filesize
 
     def compute_lst(self):
         """ Compute LST for observation """
@@ -460,7 +460,7 @@ class Filterbank(object):
         ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         plot_f    = self.freqs
-        plot_data = self.data[ii_start:ii_stop, if_id, chan_start_idx:chan_stop_idx]
+        plot_data = np.squeeze(self.data)#[ii_start:ii_stop, if_id, chan_start_idx:chan_stop_idx]
 
         return plot_f, plot_data
 
