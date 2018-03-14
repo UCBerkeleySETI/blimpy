@@ -44,6 +44,13 @@ class  H5_reader(object):
         """
 
         if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
+
+            #These values may be modified once code for multi_beam and multi_stokes observations are possible.
+            self.freq_axis = 2
+            self.time_axis = 0
+            self.beam_axis = 1  # Place holder
+            self.stokes_axis = 4  # Place holder
+
             self.filename = filename
             self.filestat = os.stat(filename)
             self.filesize = self.filestat.st_size/(1024.0**2)
@@ -51,10 +58,10 @@ class  H5_reader(object):
             self.h5 = h5py.File(self.filename)
             self.__read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
-            self.n_ints_in_file  = self.h5["data"].shape[0] #
-            self.n_channels_in_file  = self.h5["data"].shape[2] #
+            self.n_ints_in_file  = self.h5["data"].shape[self.time_axis] #
+            self.n_channels_in_file  = self.h5["data"].shape[self.freq_axis] #
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
-            self.n_pols_in_file = 0 #Placeholder for future development.
+            self.n_pols_in_file = 1 #Placeholder for future development.
             self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
@@ -72,12 +79,6 @@ class  H5_reader(object):
 
             self.c_start = lambda: int(np.round((self.f_start - self.f_begin )/ abs(self.header['foff'])))
             self.c_stop = lambda: int(np.round((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
-
-            #These values will be modified once code for multi_beam and multi_stokes observations are possible.
-            self.freq_axis = 2
-            self.time_axis = 0
-            self.beam_axis = 1  # Place holder
-            self.stokes_axis = 4  # Place holder
 
             # Max size of data array to load into memory (1GB in bytes)
             MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
@@ -283,8 +284,8 @@ class  H5_reader(object):
         chan_start_idx = np.int(i_start)
         chan_stop_idx  = np.int(i_stop)
 
-        if chan_stop_idx < chan_start_idx:
-            chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
+         if chan_stop_idx < chan_start_idx:
+             chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
 
         return chan_start_idx, chan_stop_idx
 
@@ -333,7 +334,7 @@ class  H5_reader(object):
 #        bandwith = abs(self.c_stop() - self.c_start())
         n_coarse_chan = int(bandwith / coarse_chan_bw)
 
-        return max(n_coarse_chan, 1)
+        return max(n_coarse_chan, 1) #Returning a 1 as minimum to avoid devision by zero when dividing by n_coarse_chan
 
     def calc_n_blobs(self,blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
@@ -370,7 +371,7 @@ class  H5_reader(object):
         blob_time_start = self.t_start + blob_dim[self.time_axis]*n_blob
 
         #Check which is the blob frequency offset (in channels)
-        blob_freq_start = self.c_start() + (blob_dim[self.freq_axis]*n_blob)%self.n_channels_in_file
+        blob_freq_start = self.c_start() + (blob_dim[self.freq_axis]*n_blob)%self.selection_shape[self.freq_axis]
 
         blob_start = np.array([blob_time_start,0,blob_freq_start])
 
@@ -414,7 +415,7 @@ class  FIL_reader(object):
             self.idx_data = self.__len_header()
             self.n_channels_in_file  = self.header['nchans']
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
-            self.n_pols_in_file = 0 #Placeholder for future development.
+            self.n_pols_in_file = 1 #Placeholder for future development.
             self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.__get_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
@@ -431,8 +432,8 @@ class  FIL_reader(object):
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,init=True)
 
-            self.c_start = lambda: int((self.f_start - self.f_begin )/ abs(self.header['foff']))
-            self.c_stop = lambda: int((self.f_stop - self.f_begin )/ abs(self.header['foff']))
+            self.c_start = lambda: int(np.round((self.f_start - self.f_begin )/ abs(self.header['foff'])))
+            self.c_stop = lambda: int(np.round((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
 
             self.freq_axis = 2
             self.time_axis = 0
@@ -571,9 +572,11 @@ class  FIL_reader(object):
         #Check how many integrations were requested
         n_ints = self.t_stop - self.t_start
         #Check how many frequency channels were requested
-        n_chan = int((self.f_stop - self.f_start) / abs(self.header['foff']))
+        n_chan = int(np.round((self.f_stop - self.f_start) / abs(self.header['foff'])))
 
         selection_shape = (n_ints,self.header['nifs'],n_chan)
+
+
 
         return selection_shape
 
@@ -948,7 +951,7 @@ class  FIL_reader(object):
         bandwith = abs(self.f_stop - self.f_start)
         n_coarse_chan = int(bandwith / coarse_chan_bw)
 
-        return n_coarse_chan
+        return max(n_coarse_chan, 1) #Returning a 1 as minimum to avoid devision by zero when dividing by n_coarse_chan
 
     def read_all(self,reverse=True):
         """ read all the data.
