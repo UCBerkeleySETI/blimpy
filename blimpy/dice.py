@@ -3,7 +3,7 @@ import argparse
 import math
 import sys
 
-stdDF = 2.9296875
+#stdDF = 2.9296875
 
 
 # read input and output frequency, and output file name
@@ -41,8 +41,12 @@ if args.f_start == None or args.f_stop == None:
 file_big = blimpy.Waterfall(args.in_fname)
 f_min_file = file_big.header['fch1']
 f_max_file = file_big.header['fch1'] + file_big.header['nchans']*file_big.header['foff']
+
 if f_max_file < f_min_file:
         f_max_file,f_min_file = f_min_file,f_max_file
+		
+FreqBWFile = f_max_file-f_min_file
+stdDF = FreqBWFile / float(file_big.calc_n_coarse_chan())
 
 if args.f_stop < args.f_start:
         args.f_stop,args.f_start = args.f_start,args.f_stop
