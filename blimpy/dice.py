@@ -1,3 +1,6 @@
+# dice.py removes frequency channels from BL FIL of HDF5 files, and outputs HDF5 with '_diced' appended to the file name
+# gregory.hellbourg@berkeley.edu
+
 import blimpy
 import argparse
 import math
