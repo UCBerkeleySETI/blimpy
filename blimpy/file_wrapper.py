@@ -77,8 +77,8 @@ class  H5_reader(object):
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,init=True)
 
-            self.c_start = lambda: int(np.round((self.f_start - self.f_begin )/ abs(self.header['foff'])))
-            self.c_stop = lambda: int(np.round((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
+            #convert input frequencies into what their corresponding index would be
+            self.__setup_chans()
 
             # Max size of data array to load into memory (1GB in bytes)
             MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
@@ -264,15 +264,18 @@ class  H5_reader(object):
             return None
 
         #convert input frequencies into what their corresponding index would be
-        chan_start_idx, chan_stop_idx = self.__setup_chans()
+        self.__setup_chans()
 
-        self.data = self.h5["data"][self.t_start:self.t_stop,:,chan_start_idx:chan_stop_idx]
+        self.data = self.h5["data"][self.t_start:self.t_stop,:,self.chan_start_idx:self.chan_stop_idx]
 
     def __setup_chans(self):
         """Setup channel borders
         """
 
-        f0 = self.header['fch1']
+        if self.header['foff'] < 0:
+            f0 = self.f_end
+        else:
+            f0 = self.f_begin
 
         i_start, i_stop = 0, self.n_channels_in_file
         if self.f_start:
@@ -284,16 +287,21 @@ class  H5_reader(object):
         chan_start_idx = np.int(i_start)
         chan_stop_idx  = np.int(i_stop)
 
-         if chan_stop_idx < chan_start_idx:
-             chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
+        if chan_stop_idx < chan_start_idx:
+            chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
 
-        return chan_start_idx, chan_stop_idx
+        self.chan_start_idx =  chan_start_idx
+        self.chan_stop_idx = chan_stop_idx
 
     def populate_freqs(self):
         """
          Populate frequency axis
         """
-        f0 = self.header['fch1']
+
+        if self.header['foff'] < 0:
+            f0 = self.f_end
+        else:
+            f0 = self.f_begin
 
         i_start, i_stop = 0, self.n_channels_in_file
         if self.f_start:
@@ -367,11 +375,14 @@ class  H5_reader(object):
         """Find first blob from selection.
         """
 
+        #convert input frequencies into what their corresponding index would be
+        self.__setup_chans()
+
         #Check which is the blob time offset
         blob_time_start = self.t_start + blob_dim[self.time_axis]*n_blob
 
         #Check which is the blob frequency offset (in channels)
-        blob_freq_start = self.c_start() + (blob_dim[self.freq_axis]*n_blob)%self.selection_shape[self.freq_axis]
+        blob_freq_start = self.chan_start_idx + (blob_dim[self.freq_axis]*n_blob)%self.selection_shape[self.freq_axis]
 
         blob_start = np.array([blob_time_start,0,blob_freq_start])
 
@@ -432,8 +443,8 @@ class  FIL_reader(object):
 
             self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,init=True)
 
-            self.c_start = lambda: int(np.round((self.f_start - self.f_begin )/ abs(self.header['foff'])))
-            self.c_stop = lambda: int(np.round((self.f_stop - self.f_begin )/ abs(self.header['foff'])))
+            #convert input frequencies into what their corresponding index would be
+            self.__setup_chans()
 
             self.freq_axis = 2
             self.time_axis = 0
@@ -738,7 +749,10 @@ class  FIL_reader(object):
         """Setup channel borders
         """
 
-        f0 = self.header['fch1']
+        if self.header['foff'] < 0:
+            f0 = self.f_end
+        else:
+            f0 = self.f_begin
 
         i_start, i_stop = 0, self.n_channels_in_file
         if self.f_start:
@@ -753,13 +767,18 @@ class  FIL_reader(object):
         if chan_stop_idx < chan_start_idx:
             chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
 
-        return chan_start_idx, chan_stop_idx
+        self.chan_start_idx =  chan_start_idx
+        self.chan_stop_idx = chan_stop_idx
 
     def populate_freqs(self):
         """
          Populate frequency axis
         """
-        f0 = self.header['fch1']
+
+        if self.header['foff'] < 0:
+            f0 = self.f_end
+        else:
+            f0 = self.f_begin
 
         i_start, i_stop = 0, self.n_channels_in_file
         if self.f_start:
@@ -820,7 +839,7 @@ class  FIL_reader(object):
             return None
 
         #convert input frequencies into what their corresponding index would be
-        chan_start_idx, chan_stop_idx = self.__setup_chans()
+        self.__setup_chans()
 
         n_chans = self.header['nchans']
         n_chans_selected = self.selection_shape[self.freq_axis]
@@ -907,11 +926,14 @@ class  FIL_reader(object):
         """Find first blob from selection.
         """
 
+        #convert input frequencies into what their corresponding index would be
+        self.__setup_chans()
+
         #Check which is the blob time offset
         blob_time_start = self.t_start
 
         #Check which is the blob frequency offset (in channels)
-        blob_freq_start = self.c_start()
+        blob_freq_start = self.chan_start_idx
 
         blob_start = blob_time_start*self.n_channels_in_file + blob_freq_start
 
