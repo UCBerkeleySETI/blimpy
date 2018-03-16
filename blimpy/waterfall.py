@@ -116,7 +116,8 @@ class Waterfall(Filterbank):
             self.filename = filename
             self.ext = filename.split(".")[-1].strip().lower()  #File extension
             self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data,max_load=max_load)
-            self.header = self.container.header
+            self.file_header = self.container.header
+            self.header = self.file_header
             self.n_ints_in_file = self.container.n_ints_in_file
             self.file_shape = self.container.file_shape
             self.file_size_bytes = self.container.file_size_bytes
@@ -181,7 +182,9 @@ class Waterfall(Filterbank):
     def info(self):
         """ Print header information and other derived information. """
 
-        for key, val in self.header.items():
+        print("--- File Info ---")
+
+        for key, val in self.file_header.items():
             if key == 'src_raj':
                 val = val.to_string(unit=u.hour, sep=':')
             if key == 'src_dej':
@@ -190,6 +193,7 @@ class Waterfall(Filterbank):
 
         print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
         print("%16s : %32s" % ("File shape", self.file_shape))
+        print("--- Selection Info ---")
         print("%16s : %32s" % ("Data selection shape", self.selection_shape))
         print("%16s : %32s" % ("Minimum freq (MHz)", self.container.f_start))
         print("%16s : %32s" % ("Maximum freq (MHz)", self.container.f_stop))
@@ -231,7 +235,7 @@ class Waterfall(Filterbank):
         #Write header of .fil file
         n_bytes  = self.header['nbits'] / 8
         with open(filename_out, "w") as fileh:
-            fileh.write(generate_sigproc_header(self))
+            fileh.write(generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
 
         logger.info('Using %i n_blobs to write the data.'% n_blobs)
         for ii in range(0, n_blobs):
@@ -258,7 +262,7 @@ class Waterfall(Filterbank):
 
         n_bytes  = self.header['nbits'] / 8
         with open(filename_out, "w") as fileh:
-            fileh.write(generate_sigproc_header(self))
+            fileh.write(sig.generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
             j = self.data
             if n_bytes == 4:
                 np.float32(j.ravel()).tofile(fileh)
@@ -352,7 +356,7 @@ class Waterfall(Filterbank):
 
                     #-----
                     #Using channels instead of frequency.
-                    c_start = self.container.c_start() + ii*blob_dim[self.freq_axis]
+                    c_start = self.container.chan_start_idx + ii*blob_dim[self.freq_axis]
                     t_start = self.container.t_start + (c_start/self.selection_shape[self.freq_axis])*blob_dim[self.time_axis]
                     t_stop = t_start + blob_dim[self.freq_axis]
 
@@ -451,21 +455,24 @@ class Waterfall(Filterbank):
         """ Sets the chunking dimmentions depending on the file type.
         """
 
-        if '.0000.' in self.filename:
+        #Usually '.0000.' is in self.filename
+        if np.abs(self.header['foff']) < 1e-5:
             logger.info('Detecting high frequency resolution data.')
             chunk_dim = (1,1,1048576) #1048576 is the number of channels in a coarse channel.
             return chunk_dim
-        elif '.0001.' in self.filename:
+        #Usually '.0001.' is in self.filename
+        elif np.abs(self.header['tsamp']) < 1e-3:
             logger.info('Detecting high time resolution data.')
             chunk_dim = (2048,1,512) #512 is the total number of channels per single band (ie. blc00)
             return chunk_dim
-        elif '.0002.' in self.filename:
+        #Usually '.0002.' is in self.filename
+        elif np.abs(self.header['foff']) < 1e-2 and np.abs(self.header['foff'])  >= 1e-5:
             logger.info('Detecting intermediate frequency and time resolution data.')
             chunk_dim = (10,1,65536)  #65536 is the total number of channels per single band (ie. blc00)
 #            chunk_dim = (1,1,65536/4)
             return chunk_dim
         else:
-            logger.warning('File format not know. Will use minimum chunking. NOT OPTIMAL.')
+            logger.warning('File format not known. Will use minimum chunking. NOT OPTIMAL.')
             chunk_dim = (1,1,512)
             return chunk_dim
 
