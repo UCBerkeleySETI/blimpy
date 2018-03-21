@@ -2,3 +2,6 @@
 .ipynb_checkpoints
 *.pyc
 *.fil
+*.egg-info/
+.virtualenv*/
+.venv*/
