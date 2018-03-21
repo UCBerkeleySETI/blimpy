@@ -47,7 +47,7 @@ def cmd_tool():
             sys.exit()
 
     if args.in_fname == None:
-            logger.info('need to indicate input file name\n'0
+            logger.info('need to indicate input file name\n')
             sys.exit()
 
     if args.out_fname == None:
