@@ -301,8 +301,12 @@ class  H5_reader(object):
         """Updating frequency borders from channel values
         """
 
-        self.f_start = self.f_begin + self.chan_start_idx*abs(self.header['foff'])
-        self.f_stop = self.f_begin + self.chan_stop_idx*abs(self.header['foff'])
+        if self.header['foff'] > 0:
+            self.f_start = self.f_begin + self.chan_start_idx*abs(self.header['foff'])
+            self.f_stop = self.f_begin + self.chan_stop_idx*abs(self.header['foff'])
+        else:
+            self.f_start = self.f_end - self.chan_stop_idx*abs(self.header['foff'])
+            self.f_stop = self.f_end - self.chan_start_idx*abs(self.header['foff'])
 
     def populate_freqs(self):
         """
@@ -776,8 +780,12 @@ class  FIL_reader(object):
         """Updating frequency borders from channel values
         """
 
-        self.f_start = self.f_begin + self.chan_start_idx*abs(self.header['foff'])
-        self.f_stop = self.f_begin + self.chan_stop_idx*abs(self.header['foff'])
+        if self.header['foff'] > 0:
+            self.f_start = self.f_begin + self.chan_start_idx*abs(self.header['foff'])
+            self.f_stop = self.f_begin + self.chan_stop_idx*abs(self.header['foff'])
+        else:
+            self.f_start = self.f_end - self.chan_stop_idx*abs(self.header['foff'])
+            self.f_stop = self.f_end - self.chan_start_idx*abs(self.header['foff'])
 
     def populate_freqs(self):
         """
