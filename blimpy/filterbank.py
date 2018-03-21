@@ -47,6 +47,7 @@ try:
 except ImportError:
     HAS_SLALIB = False
 
+#import pdb #pdb.set_trace()
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if 'DISPLAY' in os.environ.keys():
@@ -481,6 +482,23 @@ class Filterbank(object):
 
         return max(n_coarse_chan, 1)
 
+    def _calc_extent(self,plot_f=None,plot_t=None,MJD_time=False):
+        """ Setup ploting edges.
+        """
+
+        plot_f_begin = plot_f[0]
+        plot_f_end = plot_f[-1] + (plot_f[1]-plot_f[0])
+
+        plot_t_begin = self.timestamps[0]
+        plot_t_end = self.timestamps[-1] + (self.timestamps[1] - self.timestamps[0])
+
+        if MJD_time:
+            extent=(plot_f_begin, plot_f_begin_end, plot_t_begin, plot_t_end)
+        else:
+            extent=(plot_f_begin, plot_f_end, 0.0,(plot_t_end-plot_t_begin)*24.*60.*60)
+
+        return extent
+
     def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
         """ Plot frequency spectrum of a given file
 
@@ -508,7 +526,11 @@ class Filterbank(object):
             plot_data = plot_data[t]
         elif t == b'all':
             print("averaging along time axis...")
-            plot_data = plot_data.mean(axis=0)
+            #Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
+            if len(plot_data.shape) > 1:
+                plot_data = plot_data.mean(axis=0)
+            else:
+                plot_data = plot_data.mean()
         else:
             raise RuntimeError("Unknown integration %s" % t)
 
@@ -563,9 +585,16 @@ class Filterbank(object):
         fig_min = plot_data[0].min()
 
         print("averaging along time axis...")
-        plot_max = plot_data.max(axis=0)
-        plot_min = plot_data.min(axis=0)
-        plot_data = plot_data.mean(axis=0)
+
+        #Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
+        if len(plot_data.shape) > 1:
+            plot_max = plot_data.max(axis=0)
+            plot_min = plot_data.min(axis=0)
+            plot_data = plot_data.mean(axis=0)
+        else:
+            plot_max = plot_data.max()
+            plot_min = plot_data.min()
+            plot_data = plot_data.mean()
 
         # Rebin to max number of points
         dec_fac_x = 1
@@ -637,10 +666,7 @@ class Filterbank(object):
         except KeyError:
             plt.title(self.filename)
 
-        if MJD_time:
-            extent=(plot_f[0], plot_f[-1], self.timestamps[-1], self.timestamps[0])
-        else:
-            extent=(plot_f[0], plot_f[-1], (self.timestamps[-1]-self.timestamps[0])*24.*60.*60, 0.0)
+        extent = self._calc_extent(plot_f=plot_f,plot_t=self.timestamps,MJD_time=MJD_time)
 
         plt.imshow(plot_data,
             aspect='auto',
@@ -658,7 +684,7 @@ class Filterbank(object):
         else:
             plt.ylabel("Time [s]")
 
-    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None , **kwargs):
+    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None,MJD_time=False, **kwargs):
         """ Plot the time series.
 
          Args:
@@ -674,14 +700,27 @@ class Filterbank(object):
         if logged:
             plot_data = db(plot_data)
 
-        plot_data = plot_data.mean(axis=1)
+        #Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
+        if len(plot_data.shape) > 1:
+            plot_data = plot_data.mean(axis=1)
+        else:
+            plot_data = plot_data.mean()
+
+        #Make proper time axis for plotting (but only for plotting!). Note that this makes the values inclusive.
+        extent = self._calc_extent(plot_f=plot_f,plot_t=self.timestamps,MJD_time=MJD_time)
+        plot_t = np.linspace(extent[2],extent[3],len(self.timestamps))
+
+        if MJD_time:
+            xlabel = "Time [MJD]"
+        else:
+            xlabel = "Time [s]"
 
         #Reverse oder if vertical orientation.
         if 'v' in orientation:
-            plt.plot(plot_data,range(len(plot_data))[::-1], **kwargs)
+            plt.plot(plot_data, plot_t[::-1], **kwargs)
         else:
-            plt.plot(plot_data, **kwargs)
-            plt.xlabel("Time [s]")
+            plt.plot(plot_t, plot_data, **kwargs)
+            plt.xlabel(xlabel)
 
         ax.autoscale(axis='both',tight=True)
         ax.get_xaxis().get_major_formatter().set_useOffset(False)
@@ -904,7 +943,6 @@ class Filterbank(object):
             for key, value in self.header.items():
                 dset.attrs[key] = value
 
-
     def calibrate_band_pass_N1(self):
         """ One way to calibrate the band pass is to take the median value
             for every frequency fine channel, and divide by it.
@@ -922,8 +960,9 @@ def cmd_tool(args=None):
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
     parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
-                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, \
-                             "a" for all available plots and information; and more.')
+                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot; \
+                        "t" for time series; "mm" for spectrum including min max; "k" for kurtosis; \
+                        "a" for all available plots and information; and "ank" for all but kurtosis.')
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
@@ -1008,7 +1047,7 @@ def cmd_tool(args=None):
             fil.plot_kurtosis(f_start=args.f_start, f_stop=args.f_stop)
         elif args.what_to_plot == "t":
             plt.figure("Time Series", figsize=(8, 6))
-            fil.plot_time_series(f_start=args.f_start, f_stop=args.f_stop)
+            fil.plot_time_series(f_start=args.f_start, f_stop=args.f_stop,orientation='h')
         elif args.what_to_plot == "a":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
             fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')

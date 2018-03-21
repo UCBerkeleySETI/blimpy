@@ -358,7 +358,7 @@ class Waterfall(Filterbank):
                     #Using channels instead of frequency.
                     c_start = self.container.chan_start_idx + ii*blob_dim[self.freq_axis]
                     t_start = self.container.t_start + (c_start/self.selection_shape[self.freq_axis])*blob_dim[self.time_axis]
-                    t_stop = t_start + blob_dim[self.freq_axis]
+                    t_stop = t_start + blob_dim[self.time_axis]
 
                     # Reverse array if frequency axis is flipped
 #                     if self.header['foff'] < 0:
@@ -381,7 +381,12 @@ class Waterfall(Filterbank):
 
                     bob = self.container.read_blob(blob_dim,n_blob=ii)
                     t_start = self.container.t_start + ii*blob_dim[self.time_axis]
-                    t_stop = min((ii+1)*blob_dim[self.time_axis],self.n_ints_in_file)
+
+                    #This prevents issues when the last blob is smaller than the others in time
+                    if (ii+1)*blob_dim[self.time_axis] > self.n_ints_in_file:
+                        t_stop = self.n_ints_in_file
+                    else:
+                        t_stop = (ii+1)*blob_dim[self.time_axis]
 
                     dset[t_start:t_stop] = bob[:]
 
@@ -438,6 +443,7 @@ class Waterfall(Filterbank):
             This is assuming a chunk is about 1 MiB.
         """
 
+        #Taking the size into consideration, but avoiding having multiple blobs within a single time bin.
         if self.selection_shape[self.freq_axis] > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
             freq_axis_size = self.selection_shape[self.freq_axis]
 #             while freq_axis_size > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
@@ -445,7 +451,7 @@ class Waterfall(Filterbank):
             time_axis_size = 1
         else:
             freq_axis_size = self.selection_shape[self.freq_axis]
-            time_axis_size = chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size
+            time_axis_size = np.min(chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size, self.selection_shape[self.time_axis])
 
         blob_dim = (time_axis_size, 1, freq_axis_size)
 
@@ -520,9 +526,6 @@ class Waterfall(Filterbank):
 
         return plot_f, plot_data
 
-
-
-#EE Needs update
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on blimpy files """
 
@@ -533,16 +536,17 @@ def cmd_tool(args=None):
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
     parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
-                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot, \
-                             "a" for all available plots and information; and more.')
+                        help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot; \
+                        "t" for time series; "mm" for spectrum including min max; "k" for kurtosis; \
+                        "a" for all available plots and information; and "ank" for all but kurtosis.')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
                         help='Start frequency (begin), in MHz')
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float,
                         help='Stop frequency (end), in MHz')
     parser.add_argument('-B', action='store', default=None, dest='t_start', type=int,
-                        help='Start integration (begin) ID')
+                        help='Start integration (begin, inclusive) ID ')
     parser.add_argument('-E', action='store', default=None, dest='t_stop', type=int,
-                        help='Stop integration (end) ID')
+                        help='Stop integration (end, exclusive) ID')
     parser.add_argument('-i', action='store_true', default=False, dest='info_only',
                         help='Show info only')
     parser.add_argument('-a', action='store_true', default=False, dest='average',
@@ -600,7 +604,7 @@ def cmd_tool(args=None):
             fil.plot_kurtosis(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
         elif parse_args.what_to_plot == "t":
             plt.figure("Time Series", figsize=(8, 6))
-            fil.plot_time_series(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
+            fil.plot_time_series(f_start=parse_args.f_start, f_stop=parse_args.f_stop,orientation='h')
         elif parse_args.what_to_plot == "a":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
             fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')

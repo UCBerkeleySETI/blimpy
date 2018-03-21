@@ -11,7 +11,7 @@ import h5py
 from astropy import units as u
 from astropy.coordinates import Angle
 
-import pdb;# pdb.set_trace()
+#import pdb;# pdb.set_trace()
 
 import logging
 logger = logging.getLogger(__name__)
@@ -133,10 +133,10 @@ class  H5_reader(object):
             if not t_stop:
                 t_stop = self.t_stop
 
-        if t_stop < t_start:
+        if t_stop >= 0 and t_start >= 0 and t_stop < t_start:
             t_stop, t_start = t_start,t_stop
             logger.warning('Given t_stop < t_start, assuming reversed values.')
-        if f_stop < f_start:
+        if f_stop and f_start and f_stop < f_start:
             f_stop, f_start = f_start,f_stop
             logger.warning('Given f_stop < f_start, assuming reversed values.')
 
@@ -303,26 +303,11 @@ class  H5_reader(object):
         else:
             f0 = self.f_begin
 
-        i_start, i_stop = 0, self.n_channels_in_file
-        if self.f_start:
-            i_start = (self.f_start - f0) / self.header['foff']
-        if self.f_stop:
-            i_stop  = (self.f_stop - f0)  / self.header['foff']
-
-        #calculate closest true index value
-        chan_start_idx = np.int(i_start)
-        chan_stop_idx  = np.int(i_stop)
+        self.__setup_chans()
 
         #create freq array
-        if i_start < i_stop:
-            i_vals = np.arange(chan_start_idx, chan_stop_idx)
-        else:
-            i_vals = np.arange(chan_stop_idx, chan_start_idx)
-
+        i_vals = np.arange(self.chan_start_idx, self.chan_stop_idx)
         freqs = self.header['foff'] * i_vals + f0
-
-#         if self.header['foff'] < 0:
-#             self.freqs = self.freqs[::-1]
 
         return freqs
 
@@ -360,8 +345,14 @@ class  H5_reader(object):
         if n_blob > n_blobs or n_blob < 0:
             raise ValueError('Please provide correct n_blob value. Given %i, but max values is %i'%(n_blob,n_blobs))
 
+        #This prevents issues when the last blob is smaller than the others in time
+        if blob_dim[self.time_axis]*(n_blob+1) > self.selection_shape[self.time_axis]:
+            updated_blob_dim = (self.selection_shape[self.time_axis] - blob_dim[self.time_axis]*n_blob, 1, blob_dim[self.freq_axis])
+        else:
+            updated_blob_dim = blob_dim
+
         blob_start = self.__find_blob_start(blob_dim,n_blob)
-        blob_end = blob_start + np.array(blob_dim)
+        blob_end = blob_start + np.array(updated_blob_dim)
 
 #        blob = np.zeros(blob_dim,dtype='float32') #EE could remove.
         blob = self.h5["data"][blob_start[self.time_axis]:blob_end[self.time_axis],:,blob_start[self.freq_axis]:blob_end[self.freq_axis]]
@@ -507,10 +498,10 @@ class  FIL_reader(object):
             if not t_stop:
                 t_stop = self.t_stop
 
-        if t_stop < t_start:
+        if t_stop >= 0 and t_start >= 0 and t_stop < t_start:
             t_stop, t_start = t_start,t_stop
             logger.warning('Given t_stop < t_start, assuming reversed values.')
-        if f_stop < f_start:
+        if f_stop and f_start and f_stop < f_start:
             f_stop, f_start = f_start,f_stop
             logger.warning('Given f_stop < f_start, assuming reversed values.')
 
@@ -586,8 +577,6 @@ class  FIL_reader(object):
         n_chan = int(np.round((self.f_stop - self.f_start) / abs(self.header['foff'])))
 
         selection_shape = (n_ints,self.header['nifs'],n_chan)
-
-
 
         return selection_shape
 
@@ -780,26 +769,11 @@ class  FIL_reader(object):
         else:
             f0 = self.f_begin
 
-        i_start, i_stop = 0, self.n_channels_in_file
-        if self.f_start:
-            i_start = (self.f_start - f0) / self.header['foff']
-        if self.f_stop:
-            i_stop  = (self.f_stop - f0)  / self.header['foff']
-
-        #calculate closest true index value
-        chan_start_idx = np.int(i_start)
-        chan_stop_idx  = np.int(i_stop)
+        self.__setup_chans()
 
         #create freq array
-        if i_start < i_stop:
-            i_vals = np.arange(chan_start_idx, chan_stop_idx)
-        else:
-            i_vals = np.arange(chan_stop_idx, chan_start_idx)
-
+        i_vals = np.arange(self.chan_start_idx, self.chan_stop_idx)
         freqs = self.header['foff'] * i_vals + f0
-
-#         if self.header['foff'] < 0:
-#             self.freqs = self.freqs[::-1]
 
         return freqs
 
@@ -855,10 +829,6 @@ class  FIL_reader(object):
         # Seek to first integration
         f.seek(self.t_start * self.__n_bytes  * n_ifs * n_chans, 1)
 
-        # Set up indexes used in file read (taken out of loop for speed)
-        i0 = np.min((chan_start_idx, chan_stop_idx))
-        i1 = np.max((chan_start_idx, chan_stop_idx))
-
         #Set up the data type (taken out of loop for speed)
         if self.__n_bytes  == 4:
             dd_type = 'float32'
@@ -872,7 +842,7 @@ class  FIL_reader(object):
 
         for ii in range(n_ints):
             for jj in range(n_ifs):
-                f.seek(self.__n_bytes  * i0, 1) # 1 = from current location
+                f.seek(self.__n_bytes  * self.chan_start_idx, 1) # 1 = from current location
                 dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
                 # Reverse array if frequency axis is flipped
@@ -881,7 +851,7 @@ class  FIL_reader(object):
 
                 self.data[ii, jj] = dd
 
-                f.seek(self.__n_bytes  * (n_chans - i1), 1)  # Seek to start of next block
+                f.seek(self.__n_bytes  * (n_chans - self.chan_stop_idx), 1)  # Seek to start of next block
 
     def read_blob(self,blob_dim,n_blob=0):
         """Read blob from a selection.
@@ -890,18 +860,17 @@ class  FIL_reader(object):
         n_blobs = self.calc_n_blobs(blob_dim)
         if n_blob > n_blobs or n_blob < 0:
             raise ValueError('Please provide correct n_blob value. Given %i, but max values is %i'%(n_blob,n_blobs))
+
+        #This prevents issues when the last blob is smaller than the others in time
+        if blob_dim[self.time_axis]*(n_blob+1) > self.selection_shape[self.time_axis]:
+            updated_blob_dim = (self.selection_shape[self.time_axis] - blob_dim[self.time_axis]*n_blob, 1, blob_dim[self.freq_axis])
+        else:
+            updated_blob_dim = blob_dim
+
         blob_start = self.__find_blob_start(blob_dim)
-        blob = np.zeros(blob_dim,dtype='float32')
+        blob = np.zeros(updated_blob_dim,dtype='float32')
 
-        # Assuming the blob will be either one dimensional or loops over the whole frequency range.
-        #EE: For now; also assuming one polarization and one beam.
-        blob_flat_size = self.__flat_array_dimmention(blob_dim)
-
-        # Load binary data
-        f = open(self.filename, 'rb')
-        f.seek(self.idx_data + self.__n_bytes  * (blob_start + n_blob*blob_flat_size))
-
-        #Set up the data type (taken out of loop for speed)
+        #Set up the data type
         if self.__n_bytes  == 4:
             dd_type = 'float32'
         elif self.__n_bytes  == 2:
@@ -909,13 +878,34 @@ class  FIL_reader(object):
         elif self.__n_bytes  == 1:
             dd_type = 'int8'
 
-        dd = np.fromfile(f, count=blob_flat_size, dtype=dd_type)
+        #EE: For now; also assuming one polarization and one beam.
 
-        if dd.shape[0] == blob_flat_size:
-            blob = dd.reshape(blob_dim)
+        #Assuming the blob will loop over the whole frequency range.
+        if self.f_start == self.f_begin and self.f_stop == self.f_end:
+
+            blob_flat_size = self.__flat_array_dimmention(blob_dim)
+            updated_blob_flat_size = self.__flat_array_dimmention(updated_blob_dim)
+
+            #Load binary data
+            with open(self.filename, 'rb') as f:
+                f.seek(self.idx_data + self.__n_bytes  * (blob_start + n_blob*blob_flat_size))
+                dd = np.fromfile(f, count=updated_blob_flat_size, dtype=dd_type)
+
+            if dd.shape[0] == updated_blob_flat_size:
+                blob = dd.reshape(blob_dim)
+            else:
+                logger.info('DD shape != blob shape.')
+                blob = dd.reshape((dd.shape[0]/blob_dim[self.freq_axis],blob_dim[self.beam_axis],blob_dim[self.freq_axis]))
         else:
-            logger.debug('DD shape != blob shape.')
-            blob = dd.reshape((dd.shape[0]/blob_dim[2],blob_dim[1],blob_dim[2]))
+
+            for blobt in range(updated_blob_dim[self.time_axis]):
+
+                #Load binary data
+                with open(self.filename, 'rb') as f:
+                    f.seek(self.idx_data + self.__n_bytes * (blob_start + n_blob*blob_dim[self.time_axis]*self.n_channels_in_file + blobt*self.n_channels_in_file))
+                    dd = np.fromfile(f, count=blob_dim[self.freq_axis], dtype=dd_type)
+
+                blob[blobt] = dd
 
 #         if self.header['foff'] < 0:
 #             blob = blob[:,:,::-1]
