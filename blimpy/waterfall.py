@@ -451,7 +451,7 @@ class Waterfall(Filterbank):
             time_axis_size = 1
         else:
             freq_axis_size = self.selection_shape[self.freq_axis]
-            time_axis_size = np.min(chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size, self.selection_shape[self.time_axis])
+            time_axis_size = np.min([chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size, self.selection_shape[self.time_axis]])
 
         blob_dim = (time_axis_size, 1, freq_axis_size)
 
