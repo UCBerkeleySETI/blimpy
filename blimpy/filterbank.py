@@ -398,7 +398,8 @@ class Filterbank(object):
 
         for ii in range(0, n_coarse_chan-1):
             ss = ii*n_chan_per_coarse
-            self.data[..., ss+mid_chan-1] = self.data[..., ss+mid_chan]
+#            self.data[..., ss+mid_chan-1] = self.data[..., ss+mid_chan]
+            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
 
     def info(self):
         """ Print header information """
