@@ -262,7 +262,7 @@ class Waterfall(Filterbank):
 
         n_bytes  = self.header['nbits'] / 8
         with open(filename_out, "w") as fileh:
-            fileh.write(sig.generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
+            fileh.write(generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
             j = self.data
             if n_bytes == 4:
                 np.float32(j.ravel()).tofile(fileh)
