@@ -394,11 +394,11 @@ class Filterbank(object):
 
         if not n_coarse_chan % int(n_coarse_chan) == 0:
             logger.warning('Coarse channel number not integer in selection, unable to blank DC bin.')
-            return pass
+            return None
 
         if n_coarse_chan < 1:
             logger.warning('Coarse channel number < 1, unable to blank DC bin.')
-            return pass
+            return None
 
         n_chan = self.data.shape[2]
         n_chan_per_coarse = n_chan / n_coarse_chan
