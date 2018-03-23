@@ -20,28 +20,23 @@ Or, the latest version of the development code can be installed from the github 
 ### Command line utilities
 
 After installation, some command line utilities will be installed:
-* `filutil`, for plotting and reading filterbank information.
-* `watutil`, for opening/writing filterbank information in either .h5 or .fil format (but plotting also available).
+* `watutil`, for reading/writing/plotting blimpy filterbank files (either .h5 or .fil format).
+* `filutil`, for reading/plotting blimpy filterbank files (.fil format).
 * `rawutil`, for plotting data in guppi raw files.
 * `fil2h5`, for converting .fil files into .h5 format.
 * `h52fil`, for converting .h5 files into .fil format.
+* `bldice`, for dicing a smaller frequency region from (either from/to .h5 or .fil).
+* `matchfils`, for checking if two .fil files are the same.
 
-Use the `-h` flag to display command line arguments.
+Use the `-h` flag to any of the above command line utilities to display their available arguments.
 
-### Reading filterbank files in .fil format
-The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank format. The `filterbank.py` script provides a Python API for interacting with filterbank data; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/breakthrough/blob/master/GBT/voyager/voyager.ipynb) for an overview.
+### Reading blimpy filterbank files in .fil or .h5 format
 
-```python
-from blimpy import Filterbank
-fb = Filterbank('/path/to/filterbank.fil')
-fb.info()
-data = fb.data
+The `blimpy.Waterfall`  provides a Python API for interacting with filterbank data. It supports all BL filterbank data products; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/breakthrough/blob/master/GBT/voyager/voyager.ipynb) for an overview.
+The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank (.fil) format.
+
+From the python, ipython or jupiter notebook environments.
 ```
-
-### Reading filterbank files in .fil or .h5 format
-The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank format. The `waterfall.py` script provides a Python API for interacting with filterbank data; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/breakthrough/blob/master/GBT/voyager/voyager.ipynb) for an overview.
-
-```python
 from blimpy import Waterfall
 fb = Waterfall('/path/to/filterbank.fil')
 fb.info()
@@ -49,7 +44,18 @@ data = fb.data
 fb2 = Waterfall('/path/to/filterbank.h5')
 fb2.info()
 data = fb2.data
+```
 
+### Reading filterbank files in .fil format
+The `blimpy.Filterbank` provides a Python API for interacting with filterbank data. It supports a set of BL data products; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/breakthrough/blob/master/GBT/voyager/voyager.ipynb) for an overview.
+The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank format.
+
+From the python, ipython or jupiter notebook environments.
+```
+from blimpy import Filterbank
+fb = Filterbank('/path/to/filterbank.fil')
+fb.info()
+data = fb.data
 ```
 
 ### Reading guppi raw files
@@ -63,3 +69,6 @@ header, data = r.read_next_data_block()
 ```
 
 Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.
+
+
+### This readme is far from complete. If you have any request/questions please lets us know!
