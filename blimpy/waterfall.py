@@ -497,12 +497,12 @@ class Waterfall(Filterbank):
         Note: currently only works if entire waterfall file is read
         """
 
-        if not n_coarse_chan % int(n_coarse_chan) == 0:
-            logger.warning('Coarse channel number not integer in selection, unable to blank DC bin.')
-            return None
-
         if n_coarse_chan < 1:
             logger.warning('Coarse channel number < 1, unable to blank DC bin.')
+            return None
+
+        if not n_coarse_chan % int(n_coarse_chan) == 0:
+            logger.warning('Coarse channel number not integer in selection, unable to blank DC bin.')
             return None
 
         n_chan = self.data.shape[-1]
