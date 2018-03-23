@@ -331,14 +331,14 @@ class  H5_reader(object):
             It assumes for now that a single coarse channel is 2.9296875 MHz
         """
 
-        # Could add a telescope based coarse channel bandwith, or other discriminative.
+        # Could add a telescope based coarse channel bandwidth, or other discriminative.
         # if telescope_id == 'GBT':
         # or actually as is currently
         # if self.header['telescope_id'] == 6:
 
         coarse_chan_bw = 2.9296875
 
-        bandwith = abs(self.f_stop - self.f_start)
+        bandwidth = abs(self.f_stop - self.f_start)
         n_coarse_chan = bandwidth / coarse_chan_bw
 
         return n_coarse_chan
@@ -982,14 +982,14 @@ class  FIL_reader(object):
             It assumes for now that a single coarse channel is 2.9296875 MHz
         """
 
-        # Could add a telescope based coarse channel bandwith, or other discriminative.
+        # Could add a telescope based coarse channel bandwidth, or other discriminative.
         # if telescope_id == 'GBT':
         # or actually as is currently
         # if self.header['telescope_id'] == 6:
 
         coarse_chan_bw = 2.9296875
 
-        bandwith = abs(self.f_stop - self.f_start)
+        bandwidth = abs(self.f_stop - self.f_start)
         n_coarse_chan = bandwidth / coarse_chan_bw
 
         return n_coarse_chan
