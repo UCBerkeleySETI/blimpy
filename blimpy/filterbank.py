@@ -391,6 +391,15 @@ class Filterbank(object):
 
         Note: currently only works if entire blimpy file is read
         """
+
+        if not n_coarse_chan % int(n_coarse_chan) == 0:
+            logger.warning('Coarse channel number not integer in selection, unable to blank DC bin.')
+            return pass
+
+        if n_coarse_chan < 1:
+            logger.warning('Coarse channel number < 1, unable to blank DC bin.')
+            return pass
+
         n_chan = self.data.shape[2]
         n_chan_per_coarse = n_chan / n_coarse_chan
 
@@ -479,9 +488,9 @@ class Filterbank(object):
         coarse_chan_bw = 2.9296875
 
         bandwidth = abs(self.header[b'nchans']*self.header[b'foff'])
-        n_coarse_chan = int(bandwidth / coarse_chan_bw)
+        n_coarse_chan = bandwidth / coarse_chan_bw
 
-        return max(n_coarse_chan, 1)
+        return n_coarse_chan
 
     def _calc_extent(self,plot_f=None,plot_t=None,MJD_time=False):
         """ Setup ploting edges.

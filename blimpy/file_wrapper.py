@@ -339,10 +339,9 @@ class  H5_reader(object):
         coarse_chan_bw = 2.9296875
 
         bandwith = abs(self.f_stop - self.f_start)
-#        bandwith = abs(self.c_stop() - self.c_start())
-        n_coarse_chan = int(bandwith / coarse_chan_bw)
+        n_coarse_chan = bandwidth / coarse_chan_bw
 
-        return max(n_coarse_chan, 1) #Returning a 1 as minimum to avoid devision by zero when dividing by n_coarse_chan
+        return n_coarse_chan
 
     def calc_n_blobs(self,blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
@@ -991,9 +990,9 @@ class  FIL_reader(object):
         coarse_chan_bw = 2.9296875
 
         bandwith = abs(self.f_stop - self.f_start)
-        n_coarse_chan = int(bandwith / coarse_chan_bw)
+        n_coarse_chan = bandwidth / coarse_chan_bw
 
-        return max(n_coarse_chan, 1) #Returning a 1 as minimum to avoid devision by zero when dividing by n_coarse_chan
+        return n_coarse_chan
 
     def read_all(self,reverse=True):
         """ read all the data.
