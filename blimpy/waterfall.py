@@ -502,7 +502,7 @@ class Waterfall(Filterbank):
             return None
 
         if not n_coarse_chan % int(n_coarse_chan) == 0:
-            logger.warning('Coarse channel number not integer in selection, unable to blank DC bin.')
+            logger.warning('Selection does not contain an interger number of coarse channels, unable to blank DC bin.')
             return None
 
         n_coarse_chan = int(n_coarse_chan)
