@@ -9,13 +9,18 @@ by the Breakthrough Listen instruments.
 
 ### Installation
 
-The latest stable release (1.1.7) can be installed via pip:
+The latest stable release (1.1.8) can be installed via pip:
 
 ```
 pip install blimpy
 ```
 
 Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `python setup.py install` (with sudo if required). You will need numpy, h5py and astropy as dependencies.
+
+```
+Version 1.1.8
+Now supporting dicing (bldice).
+```
 
 ### Command line utilities
 
