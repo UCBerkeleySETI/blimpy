@@ -505,6 +505,8 @@ class Waterfall(Filterbank):
             logger.warning('Coarse channel number not integer in selection, unable to blank DC bin.')
             return None
 
+        n_coarse_chan = int(n_coarse_chan)
+
         n_chan = self.data.shape[-1]
         n_chan_per_coarse = n_chan / n_coarse_chan
 
