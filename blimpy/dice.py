@@ -31,39 +31,75 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 #------
 
 def cmd_tool():
-    '''read input and output frequency, and output file name
+    '''Read input and output frequency, and output file name
     '''
 
-    parser = argparse.ArgumentParser(description='Dices hdf5 or fil files and writes to hdf5')
+    parser = argparse.ArgumentParser(description='Dices hdf5 or fil files and writes to hdf5 or fil.')
     parser.add_argument('-f', '--input_filename', action='store', default=None, dest='in_fname', type=str, help='Name of file to write from (HDF5 or FIL)')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float, help='Start frequency in MHz')
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float, help='Stop frequency in MHz')
-    parser.add_argument('-o', '--output_filename', action='store', default=None, dest='out_fname', type=str, help='Name of file to write to (HDF5)')
+    parser.add_argument('-x', '--output_file', action='store', default=None, dest='out_format', type=str, help='Output file format [.h5 or .fil].')
+    parser.add_argument('-o', '--output_filename', action='store', default=None, dest='out_fname', type=str, help='Ouput file name to write (to HDF5 or FIL).')
 
     args = parser.parse_args()
 
     if len(sys.argv) == 1:
-            logger.info('indicate file name and start and stop frequencies\n')
+            logger.error('Indicate file name and start and stop frequencies')
             sys.exit()
 
     if args.in_fname == None:
-            logger.info('need to indicate input file name\n')
+            logger.error('Need to indicate input file name')
             sys.exit()
 
     if args.out_fname == None:
+        if (args.out_format == None) or (args.out_format == 'h5'):
             if args.in_fname[len(args.in_fname)-4:] == '.fil':
-                    args.out_fname = args.in_fname
-                    args.out_fname = args.out_fname.replace('.fil','_diced.h5')
-            if args.in_fname[len(args.in_fname)-3:] == '.h5':
-                    args.out_fname = args.in_fname
-                    args.out_fname = args.out_fname.replace('.h5','_diced.h5')
+                args.out_fname = args.in_fname
+                args.out_fname = args.out_fname.replace('.fil','_diced.h5')
+            elif args.in_fname[len(args.in_fname)-3:] == '.h5':
+                args.out_fname = args.in_fname
+                args.out_fname = args.out_fname.replace('.h5','_diced.h5')
+            else:
+                logger.error('Input file not recognized')
+                sys.exit()
+        elif args.out_format == 'fil':
+            if args.in_fname[len(args.in_fname)-4:] == '.fil':
+                args.out_fname = args.in_fname
+                args.out_fname = args.out_fname.replace('.fil','_diced.fil')
+            elif args.in_fname[len(args.in_fname)-3:] == '.h5':
+                args.out_fname = args.in_fname
+                args.out_fname = args.out_fname.replace('.h5','_diced.fil')
+            else:
+                logger.error('input file not recognized.')
+                sys.exit()
 
-    if args.f_start == None or args.f_stop == None:
-            logger.info('start and end frequencies must be informed\n')
+        else:
+            logger.error('Must indicate either output file name or valid output file extension.')
             sys.exit()
 
-    # read start frequency and bandwidth from data set
+    elif (args.out_fname[len(args.out_fname)-4:] == '.fil') and (args.out_format == 'h5'):
+        logger.error('Output file extension does not match output file name')
+        sys.exit()
 
+    elif (args.out_fname[len(args.out_fname)-3:] == '.h5') and (args.out_format == 'fil'):
+        logger.error('Output file extension does not match output file name.')
+        sys.exit()
+
+    if (args.out_fname[len(args.out_fname)-3:] != '.h5') and (args.out_fname[len(args.out_fname)-4:] != '.fil'):
+        logger.error('Indicate output file name with extension, or simply output file extension.')
+        sys.exit()
+
+    if args.f_start == None and args.f_stop == None:
+        logger.error('Please give either start and/or end frequencies. Otherwise use fil2h5 or h52fil functions.')
+        sys.exit()
+
+    if args.f_start == None:
+        logger.warning('Lower frequency not given, setting to ' + str(f_min_file) + ' MHz to match file.')
+
+    if args.f_stop == None:
+        logger.warning('Higher frequency not given, setting to ' + str(f_max_file) + ' MHz to match file.')
+
+    #Read start frequency and bandwidth from data set
     file_big = Waterfall(args.in_fname)
     f_min_file = file_big.header['fch1']
     f_max_file = file_big.header['fch1'] + file_big.header['nchans']*file_big.header['foff']
@@ -79,21 +115,21 @@ def cmd_tool():
 
     if args.f_start < f_max_file and args.f_start > f_min_file and args.f_stop > f_max_file:
             args.f_stop = f_max_file
-            logger.info('\nWarning : higher frequency set to ' + str(f_max_file) + ' MHz to match file\n')
+            logger.warning('Higher frequency set to ' + str(f_max_file) + ' MHz to match file.')
 
     if args.f_stop < f_max_file and args.f_stop > f_min_file and args.f_start < f_min_file:
             args.f_start = f_min_file
-            logger.info('\nWarning : lower frequency set to ' + str(f_min_file) + ' MHz to match file\n')
+            logger.warning('Lower frequency set to ' + str(f_min_file) + ' MHz to match file.')
 
     if args.f_start < f_min_file and args.f_stop > f_max_file:
             args.f_start = f_min_file
             args.f_stop = f_max_file
-            logger.info('\nWarning : lower frequency set to ' + str(f_min_file) + ' MHz\nand higher frequency set to ' + str(f_max_file) + ' MHz to match file\n')
+            logger.warning('Lower frequency set to ' + str(f_min_file) + ' MHz and higher frequency set to ' + str(f_max_file) + ' MHz to match file.')
             # print '\nindicated frequencies include file frequency span - no need to dice\n'
             # sys.exit()
 
     if min(args.f_start,args.f_stop) < f_min_file or max(args.f_start,args.f_stop) > f_max_file:
-            logger.info('\nbandwidth to extract must be within ' + str(f_min_file) + ' MHz and ' + str(f_max_file) + ' MHz\n')
+            logger.error('Bandwidth to extract must be within ' + str(f_min_file) + ' MHz and ' + str(f_max_file) + ' MHz.')
             sys.exit()
 
     # calculate real coarse channel begin and end freqs
@@ -104,14 +140,20 @@ def cmd_tool():
     # print "true start frequency is " + str(f_start_real)
     # print "true stop frequency is " + str(f_stop_real)
 
-    logger.info('\nwriting to ' + args.out_fname + ' extacting from ' + str(f_start_real) + ' MHz to ' + str(f_stop_real) + ' MHz\n')
+    logger.info('Writing to ' + args.out_fname)
+    logger.info('Extacting from ' + str(f_start_real) + ' MHz to ' + str(f_stop_real) + ' MHz.')
 
     # create waterfall object
     file_small = Waterfall(args.in_fname, f_start = f_start_real, f_stop = f_stop_real)
 
     # write waterfall object
-    file_small.write_to_hdf5(args.out_fname)
-
+    if args.out_fname[len(args.out_fname)-4:] == '.fil':
+        file_small.write_to_fil(args.out_fname)
+    elif args.out_fname[len(args.out_fname)-3:] == '.h5':
+        file_small.write_to_hdf5(args.out_fname)
+    else:
+        logger.error('Error in output file creation : verify output file name and extension.')
+        sys.exit()
 
 
 if __name__ == "__main__":

@@ -182,7 +182,7 @@ class Waterfall(Filterbank):
     def info(self):
         """ Print header information and other derived information. """
 
-        print("--- File Info ---")
+        print("\n--- File Info ---")
 
         for key, val in self.file_header.items():
             if key == 'src_raj':
