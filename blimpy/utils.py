@@ -43,7 +43,10 @@ def rebin(d, n_x, n_y=None):
     return d
 
 def unpack(data, nbit):
-    """upgrade data from nbits to 8bits"""
+    """upgrade data from nbits to 8bits
+
+    Notes: Pretty sure this function is a little broken!
+    """
     if nbit > 8:
         raise ValueError("unpack: nbit must be <= 8")
     if 8 % nbit != 0:
@@ -67,12 +70,10 @@ def unpack(data, nbit):
         tmpdata = (tmpdata | (tmpdata <<  8)) & 0x0F0F
         tmpdata = tmpdata << 4 # Shift into high bits to avoid needing to sign extend
         updata = tmpdata
+        return updata.view(data.dtype)
     elif nbit == 2:
-        tmpdata = data.astype(np.int32)#np.empty(upshape, dtype=np.int16)
-        tmpdata = (tmpdata | (tmpdata << 16)) & 0x000F000F
-        tmpdata = (tmpdata | (tmpdata <<  8)) & 0x03030303
-        tmpdata = tmpdata << 6 # Shift into high bits to avoid needing to sign extend
-        updata = tmpdata
+        data = unpack_2to8(data)
+        return data
     elif nbit == 1:
         tmpdata = data.astype(np.int64)#np.empty(upshape, dtype=np.int16)
         tmpdata = (tmpdata | (tmpdata << 32)) & 0x0000000F0000000F
@@ -80,4 +81,18 @@ def unpack(data, nbit):
         tmpdata = (tmpdata | (tmpdata <<  8)) & 0x0101010101010101
         tmpdata = tmpdata << 7 # Shift into high bits to avoid needing to sign extend
         updata = tmpdata
-    return updata.view(data.dtype)
+        return updata.view(data.dtype)
+
+
+
+def unpack_2to8(data):
+    """ Promote 2-bit data into 8-bit data.
+
+    Args:
+        data: Numpy array with dtype == uint8
+    """
+    tmp = data.astype(np.uint32)
+    tmp = (tmp | (tmp << 12)) & 0xF000F
+    tmp = (tmp | (tmp << 6))  & 0x3030303
+    tmp = tmp.byteswap()
+    return tmp.view('uint8')
