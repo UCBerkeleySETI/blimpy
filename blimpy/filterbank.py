@@ -279,9 +279,9 @@ class Filterbank(object):
         elif n_bytes == 4:
             dd_type = b'float32'
         elif n_bytes == 2:
-            dd_type = b'int16'
+            dd_type = b'uint16'
         elif n_bytes == 1:
-            dd_type = b'int8'
+            dd_type = b'uint8'
 
         if load_data:
 
