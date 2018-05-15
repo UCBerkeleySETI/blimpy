@@ -4,21 +4,27 @@
 
 ### Filterbank + Raw file readers
 
-This repository contains python readers for interacting with Sigproc filterbank (.fil), HDF5 (.h5) and guppi raw (.raw) files generated
+This repository contains Python 2 readers for interacting with Sigproc filterbank (.fil), HDF5 (.h5) and guppi raw (.raw) files generated
 by the Breakthrough Listen instruments.
 
 ### Installation
 
-The latest stable release (1.1.8) can be installed via pip:
+The latest stable release (1.1.9) can be installed via pip:
 
 ```
 pip install blimpy
 ```
 
-Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `python setup.py install` (with sudo if required). You will need numpy, h5py and astropy as dependencies.
+Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `python setup.py install` (with sudo if required) or by using the following terminal command:
 
 ```
-Version 1.1.8
+pip install https://github.com/UCBerkeleySETI/blimpy/tarball/master
+```
+
+You will need numpy, h5py and astropy as dependencies.
+
+```
+Version 1.1.9
 Now supporting dicing (bldice).
 ```
 
@@ -38,27 +44,13 @@ Use the `-h` flag to any of the above command line utilities to display their av
 ### Reading blimpy filterbank files in .fil or .h5 format
 
 The `blimpy.Waterfall`  provides a Python API for interacting with filterbank data. It supports all BL filterbank data products; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/breakthrough/blob/master/GBT/voyager/voyager.ipynb) for an overview.
-The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank (.fil) format.
+The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank (.fil) format. This method is the most up-to-date and supercedes the depreciated `blimpy.Filterbank` which can only import .fil files.
 
 From the python, ipython or jupiter notebook environments.
 ```
 from blimpy import Waterfall
 fb = Waterfall('/path/to/filterbank.fil')
-fb.info()
-data = fb.data
-fb2 = Waterfall('/path/to/filterbank.h5')
-fb2.info()
-data = fb2.data
-```
-
-### Reading filterbank files in .fil format
-The `blimpy.Filterbank` provides a Python API for interacting with filterbank data. It supports a set of BL data products; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/breakthrough/blob/master/GBT/voyager/voyager.ipynb) for an overview.
-The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank format.
-
-From the python, ipython or jupiter notebook environments.
-```
-from blimpy import Filterbank
-fb = Filterbank('/path/to/filterbank.fil')
+#fb = Waterfall('/path/to/filterbank.h5') #works the same way
 fb.info()
 data = fb.data
 ```
