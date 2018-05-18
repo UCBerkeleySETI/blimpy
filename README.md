@@ -21,7 +21,7 @@ Or, the latest version of the development code can be installed from the github 
 pip install https://github.com/UCBerkeleySETI/blimpy/tarball/master
 ```
 
-You will need numpy, h5py and astropy as dependencies.
+You will need numpy, h5py astropy, scipy, and matplotlib as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately. 
 
 ```
 Version 1.1.9
