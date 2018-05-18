@@ -33,7 +33,8 @@ from astropy.time import Time
 import scipy.stats
 from matplotlib.ticker import NullFormatter
 
-from .utils import db, lin, rebin, closest, unpack
+from .utils import db, lin, rebin, closest, unpack_2to8
+import logging as logger
 
 try:
     import h5py
@@ -66,7 +67,7 @@ from .sigproc import *
 
 MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
 MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024 * 2 # Max size of data array to load into memory
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
 
 
@@ -206,7 +207,7 @@ class Filterbank(object):
 
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
-    def _setup_time_axis(self,t_start=None, t_stop=None):
+    def _setup_time_axis(self, t_start=None, t_stop=None):
         """  Setup time axis.
         """
 
@@ -252,7 +253,10 @@ class Filterbank(object):
         filesize = os.path.getsize(self.filename)
         n_bytes_data = filesize - self.idx_data
 
-        n_ints_in_file = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
+        if n_bits == 2:
+            n_ints_in_file = int(4 * n_bytes_data / (n_chans * n_ifs))
+        else:
+            n_ints_in_file = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
 
         # Finally add some other info to the class as objects
         self.n_ints_in_file  = n_ints_in_file
@@ -262,7 +266,7 @@ class Filterbank(object):
         ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         # Seek to first integration
-        f.seek(ii_start * n_bytes * n_ifs * n_chans, 1)
+        f.seek(ii_start * n_bits * n_ifs * n_chans / 8, 1)
 
         # Set up indexes used in file read (taken out of loop for speed)
         i0 = np.min((chan_start_idx, chan_stop_idx))
@@ -275,9 +279,9 @@ class Filterbank(object):
         elif n_bytes == 4:
             dd_type = b'float32'
         elif n_bytes == 2:
-            dd_type = b'int16'
+            dd_type = b'uint16'
         elif n_bytes == 1:
-            dd_type = b'int8'
+            dd_type = b'uint8'
 
         if load_data:
 
@@ -307,7 +311,7 @@ class Filterbank(object):
 #                         dd = dd[::-1]
 
                     if n_bits == 2:
-                        dd = unpack(dd, 2)
+                        dd = unpack_2to8(dd)
                     self.data[ii, jj] = dd
 
                     f.seek(n_bytes * (n_chans - i1), 1)  # Seek to start of next block
@@ -470,7 +474,9 @@ class Filterbank(object):
         """
 
         i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start=f_start, f_stop=f_stop)
-        ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
+
+        # TODO: FIX THIS. CURRENTLY UNUSED
+        #ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         plot_f    = self.freqs
         plot_data = np.squeeze(self.data)#[ii_start:ii_stop, if_id, chan_start_idx:chan_stop_idx]
@@ -502,7 +508,7 @@ class Filterbank(object):
         plot_f_end = plot_f[-1] + (plot_f[1]-plot_f[0])
 
         plot_t_begin = self.timestamps[0]
-        plot_t_end = self.timestamps[-1] + (self.timestamps[1] - self.timestamps[0])
+        plot_t_end  = self.timestamps[-1] + (self.timestamps[1] - self.timestamps[0])
 
         if MJD_time:
             extent=(plot_f_begin, plot_f_begin_end, plot_t_begin, plot_t_end)
@@ -709,7 +715,7 @@ class Filterbank(object):
         ax = plt.gca()
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        if logged:
+        if logged and self.header['nbits'] >= 8:
             plot_data = db(plot_data)
 
         #Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
