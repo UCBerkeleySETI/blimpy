@@ -123,7 +123,7 @@ class Reader(object):
         #Check to see how many frequency channels requested
         n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
 
-        n_bytes  = self.__n_bytes
+        n_bytes  = self._n_bytes
         selection_size = int(n_ints*n_chan*n_bytes)
 
         return selection_size
@@ -290,13 +290,13 @@ class  H5_reader(Reader):
             self.filesize = self.filestat.st_size/(1024.0**2)
             self.load_data = load_data
             self.h5 = h5py.File(self.filename)
-            self.__read_header()
+            self._read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
             self.n_ints_in_file  = self.h5["data"].shape[self.time_axis] #
             self.n_channels_in_file  = self.h5["data"].shape[self.freq_axis] #
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
-            self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
+            self._n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0:
@@ -351,7 +351,7 @@ class  H5_reader(Reader):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __read_header(self):
+    def _read_header(self):
         """ Read header and return a Python dictionary of key:value pairs
         """
 
@@ -429,19 +429,19 @@ class  FIL_reader(Reader):
             t_stop (int): stop time bin
         """
 
-        self.__set_header_keywords_types()
+        self._set_header_keywords_types()
 
         if filename and os.path.isfile(filename):
             self.filename = filename
             self.load_data = load_data
-            self.header = self.__read_header()
+            self.header = self._read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
-            self.idx_data = self.__len_header()
+            self.idx_data = self._len_header()
             self.n_channels_in_file  = self.header['nchans']
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
-            self.__n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
-            self.__get_n_ints_in_file()
+            self._n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
+            self._get_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0:
@@ -504,8 +504,8 @@ class  FIL_reader(Reader):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def __set_header_keywords_types(self):
-        self.__header_keyword_types = {
+    def _set_header_keywords_types(self):
+        self._header_keyword_types = {
             'telescope_id' : '<l',
             'machine_id'   : '<l',
             'data_type'    : '<l',
@@ -531,16 +531,16 @@ class  FIL_reader(Reader):
             'src_dej'      : 'angle',
             }
 
-    def __get_n_ints_in_file(self):
+    def _get_n_ints_in_file(self):
 
-        n_bytes  = self.__n_bytes
+        n_bytes  = self._n_bytes
         n_chans = self.n_channels_in_file
         n_ifs   = self.n_beams_in_file
 
         n_bytes_data = self.file_size_bytes - self.idx_data
         self.n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
 
-    def __len_header(self):
+    def _len_header(self):
         """ Return the length of the blimpy header, in bytes
 
         Args:
@@ -563,7 +563,7 @@ class  FIL_reader(Reader):
             idx_end = (header_sub_count -1) * 512 + idx_end
         return idx_end
 
-    def __read_next_header_keyword(self,fh):
+    def _read_next_header_keyword(self,fh):
         """
 
         Args:
@@ -583,7 +583,7 @@ class  FIL_reader(Reader):
         if keyword == 'HEADER_START' or keyword == 'HEADER_END':
             return keyword, 0, fh.tell()
         else:
-            dtype = self.__header_keyword_types[keyword]
+            dtype = self._header_keyword_types[keyword]
             idx = fh.tell()
             if dtype == '<l':
                 val = struct.unpack(dtype, fh.read(4))[0]
@@ -594,14 +594,14 @@ class  FIL_reader(Reader):
                 val = fh.read(str_len)
             if dtype == 'angle':
                 val = struct.unpack('<d', fh.read(8))[0]
-                val = self.__fil_double_to_angle(val)
+                val = self._fil_double_to_angle(val)
                 if keyword == 'src_raj':
                     val = Angle(val, unit=u.hour)
                 else:
                     val = Angle(val, unit=u.deg)
             return keyword, val, idx
 
-    def __read_header(self, return_idxs=False):
+    def _read_header(self, return_idxs=False):
         """ Read blimpy header and return a Python dictionary of key:value pairs
 
         Args:
@@ -619,7 +619,7 @@ class  FIL_reader(Reader):
             header_idxs = {}
 
             # Check this is a blimpy file
-            keyword, value, idx = self.__read_next_header_keyword(fh)
+            keyword, value, idx = self._read_next_header_keyword(fh)
 
             try:
                 assert keyword == 'HEADER_START'
@@ -627,7 +627,7 @@ class  FIL_reader(Reader):
                 raise RuntimeError("Not a valid blimpy file.")
 
             while True:
-                keyword, value, idx = self.__read_next_header_keyword(fh)
+                keyword, value, idx = self._read_next_header_keyword(fh)
                 if keyword == 'HEADER_END':
                     break
                 else:
@@ -639,7 +639,7 @@ class  FIL_reader(Reader):
         else:
             return header_dict
 
-    def __fil_double_to_angle(self,angle):
+    def _fil_double_to_angle(self,angle):
           """ Reads a little-endian double in ddmmss.s (or hhmmss.s) format and then
           converts to Float degrees (or hours).  This is primarily used to read
           src_raj and src_dej header values. """
@@ -687,14 +687,14 @@ class  FIL_reader(Reader):
         n_ints = self.t_stop - self.t_start
 
         # Seek to first integration
-        f.seek(self.t_start * self.__n_bytes  * n_ifs * n_chans, 1)
+        f.seek(self.t_start * self._n_bytes  * n_ifs * n_chans, 1)
 
         #Set up the data type (taken out of loop for speed)
-        if self.__n_bytes  == 4:
+        if self._n_bytes  == 4:
             dd_type = 'float32'
-        elif self.__n_bytes  == 2:
+        elif self._n_bytes  == 2:
             dd_type = 'int16'
-        elif self.__n_bytes  == 1:
+        elif self._n_bytes  == 1:
             dd_type = 'int8'
 
         #Loading  data
@@ -702,7 +702,7 @@ class  FIL_reader(Reader):
 
         for ii in range(n_ints):
             for jj in range(n_ifs):
-                f.seek(self.__n_bytes  * self.chan_start_idx, 1) # 1 = from current location
+                f.seek(self._n_bytes  * self.chan_start_idx, 1) # 1 = from current location
                 dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
 
                 # Reverse array if frequency axis is flipped
@@ -711,7 +711,7 @@ class  FIL_reader(Reader):
 
                 self.data[ii, jj] = dd
 
-                f.seek(self.__n_bytes  * (n_chans - self.chan_stop_idx), 1)  # Seek to start of next block
+                f.seek(self._n_bytes  * (n_chans - self.chan_stop_idx), 1)  # Seek to start of next block
 
     def read_blob(self,blob_dim,n_blob=0):
         """Read blob from a selection.
@@ -731,11 +731,11 @@ class  FIL_reader(Reader):
         blob = np.zeros(updated_blob_dim,dtype='float32')
 
         #Set up the data type
-        if self.__n_bytes  == 4:
+        if self._n_bytes  == 4:
             dd_type = 'float32'
-        elif self.__n_bytes  == 2:
+        elif self._n_bytes  == 2:
             dd_type = 'int16'
-        elif self.__n_bytes  == 1:
+        elif self._n_bytes  == 1:
             dd_type = 'int8'
 
         #EE: For now; also assuming one polarization and one beam.
@@ -748,7 +748,7 @@ class  FIL_reader(Reader):
 
             #Load binary data
             with open(self.filename, 'rb') as f:
-                f.seek(self.idx_data + self.__n_bytes  * (blob_start + n_blob*blob_flat_size))
+                f.seek(self.idx_data + self._n_bytes  * (blob_start + n_blob*blob_flat_size))
                 dd = np.fromfile(f, count=updated_blob_flat_size, dtype=dd_type)
 
             if dd.shape[0] == updated_blob_flat_size:
@@ -762,7 +762,7 @@ class  FIL_reader(Reader):
 
                 #Load binary data
                 with open(self.filename, 'rb') as f:
-                    f.seek(self.idx_data + self.__n_bytes * (blob_start + n_blob*blob_dim[self.time_axis]*self.n_channels_in_file + blobt*self.n_channels_in_file))
+                    f.seek(self.idx_data + self._n_bytes * (blob_start + n_blob*blob_dim[self.time_axis]*self.n_channels_in_file + blobt*self.n_channels_in_file))
                     dd = np.fromfile(f, count=blob_dim[self.freq_axis], dtype=dd_type)
 
                 blob[blobt] = dd
