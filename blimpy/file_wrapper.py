@@ -347,7 +347,7 @@ class  H5_reader(object):
         """ Given the blob dimensions, calculate how many fit in the data selection.
         """
 
-        n_blobs = int(np.ceil(self.__flat_array_dimmention(self.selection_shape)/float(self.__flat_array_dimmention(blob_dim))))
+        n_blobs = int(np.ceil(self.__flat_array_dimension(self.selection_shape) / float(self.__flat_array_dimension(blob_dim))))
 
         return n_blobs
 
@@ -393,7 +393,7 @@ class  H5_reader(object):
 
         return blob_start
 
-    def __flat_array_dimmention(self,array_dim):
+    def __flat_array_dimension(self, array_dim):
         """Multiplies all the dimentions of an array.
         """
 
@@ -912,8 +912,8 @@ class  FIL_reader(object):
         #Assuming the blob will loop over the whole frequency range.
         if self.f_start == self.f_begin and self.f_stop == self.f_end:
 
-            blob_flat_size = self.__flat_array_dimmention(blob_dim)
-            updated_blob_flat_size = self.__flat_array_dimmention(updated_blob_dim)
+            blob_flat_size = self.__flat_array_dimension(blob_dim)
+            updated_blob_flat_size = self.__flat_array_dimension(updated_blob_dim)
 
             #Load binary data
             with open(self.filename, 'rb') as f:
@@ -921,7 +921,7 @@ class  FIL_reader(object):
                 dd = np.fromfile(f, count=updated_blob_flat_size, dtype=dd_type)
 
             if dd.shape[0] == updated_blob_flat_size:
-                blob = dd.reshape(blob_dim)
+                blob = dd.reshape(updated_blob_dim)
             else:
                 logger.info('DD shape != blob shape.')
                 blob = dd.reshape((dd.shape[0]/blob_dim[self.freq_axis],blob_dim[self.beam_axis],blob_dim[self.freq_axis]))
@@ -962,11 +962,11 @@ class  FIL_reader(object):
         """ Given the blob dimensions, calculate how many fit in the data selection.
         """
 
-        n_blobs = int(np.ceil(self.__flat_array_dimmention(self.selection_shape)/float(self.__flat_array_dimmention(blob_dim))))
+        n_blobs = int(np.ceil(self.__flat_array_dimension(self.selection_shape) / float(self.__flat_array_dimension(blob_dim))))
 
         return n_blobs
 
-    def __flat_array_dimmention(self,array_dim):
+    def __flat_array_dimension(self, array_dim):
         """Multiplies all the dimentions of an array.
         """
 
