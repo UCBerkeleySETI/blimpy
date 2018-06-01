@@ -987,12 +987,14 @@ class  FIL_reader(object):
         # or actually as is currently
         # if self.header['telescope_id'] == 6:
 
-        coarse_chan_bw = 2.9296875
-
-        bandwidth = abs(self.f_stop - self.f_start)
-        n_coarse_chan = bandwidth / coarse_chan_bw
-
-        return n_coarse_chan
+        # For 3 Hz channels we are using 2^20 length FFTs
+        if self.header['nchans'] >= 1048576:
+            return self.header['nchans'] / 1048576
+        else:
+            coarse_chan_bw = 2.9296875
+            bandwidth = abs(self.f_stop - self.f_start)
+            n_coarse_chan = bandwidth / coarse_chan_bw
+            return n_coarse_chan
 
     def read_all(self,reverse=True):
         """ read all the data.
