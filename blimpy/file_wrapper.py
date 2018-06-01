@@ -988,8 +988,9 @@ class  FIL_reader(object):
         # if self.header['telescope_id'] == 6:
 
         # For 3 Hz channels we are using 2^20 length FFTs
-        if self.header['nchans'] >= 1048576:
-            return self.header['nchans'] / 1048576
+        nchans = int(self.header['nchans'])
+        if nchans >= 1048576:
+            return int(nchans / 1048576)
         else:
             coarse_chan_bw = 2.9296875
             bandwidth = abs(self.f_stop - self.f_start)
