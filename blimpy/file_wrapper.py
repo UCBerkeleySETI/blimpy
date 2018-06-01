@@ -30,7 +30,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 class Reader(object):
     """ Basic reader object """
 
-    def __setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None,init=False):
+    def _setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None, init=False):
         """Making sure the selection if time and frequency are within the file limits.
 
         Args:
@@ -84,9 +84,9 @@ class Reader(object):
             self.f_stop = self.f_end
 
         #calculate shape of selection
-        self.selection_shape = self.__calc_selection_shape()
+        self.selection_shape = self._calc_selection_shape()
 
-    def __init_empty_selection(self):
+    def _init_empty_selection(self):
         """
         """
 
@@ -114,7 +114,7 @@ class Reader(object):
 
         return timestamps
 
-    def __calc_selection_size(self):
+    def _calc_selection_size(self):
         """Calculate size of data of interest.
         """
 
@@ -132,14 +132,14 @@ class Reader(object):
         """ Check if the current selection is too large.
         """
 
-        selection_size_bytes = self.__calc_selection_size()
+        selection_size_bytes = self._calc_selection_size()
 
         if selection_size_bytes > self.MAX_DATA_ARRAY_SIZE:
             return True
         else:
             return False
 
-    def __calc_selection_shape(self):
+    def _calc_selection_shape(self):
         """Calculate shape of data of interest.
         """
 
@@ -152,7 +152,7 @@ class Reader(object):
 
         return selection_shape
 
-    def __setup_chans(self):
+    def _setup_chans(self):
         """Setup channel borders
         """
 
@@ -177,7 +177,7 @@ class Reader(object):
         self.chan_start_idx =  chan_start_idx
         self.chan_stop_idx = chan_stop_idx
 
-    def __setup_freqs(self):
+    def _setup_freqs(self):
         """Updating frequency borders from channel values
         """
 
@@ -198,7 +198,7 @@ class Reader(object):
         else:
             f0 = self.f_begin
 
-        self.__setup_chans()
+        self._setup_chans()
 
         #create freq array
         i_vals = np.arange(self.chan_start_idx, self.chan_stop_idx)
@@ -230,16 +230,16 @@ class Reader(object):
         """ Given the blob dimensions, calculate how many fit in the data selection.
         """
 
-        n_blobs = int(np.ceil(self.__flat_array_dimension(self.selection_shape) / float(self.__flat_array_dimension(blob_dim))))
+        n_blobs = int(np.ceil(self._flat_array_dimension(self.selection_shape) / float(self._flat_array_dimension(blob_dim))))
 
         return n_blobs
 
-    def __find_blob_start(self,blob_dim,n_blob):
+    def _find_blob_start(self, blob_dim, n_blob):
         """Find first blob from selection.
         """
 
         #Convert input frequencies into what their corresponding channel number would be.
-        self.__setup_chans()
+        self._setup_chans()
 
         #Check which is the blob time offset
         blob_time_start = self.t_start + blob_dim[self.time_axis]*n_blob
@@ -251,7 +251,7 @@ class Reader(object):
 
         return blob_start
 
-    def __flat_array_dimension(self, array_dim):
+    def _flat_array_dimension(self, array_dim):
         """Multiplies all the dimentions of an array.
         """
 
@@ -310,11 +310,11 @@ class  H5_reader(Reader):
             self.t_end = self.n_ints_in_file
 
             #Taking care all the frequencies are assigned correctly.
-            self.__setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,init=True)
+            self._setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, init=True)
             #Convert input frequencies into what their corresponding channel number would be.
-            self.__setup_chans()
+            self._setup_chans()
             #Update frequencies ranges from channel number.
-            self.__setup_freqs()
+            self._setup_freqs()
 
             # Max size of data array to load into memory (1GB in bytes)
             MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
@@ -336,18 +336,18 @@ class  H5_reader(Reader):
                     #Only checking the selection, if the file is too large.
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
-                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
-                            self.__init_empty_selection()
+                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
+                            self._init_empty_selection()
                         else:
                             self.read_data()
                     else:
                         logger.warning("The file is of size %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
-                        self.__init_empty_selection()
+                        self._init_empty_selection()
                 else:
                     self.read_data()
             else:
                 logger.info("Skipping loading data ...")
-                self.__init_empty_selection()
+                self._init_empty_selection()
         else:
             raise IOError("Need a file to open, please give me one!")
 
@@ -370,18 +370,18 @@ class  H5_reader(Reader):
         """ Read data
         """
 
-        self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+        self._setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop)
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
+            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
             self.data = np.array([0],dtype='float32')
             return None
 
         #Convert input frequencies into what their corresponding channel number would be.
-        self.__setup_chans()
+        self._setup_chans()
         #Update frequencies ranges from channel number.
-        self.__setup_freqs()
+        self._setup_freqs()
 
         self.data = self.h5["data"][self.t_start:self.t_stop,:,self.chan_start_idx:self.chan_stop_idx]
 
@@ -399,7 +399,7 @@ class  H5_reader(Reader):
         else:
             updated_blob_dim = blob_dim
 
-        blob_start = self.__find_blob_start(blob_dim,n_blob)
+        blob_start = self._find_blob_start(blob_dim, n_blob)
         blob_end = blob_start + np.array(updated_blob_dim)
 
 #        blob = np.zeros(blob_dim,dtype='float32') #EE could remove.
@@ -455,11 +455,11 @@ class  FIL_reader(Reader):
             self.t_end = self.n_ints_in_file
 
             #Taking care all the frequencies are assigned correctly.
-            self.__setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,init=True)
+            self._setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, init=True)
             #Convert input frequencies into what their corresponding channel number would be.
-            self.__setup_chans()
+            self._setup_chans()
             #Update frequencies ranges from channel number.
-            self.__setup_freqs()
+            self._setup_freqs()
 
             self.freq_axis = 2
             self.time_axis = 0
@@ -489,18 +489,18 @@ class  FIL_reader(Reader):
                 if self.large_file:
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
-                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
-                            self.__init_empty_selection()
+                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
+                            self._init_empty_selection()
                         else:
                             self.read_data()
                     else:
                         logger.warning("The file is of size %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
-                        self.__init_empty_selection()
+                        self._init_empty_selection()
                 else:
                     self.read_data()
             else:
                 logger.info("Skipping loading data ...")
-                self.__init_empty_selection()
+                self._init_empty_selection()
         else:
             raise IOError("Need a file to open, please give me one!")
 
@@ -662,18 +662,18 @@ class  FIL_reader(Reader):
         """ Read data.
         """
 
-        self.__setup_selection_range(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
+        self._setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop)
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection."%(self.__calc_selection_size()/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
+            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
             self.data = np.array([0],dtype='float32')
             return None
 
         #Convert input frequencies into what their corresponding channel number would be.
-        self.__setup_chans()
+        self._setup_chans()
         #Update frequencies ranges from channel number.
-        self.__setup_freqs()
+        self._setup_freqs()
 
         n_chans = self.header['nchans']
         n_chans_selected = self.selection_shape[self.freq_axis]
@@ -727,7 +727,7 @@ class  FIL_reader(Reader):
         else:
             updated_blob_dim = blob_dim
 
-        blob_start = self.__find_blob_start(blob_dim)
+        blob_start = self._find_blob_start(blob_dim)
         blob = np.zeros(updated_blob_dim,dtype='float32')
 
         #Set up the data type
@@ -743,8 +743,8 @@ class  FIL_reader(Reader):
         #Assuming the blob will loop over the whole frequency range.
         if self.f_start == self.f_begin and self.f_stop == self.f_end:
 
-            blob_flat_size = self.__flat_array_dimension(blob_dim)
-            updated_blob_flat_size = self.__flat_array_dimension(updated_blob_dim)
+            blob_flat_size = self._flat_array_dimension(blob_dim)
+            updated_blob_flat_size = self._flat_array_dimension(updated_blob_dim)
 
             #Load binary data
             with open(self.filename, 'rb') as f:
