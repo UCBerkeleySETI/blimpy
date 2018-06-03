@@ -441,7 +441,7 @@ class  FilReader(Reader):
             self.load_data = load_data
             self.header = self.read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
-            self.idx_data = self._len_header()
+            self.idx_data = sigproc.len_header(self.filename)
             self.n_channels_in_file  = self.header['nchans']
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
@@ -518,29 +518,6 @@ class  FilReader(Reader):
 
         n_bytes_data = self.file_size_bytes - self.idx_data
         self.n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
-
-    def _len_header(self):
-        """ Return the length of the blimpy header, in bytes
-
-        Args:
-            filename (str): name of file to open
-
-        Returns:
-            idx_end (int): length of header, in bytes
-        """
-        with  open(self.filename, 'rb') as f:
-            header_sub_count = 0
-            eoh_found = False
-            while not eoh_found:
-                header_sub = f.read(512)
-                header_sub_count += 1
-                if 'HEADER_END' in header_sub:
-                    idx_end = header_sub.index('HEADER_END') + len('HEADER_END')
-                    eoh_found = True
-                    break
-
-            idx_end = (header_sub_count -1) * 512 + idx_end
-        return idx_end
 
     def read_header(self, return_idxs=False):
         """ Read blimpy header and return a Python dictionary of key:value pairs
