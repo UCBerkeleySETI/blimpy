@@ -253,7 +253,7 @@ class Reader(object):
 
         return n_blobs
 
-class  H5_reader(Reader):
+class  H5Reader(Reader):
     """ This class handles .h5 files.
     """
 
@@ -267,6 +267,7 @@ class  H5_reader(Reader):
             t_start (int): start time bin
             t_stop (int): stop time bin
         """
+        super(H5Reader, self).__init__()
 
         if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
 
@@ -421,7 +422,7 @@ class  H5_reader(Reader):
 
 
 
-class  FIL_reader(Reader):
+class  FilReader(Reader):
     """ This class handles .fil files.
     """
 
@@ -435,6 +436,7 @@ class  FIL_reader(Reader):
             t_start (int): start time bin
             t_stop (int): stop time bin
         """
+        super(FilReader, self).__init__()
 
         self._set_header_keywords_types()
 
@@ -848,10 +850,10 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
 
     if ext == 'h5':
         # Open HDF5 file
-        return H5_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data,max_load=max_load)
+        return H5Reader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
     elif ext == 'fil':
         # Open FIL file
-        return FIL_reader(filename,f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data,max_load=max_load)
+        return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
     else:
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)
