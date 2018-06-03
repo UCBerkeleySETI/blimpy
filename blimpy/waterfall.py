@@ -138,13 +138,17 @@ class Waterfall(Filterbank):
             self.__load_data()
 
         elif header_dict is not None and data_array is not None:
-            self.gen_from_header(header_dict, data_array)
+            self.filename = b''
+            self.header = header_dict
+            self.data = data_array
+            self.n_ints_in_file = 0
+            self._setup_freqs()
+
         else:
-            pass
+            self.filename = b''
 
     def __load_data(self):
-        """
-        """
+        """ Helper for loading data form a container. Should not be called manually. """
 
         self.data = self.container.data
 
