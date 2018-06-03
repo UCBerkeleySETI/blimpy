@@ -282,7 +282,7 @@ class  H5Reader(Reader):
             self.filesize = self.filestat.st_size/(1024.0**2)
             self.load_data = load_data
             self.h5 = h5py.File(self.filename)
-            self._read_header()
+            self.read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
             self.n_ints_in_file  = self.h5["data"].shape[self.time_axis] #
             self.n_channels_in_file  = self.h5["data"].shape[self.freq_axis] #
@@ -344,7 +344,7 @@ class  H5Reader(Reader):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def _read_header(self):
+    def read_header(self):
         """ Read header and return a Python dictionary of key:value pairs
         """
 
@@ -357,6 +357,8 @@ class  H5Reader(Reader):
                 self.header[key] = Angle(val, unit='deg')
             else:
                 self.header[key] = val
+
+        return self.header
 
     def _find_blob_start(self,blob_dim,n_blob):
         """Find first blob from selection.
