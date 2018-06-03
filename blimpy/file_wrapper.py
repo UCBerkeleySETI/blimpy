@@ -452,7 +452,7 @@ class  FilReader(Reader):
             self.n_pols_in_file = 1 #Placeholder for future development.
             self._n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
             self._d_type = self._setup_dtype()
-            self._get_n_ints_in_file()
+            self._setup_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0:
@@ -515,7 +515,7 @@ class  FilReader(Reader):
         else:
             raise IOError("Need a file to open, please give me one!")
 
-    def _get_n_ints_in_file(self):
+    def _setup_n_ints_in_file(self):
 
         n_bytes  = self._n_bytes
         n_chans = self.n_channels_in_file
