@@ -418,10 +418,6 @@ class  H5Reader(Reader):
 
         return blob
 
-
-
-
-
 class  FilReader(Reader):
     """ This class handles .fil files.
     """
@@ -438,7 +434,7 @@ class  FilReader(Reader):
         """
         super(FilReader, self).__init__()
 
-        self._set_header_keywords_types()
+        self.header_keywords_types = sigproc.header_keyword_types
 
         if filename and os.path.isfile(filename):
             self.filename = filename
@@ -513,33 +509,6 @@ class  FilReader(Reader):
                 self._init_empty_selection()
         else:
             raise IOError("Need a file to open, please give me one!")
-
-    def _set_header_keywords_types(self):
-        self._header_keyword_types = {
-            'telescope_id' : '<l',
-            'machine_id'   : '<l',
-            'data_type'    : '<l',
-            'barycentric'  : '<l',
-            'pulsarcentric': '<l',
-            'nbits'        : '<l',
-            'nsamples'     : '<l',
-            'nchans'       : '<l',
-            'nifs'         : '<l',
-            'nbeams'       : '<l',
-            'ibeam'        : '<l',
-            'rawdatafile'  : 'str',
-            'source_name'  : 'str',
-            'az_start'     : '<d',
-            'za_start'     : '<d',
-            'tstart'       : '<d',
-            'tsamp'        : '<d',
-            'fch1'         : '<d',
-            'foff'         : '<d',
-            'refdm'        : '<d',
-            'period'       : '<d',
-            'src_raj'      : 'angle',
-            'src_dej'      : 'angle',
-            }
 
     def _get_n_ints_in_file(self):
 
