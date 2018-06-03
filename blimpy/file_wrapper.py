@@ -573,7 +573,7 @@ class  FilReader(Reader):
                 val = fh.read(str_len)
             if dtype == 'angle':
                 val = struct.unpack('<d', fh.read(8))[0]
-                val = self._fil_double_to_angle(val)
+                val = sigproc.fil_double_to_angle(val)
                 if keyword == 'src_raj':
                     val = Angle(val, unit=u.hour)
                 else:
@@ -617,25 +617,6 @@ class  FilReader(Reader):
             return header_idxs
         else:
             return header_dict
-
-    def _fil_double_to_angle(self,angle):
-          """ Reads a little-endian double in ddmmss.s (or hhmmss.s) format and then
-          converts to Float degrees (or hours).  This is primarily used to read
-          src_raj and src_dej header values. """
-
-          negative = (angle < 0.0)
-          angle = np.abs(angle)
-
-          dd = np.floor((angle / 10000))
-          angle -= 10000 * dd
-          mm = np.floor((angle / 100))
-          ss = angle - 100 * mm
-          dd += mm/60.0 + ss/3600.0
-
-          if negative:
-              dd *= -1
-
-          return dd
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Read data.
