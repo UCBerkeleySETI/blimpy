@@ -370,7 +370,7 @@ class H5Reader(Reader):
 
         return self.header
 
-    def _find_blob_start(self,blob_dim,n_blob):
+    def _find_blob_start(self, blob_dim, n_blob):
         """Find first blob from selection.
         """
 
@@ -383,7 +383,7 @@ class H5Reader(Reader):
         #Check which is the blob frequency offset (in channels)
         blob_freq_start = self.chan_start_idx + (blob_dim[self.freq_axis]*n_blob)%self.selection_shape[self.freq_axis]
 
-        blob_start = np.array([blob_time_start,0,blob_freq_start])
+        blob_start = np.array([blob_time_start, 0, blob_freq_start])
 
         return blob_start
 
@@ -595,20 +595,20 @@ class FilReader(Reader):
 
                 f.seek(self._n_bytes  * (n_chans - self.chan_stop_idx), 1)  # Seek to start of next block
 
-    def _find_blob_start(self,blob_dim):
+    def _find_blob_start(self):
         """Find first blob from selection.
         """
 
-        #Convert input frequencies into what their corresponding channel number would be.
+        # Convert input frequencies into what their corresponding channel number would be.
         self._setup_chans()
 
-        #Check which is the blob time offset
+        # Check which is the blob time offset
         blob_time_start = self.t_start
 
-        #Check which is the blob frequency offset (in channels)
+        # Check which is the blob frequency offset (in channels)
         blob_freq_start = self.chan_start_idx
 
-        blob_start = blob_time_start*self.n_channels_in_file + blob_freq_start
+        blob_start = blob_time_start * self.n_channels_in_file + blob_freq_start
 
         return blob_start
 
