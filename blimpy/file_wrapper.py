@@ -11,6 +11,8 @@ import h5py
 from astropy import units as u
 from astropy.coordinates import Angle
 
+from . import sigproc
+
 #import pdb;# pdb.set_trace()
 
 import logging
@@ -241,24 +243,13 @@ class Reader(object):
         n_coarse_chan = bandwidth / coarse_chan_bw
         return n_coarse_chan
 
-    def calc_n_blobs(self,blob_dim):
+    def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
         """
 
-        n_blobs = int(np.ceil(self._flat_array_dimension(self.selection_shape) / float(self._flat_array_dimension(blob_dim))))
+        n_blobs = int(np.ceil(np.prod(selection_shape)) / float(np.prod(blob_dim)))
 
         return n_blobs
-
-    def _flat_array_dimension(self, array_dim):
-        """Multiplies all the dimentions of an array.
-        """
-
-        array_flat_size = 1
-
-        for a_dim in array_dim:
-            array_flat_size*=a_dim
-
-        return array_flat_size
 
 class  H5_reader(Reader):
     """ This class handles .h5 files.
@@ -759,8 +750,8 @@ class  FIL_reader(Reader):
         #Assuming the blob will loop over the whole frequency range.
         if self.f_start == self.f_begin and self.f_stop == self.f_end:
 
-            blob_flat_size = self._flat_array_dimension(blob_dim)
-            updated_blob_flat_size = self._flat_array_dimension(updated_blob_dim)
+            blob_flat_size = np.prod(blob_dim)
+            updated_blob_flat_size = np.prod(updated_blob_dim)
 
             #Load binary data
             with open(self.filename, 'rb') as f:
