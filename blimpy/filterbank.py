@@ -397,7 +397,7 @@ class Filterbank(object):
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
 
-        Note: currently only works if entire blimpy file is read
+        Note: currently only works if entire file is read
         """
 
         if n_coarse_chan < 1:
@@ -410,14 +410,13 @@ class Filterbank(object):
 
         n_coarse_chan = int(n_coarse_chan)
 
-        n_chan = self.data.shape[2]
+        n_chan = self.data.shape[-1]
         n_chan_per_coarse = n_chan / n_coarse_chan
 
-        mid_chan = n_chan_per_coarse / 2
+        mid_chan = (n_chan_per_coarse / 2)
 
-        for ii in range(0, n_coarse_chan-1):
+        for ii in range(n_coarse_chan):
             ss = ii*n_chan_per_coarse
-#            self.data[..., ss+mid_chan-1] = self.data[..., ss+mid_chan]
             self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
 
     def info(self):
