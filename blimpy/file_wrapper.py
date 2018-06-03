@@ -9,7 +9,10 @@ import h5py
 
 from astropy.coordinates import Angle
 
-from . import sigproc
+try:
+    from . import sigproc
+except:
+    import sigproc
 
 # import pdb;# pdb.set_trace()
 

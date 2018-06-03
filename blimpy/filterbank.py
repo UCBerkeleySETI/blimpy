@@ -21,14 +21,9 @@ TODO: check the file seek logic works correctly for multiple IFs
 
 """
 
-import os
-import sys
-import struct
-import numpy as np
-from pprint import pprint
 
-from astropy import units as u
-from astropy.coordinates import Angle
+import sys
+
 from astropy.time import Time
 import scipy.stats
 from matplotlib.ticker import NullFormatter
