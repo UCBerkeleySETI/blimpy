@@ -139,8 +139,7 @@ class Filterbank(object):
             print("Calibrating the band pass.")
             self.calibrate_band_pass_N1()
 
-    def read_hdf5(self, filename, f_start=None, f_stop=None,
-                        t_start=None, t_stop=None, load_data=True):
+    def read_hdf5(self, filename, load_data=True):
 
         print("Warning: this function will be deprecated in the future. Please use Waterfall to open HDF5 files.")
 #        raise DeprecationWarning('Please use Waterfall to open HDF5 files.')
