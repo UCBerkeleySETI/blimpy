@@ -90,7 +90,19 @@ class Reader(object):
         """
         """
 
-        self.data = np.array([0],dtype='float32')
+        self.data = np.array([0],dtype=self._d_type)
+
+    def _setup_dtype(self):
+        """Calculating dtype
+        """
+
+        #Set up the data type
+        if self._n_bytes  == 4:
+            return 'float32'
+        elif self._n_bytes  == 2:
+            return 'int16'
+        elif self._n_bytes  == 1:
+            return 'int8'
 
     def populate_timestamps(self,update_header=False):
         """  Populate time axis.
@@ -283,6 +295,7 @@ class  H5_reader(Reader):
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
             self._n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
+            self._d_type = self._setup_dtype()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0:
@@ -377,7 +390,7 @@ class  H5_reader(Reader):
         #check if selection is small enough.
         if self.isheavy():
             logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
-            self.data = np.array([0],dtype='float32')
+            self.data = np.array([0],dtype=self._d_type)
             return None
 
         #Convert input frequencies into what their corresponding channel number would be.
@@ -404,7 +417,6 @@ class  H5_reader(Reader):
         blob_start = self._find_blob_start(blob_dim, n_blob)
         blob_end = blob_start + np.array(updated_blob_dim)
 
-#        blob = np.zeros(blob_dim,dtype='float32') #EE could remove.
         blob = self.h5["data"][blob_start[self.time_axis]:blob_end[self.time_axis],:,blob_start[self.freq_axis]:blob_end[self.freq_axis]]
 
 #         if self.header['foff'] < 0:
@@ -443,6 +455,7 @@ class  FIL_reader(Reader):
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
             self._n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
+            self._d_type = self._setup_dtype()
             self._get_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
@@ -669,7 +682,7 @@ class  FIL_reader(Reader):
         #check if selection is small enough.
         if self.isheavy():
             logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
-            self.data = np.array([0],dtype='float32')
+            self.data = np.array([0],dtype=self._d_type)
             return None
 
         #Convert input frequencies into what their corresponding channel number would be.
@@ -691,21 +704,13 @@ class  FIL_reader(Reader):
         # Seek to first integration
         f.seek(self.t_start * self._n_bytes  * n_ifs * n_chans, 1)
 
-        #Set up the data type (taken out of loop for speed)
-        if self._n_bytes  == 4:
-            dd_type = 'float32'
-        elif self._n_bytes  == 2:
-            dd_type = 'int16'
-        elif self._n_bytes  == 1:
-            dd_type = 'int8'
-
         #Loading  data
-        self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype='float32')
+        self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype=self._d_type)
 
         for ii in range(n_ints):
             for jj in range(n_ifs):
                 f.seek(self._n_bytes  * self.chan_start_idx, 1) # 1 = from current location
-                dd = np.fromfile(f, count=n_chans_selected, dtype=dd_type)
+                dd = np.fromfile(f, count=n_chans_selected, dtype=self._d_type)
 
                 # Reverse array if frequency axis is flipped
 #                     if self.header['foff'] < 0:
@@ -747,15 +752,7 @@ class  FIL_reader(Reader):
             updated_blob_dim = blob_dim
 
         blob_start = self._find_blob_start(blob_dim)
-        blob = np.zeros(updated_blob_dim,dtype='float32')
-
-        #Set up the data type
-        if self._n_bytes  == 4:
-            dd_type = 'float32'
-        elif self._n_bytes  == 2:
-            dd_type = 'int16'
-        elif self._n_bytes  == 1:
-            dd_type = 'int8'
+        blob = np.zeros(updated_blob_dim,dtype=self._d_type)
 
         #EE: For now; also assuming one polarization and one beam.
 
@@ -768,7 +765,7 @@ class  FIL_reader(Reader):
             #Load binary data
             with open(self.filename, 'rb') as f:
                 f.seek(self.idx_data + self._n_bytes  * (blob_start + n_blob*blob_flat_size))
-                dd = np.fromfile(f, count=updated_blob_flat_size, dtype=dd_type)
+                dd = np.fromfile(f, count=updated_blob_flat_size, dtype=self._d_type)
 
             if dd.shape[0] == updated_blob_flat_size:
                 blob = dd.reshape(updated_blob_dim)
@@ -782,7 +779,7 @@ class  FIL_reader(Reader):
                 #Load binary data
                 with open(self.filename, 'rb') as f:
                     f.seek(self.idx_data + self._n_bytes * (blob_start + n_blob*blob_dim[self.time_axis]*self.n_channels_in_file + blobt*self.n_channels_in_file))
-                    dd = np.fromfile(f, count=blob_dim[self.freq_axis], dtype=dd_type)
+                    dd = np.fromfile(f, count=blob_dim[self.freq_axis], dtype=self._d_type)
 
                 blob[blobt] = dd
 
