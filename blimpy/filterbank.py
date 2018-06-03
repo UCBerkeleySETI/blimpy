@@ -33,8 +33,14 @@ from astropy.time import Time
 import scipy.stats
 from matplotlib.ticker import NullFormatter
 
-from .utils import db, lin, rebin, closest, unpack_2to8
 import logging as logger
+
+try:
+    from .utils import db, lin, rebin, closest, unpack_2to8
+    from .sigproc import *
+except:
+    from utils import db, lin, rebin, closest, unpack_2to8
+    from sigproc import *
 
 try:
     import h5py
@@ -58,8 +64,6 @@ else:
     matplotlib.use('Agg')
     import pylab as plt
 
-
-from .sigproc import *
 
 ###
 # Config values

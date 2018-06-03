@@ -25,9 +25,14 @@ import os
 import sys
 import time
 
-from .filterbank import Filterbank
-from . import file_wrapper as fw
-from .sigproc import *
+try:
+    from .filterbank import Filterbank
+    from . import file_wrapper as fw
+    from .sigproc import *
+except:
+    from filterbank import Filterbank
+    import file_wrapper as fw
+    from sigproc import *
 
 try:
     import h5py
