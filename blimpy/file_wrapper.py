@@ -94,6 +94,7 @@ class Reader(object):
 
     def populate_timestamps(self,update_header=False):
         """  Populate time axis.
+            IF update_header then only return tstart
         """
 
         #Check to see how many integrations requested
@@ -143,9 +144,9 @@ class Reader(object):
         """Calculate shape of data of interest.
         """
 
-        #Check to see how many integrations requested
+        #Check how many integrations requested
         n_ints = self.t_stop - self.t_start
-        #Check to see how many frequency channels requested
+        #Check how many frequency channels requested
         n_chan = int(np.round((self.f_stop - self.f_start) / abs(self.header['foff'])))
 
         selection_shape = (n_ints,self.header['nifs'],n_chan)
@@ -233,23 +234,6 @@ class Reader(object):
         n_blobs = int(np.ceil(self._flat_array_dimension(self.selection_shape) / float(self._flat_array_dimension(blob_dim))))
 
         return n_blobs
-
-    def _find_blob_start(self, blob_dim, n_blob):
-        """Find first blob from selection.
-        """
-
-        #Convert input frequencies into what their corresponding channel number would be.
-        self._setup_chans()
-
-        #Check which is the blob time offset
-        blob_time_start = self.t_start + blob_dim[self.time_axis]*n_blob
-
-        #Check which is the blob frequency offset (in channels)
-        blob_freq_start = self.chan_start_idx + (blob_dim[self.freq_axis]*n_blob)%self.selection_shape[self.freq_axis]
-
-        blob_start = np.array([blob_time_start,0,blob_freq_start])
-
-        return blob_start
 
     def _flat_array_dimension(self, array_dim):
         """Multiplies all the dimentions of an array.
@@ -365,6 +349,22 @@ class  H5_reader(Reader):
             else:
                 self.header[key] = val
 
+    def _find_blob_start(self,blob_dim,n_blob):
+        """Find first blob from selection.
+        """
+
+        #Convert input frequencies into what their corresponding channel number would be.
+        self._setup_chans()
+
+        #Check which is the blob time offset
+        blob_time_start = self.t_start + blob_dim[self.time_axis]*n_blob
+
+        #Check which is the blob frequency offset (in channels)
+        blob_freq_start = self.chan_start_idx + (blob_dim[self.freq_axis]*n_blob)%self.selection_shape[self.freq_axis]
+
+        blob_start = np.array([blob_time_start,0,blob_freq_start])
+
+        return blob_start
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Read data
@@ -712,6 +712,23 @@ class  FIL_reader(Reader):
                 self.data[ii, jj] = dd
 
                 f.seek(self._n_bytes  * (n_chans - self.chan_stop_idx), 1)  # Seek to start of next block
+
+    def _find_blob_start(self,blob_dim):
+        """Find first blob from selection.
+        """
+
+        #Convert input frequencies into what their corresponding channel number would be.
+        self._setup_chans()
+
+        #Check which is the blob time offset
+        blob_time_start = self.t_start
+
+        #Check which is the blob frequency offset (in channels)
+        blob_freq_start = self.chan_start_idx
+
+        blob_start = blob_time_start*self.n_channels_in_file + blob_freq_start
+
+        return blob_start
 
     def read_blob(self,blob_dim,n_blob=0):
         """Read blob from a selection.
