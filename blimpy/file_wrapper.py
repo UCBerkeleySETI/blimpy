@@ -542,44 +542,6 @@ class  FilReader(Reader):
             idx_end = (header_sub_count -1) * 512 + idx_end
         return idx_end
 
-    def _read_next_header_keyword(self,fh):
-        """
-
-        Args:
-            fh (file): file handler
-
-        Returns:
-        """
-        n_bytes = np.fromstring(fh.read(4), dtype='uint32')[0]
-
-        if n_bytes > 255:
-            n_bytes = 16
-
-        keyword = fh.read(n_bytes)
-
-        #print keyword
-
-        if keyword == 'HEADER_START' or keyword == 'HEADER_END':
-            return keyword, 0, fh.tell()
-        else:
-            dtype = self._header_keyword_types[keyword]
-            idx = fh.tell()
-            if dtype == '<l':
-                val = struct.unpack(dtype, fh.read(4))[0]
-            if dtype == '<d':
-                val = struct.unpack(dtype, fh.read(8))[0]
-            if dtype == 'str':
-                str_len = np.fromstring(fh.read(4), dtype='int32')[0]
-                val = fh.read(str_len)
-            if dtype == 'angle':
-                val = struct.unpack('<d', fh.read(8))[0]
-                val = sigproc.fil_double_to_angle(val)
-                if keyword == 'src_raj':
-                    val = Angle(val, unit=u.hour)
-                else:
-                    val = Angle(val, unit=u.deg)
-            return keyword, val, idx
-
     def _read_header(self, return_idxs=False):
         """ Read blimpy header and return a Python dictionary of key:value pairs
 
@@ -598,7 +560,7 @@ class  FilReader(Reader):
             header_idxs = {}
 
             # Check this is a blimpy file
-            keyword, value, idx = self._read_next_header_keyword(fh)
+            keyword, value, idx = sigproc.read_next_header_keyword(fh)
 
             try:
                 assert keyword == 'HEADER_START'
@@ -606,7 +568,7 @@ class  FilReader(Reader):
                 raise RuntimeError("Not a valid blimpy file.")
 
             while True:
-                keyword, value, idx = self._read_next_header_keyword(fh)
+                keyword, value, idx = sigproc.read_next_header_keyword(fh)
                 if keyword == 'HEADER_END':
                     break
                 else:
