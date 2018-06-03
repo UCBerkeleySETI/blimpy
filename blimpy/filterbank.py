@@ -120,7 +120,13 @@ class Filterbank(object):
             else:
                 self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
         elif header_dict is not None and data_array is not None:
-            self.gen_from_header(header_dict, data_array)
+            self.filename = b''
+            self.header = header_dict
+            self.data = data_array
+            self.n_ints_in_file = 0
+
+            self._setup_freqs()
+
         else:
             pass
 
@@ -132,16 +138,6 @@ class Filterbank(object):
         if cal_band_pass:
             print("Calibrating the band pass.")
             self.calibrate_band_pass_N1()
-
-
-    def gen_from_header(self, header_dict, data_array, f_start=None, f_stop=None,
-                        t_start=None, t_stop=None, load_data=True):
-        self.filename = b''
-        self.header = header_dict
-        self.data = data_array
-        self.n_ints_in_file = 0
-
-        self._setup_freqs()
 
     def read_hdf5(self, filename, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
