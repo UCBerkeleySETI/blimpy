@@ -140,7 +140,11 @@ class Filterbank(object):
             self.calibrate_band_pass_N1()
 
     def read_hdf5(self, filename, load_data=True):
+        """ Populate Filterbank instance with data from HDF5 file
 
+        Note:
+            This is to be deprecated in future, please use Waterfall() to open files.
+        """
         print("Warning: this function will be deprecated in the future. Please use Waterfall to open HDF5 files.")
 #        raise DeprecationWarning('Please use Waterfall to open HDF5 files.')
 
@@ -173,6 +177,7 @@ class Filterbank(object):
         self._setup_time_axis()
 
     def _setup_freqs(self, f_start=None, f_stop=None):
+        """ Setup frequency axis """
         ## Setup frequency axis
         f0 = self.header[b'fch1']
         f_delt = self.header[b'foff']
@@ -204,8 +209,7 @@ class Filterbank(object):
         return i_start, i_stop, chan_start_idx, chan_stop_idx
 
     def _setup_time_axis(self, t_start=None, t_stop=None):
-        """  Setup time axis.
-        """
+        """  Setup time axis. """
 
         # now check to see how many integrations requested
         ii_start, ii_stop = 0, self.n_ints_in_file
@@ -225,7 +229,11 @@ class Filterbank(object):
 
     def read_filterbank(self, filename=None, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
+        """ Populate Filterbank instance with data from Filterbank file
 
+        Note:
+            This is to be deprecated in future, please use Waterfall() to open files.
+        """
         if filename is None:
             filename = self.filename
         else:
