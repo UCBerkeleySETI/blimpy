@@ -106,28 +106,7 @@ class Reader(object):
         elif self._n_bytes  == 1:
             return 'int8'
 
-    def populate_timestamps(self,update_header=False):
-        """  Populate time axis.
-            IF update_header then only return tstart
-        """
 
-        #Check to see how many integrations requested
-        ii_start, ii_stop = 0, self.n_ints_in_file
-        if self.t_start:
-            ii_start = self.t_start
-        if self.t_stop:
-            ii_stop = self.t_stop
-
-        ## Setup time axis
-        t0 = self.header['tstart']
-        t_delt = self.header['tsamp']
-
-        if update_header:
-            timestamps = ii_start * t_delt / 24./60./60 + t0
-        else:
-            timestamps = np.arange(ii_start, ii_stop) * t_delt / 24./60./60 + t0
-
-        return timestamps
 
     def _calc_selection_size(self):
         """Calculate size of data of interest.
@@ -142,17 +121,6 @@ class Reader(object):
         selection_size = int(n_ints*n_chan*n_bytes)
 
         return selection_size
-
-    def isheavy(self):
-        """ Check if the current selection is too large.
-        """
-
-        selection_size_bytes = self._calc_selection_size()
-
-        if selection_size_bytes > self.MAX_DATA_ARRAY_SIZE:
-            return True
-        else:
-            return False
 
     def _calc_selection_shape(self):
         """Calculate shape of data of interest.
@@ -203,6 +171,29 @@ class Reader(object):
             self.f_start = self.f_end - self.chan_stop_idx*abs(self.header['foff'])
             self.f_stop = self.f_end - self.chan_start_idx*abs(self.header['foff'])
 
+    def populate_timestamps(self,update_header=False):
+        """  Populate time axis.
+            IF update_header then only return tstart
+        """
+
+        #Check to see how many integrations requested
+        ii_start, ii_stop = 0, self.n_ints_in_file
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
+
+        ## Setup time axis
+        t0 = self.header['tstart']
+        t_delt = self.header['tsamp']
+
+        if update_header:
+            timestamps = ii_start * t_delt / 24./60./60 + t0
+        else:
+            timestamps = np.arange(ii_start, ii_stop) * t_delt / 24./60./60 + t0
+
+        return timestamps
+
     def populate_freqs(self):
         """
          Populate frequency axis
@@ -252,6 +243,18 @@ class Reader(object):
         n_blobs = int(np.ceil(1.0 * np.prod(self.selection_shape) / np.prod(blob_dim)))
 
         return n_blobs
+
+    def isheavy(self):
+        """ Check if the current selection is too large.
+        """
+
+        selection_size_bytes = self._calc_selection_size()
+
+        if selection_size_bytes > self.MAX_DATA_ARRAY_SIZE:
+            return True
+        else:
+            return False
+
 
 class  H5Reader(Reader):
     """ This class handles .h5 files.
