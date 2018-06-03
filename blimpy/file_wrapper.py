@@ -11,7 +11,7 @@ from astropy.coordinates import Angle
 
 from . import sigproc
 
-#import pdb;# pdb.set_trace()
+# import pdb;# pdb.set_trace()
 
 import logging
 logger = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ else:
 
 logging.basicConfig(format=format,stream=stream,level = level_log)
 
+
 class Reader(object):
     """ Basic reader object """
 
@@ -37,7 +38,7 @@ class Reader(object):
             init (bool): If call during __init__
         """
 
-        #This avoids reseting values
+        # This avoids resetting values
         if not init:
             if not f_start:
                 f_start = self.f_start
@@ -536,7 +537,8 @@ class  FilReader(Reader):
             Python dict of key:value pairs, OR returns file offset indexes for values.
 
         """
-        return sigproc.read_header(self.filename, return_idxs=return_idxs)
+        self.header = sigproc.read_header(self.filename, return_idxs=return_idxs)
+        return self.header
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Read data.
