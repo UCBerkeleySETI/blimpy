@@ -516,7 +516,7 @@ class  FilReader(Reader):
             raise IOError("Need a file to open, please give me one!")
 
     def _setup_n_ints_in_file(self):
-
+        """ Calculate the number of integrations in the file. """
         n_bytes  = self._n_bytes
         n_chans = self.n_channels_in_file
         n_ifs   = self.n_beams_in_file
@@ -538,7 +538,7 @@ class  FilReader(Reader):
             Python dict of key:value pairs, OR returns file offset indexes for values.
 
         """
-        return sigproc.read_header(self.filename, return_idxs=False)
+        return sigproc.read_header(self.filename, return_idxs=return_idxs)
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Read data.
