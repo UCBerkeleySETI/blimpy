@@ -439,7 +439,7 @@ class  FilReader(Reader):
         if filename and os.path.isfile(filename):
             self.filename = filename
             self.load_data = load_data
-            self.header = self._read_header()
+            self.header = self.read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
             self.idx_data = self._len_header()
             self.n_channels_in_file  = self.header['nchans']
@@ -542,7 +542,7 @@ class  FilReader(Reader):
             idx_end = (header_sub_count -1) * 512 + idx_end
         return idx_end
 
-    def _read_header(self, return_idxs=False):
+    def read_header(self, return_idxs=False):
         """ Read blimpy header and return a Python dictionary of key:value pairs
 
         Args:
@@ -552,33 +552,11 @@ class  FilReader(Reader):
             return_idxs (bool): Default False. If true, returns the file offset indexes
                                 for values
 
-        returns
+        Returns:
+            Python dict of key:value pairs, OR returns file offset indexes for values.
 
         """
-        with open(self.filename, 'rb') as fh:
-            header_dict = {}
-            header_idxs = {}
-
-            # Check this is a blimpy file
-            keyword, value, idx = sigproc.read_next_header_keyword(fh)
-
-            try:
-                assert keyword == 'HEADER_START'
-            except AssertionError:
-                raise RuntimeError("Not a valid blimpy file.")
-
-            while True:
-                keyword, value, idx = sigproc.read_next_header_keyword(fh)
-                if keyword == 'HEADER_END':
-                    break
-                else:
-                    header_dict[keyword] = value
-                    header_idxs[keyword] = idx
-
-        if return_idxs:
-            return header_idxs
-        else:
-            return header_dict
+        return sigproc.read_header(self.filename, return_idxs=False)
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Read data.
