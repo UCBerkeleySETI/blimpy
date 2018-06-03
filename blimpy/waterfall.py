@@ -496,30 +496,7 @@ class Waterfall(Filterbank):
 
         return n_coarse_chan
 
-    def blank_dc(self, n_coarse_chan):
-        """ Blank DC bins in coarse channels.
 
-        Note: currently only works if entire waterfall file is read
-        """
-
-        if n_coarse_chan < 1:
-            logger.warning('Coarse channel number < 1, unable to blank DC bin.')
-            return None
-
-        if not n_coarse_chan % int(n_coarse_chan) == 0:
-            logger.warning('Selection does not contain an interger number of coarse channels, unable to blank DC bin.')
-            return None
-
-        n_coarse_chan = int(n_coarse_chan)
-
-        n_chan = self.data.shape[-1]
-        n_chan_per_coarse = n_chan / n_coarse_chan
-
-        mid_chan = (n_chan_per_coarse / 2)
-
-        for ii in range(n_coarse_chan):
-            ss = ii*n_chan_per_coarse
-            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
 
     def grab_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
