@@ -705,7 +705,7 @@ class Filterbank(object):
         else:
             plt.ylabel("Time [s]")
 
-    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None,MJD_time=False, **kwargs):
+    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None, MJD_time=False, **kwargs):
         """ Plot the time series.
 
          Args:
@@ -736,9 +736,13 @@ class Filterbank(object):
         else:
             xlabel = "Time [s]"
 
-        #Reverse oder if vertical orientation.
-        if 'v' in orientation:
-            plt.plot(plot_data, plot_t[::-1], **kwargs)
+        # Reverse oder if vertical orientation.
+        if orientation is not None:
+            if 'v' in orientation:
+                plt.plot(plot_data, plot_t[::-1], **kwargs)
+            else:
+                plt.plot(plot_t, plot_data, **kwargs)
+                plt.xlabel(xlabel)
         else:
             plt.plot(plot_t, plot_data, **kwargs)
             plt.xlabel(xlabel)
