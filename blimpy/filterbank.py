@@ -64,6 +64,8 @@ else:
     matplotlib.use('Agg')
     import pylab as plt
 
+plt.rcParams['axes.formatter.useoffset'] = False
+
 
 ###
 # Config values
@@ -581,7 +583,6 @@ class Filterbank(object):
         except KeyError:
             plt.title(self.filename)
 
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
         plt.xlim(plot_f[0], plot_f[-1])
 
     def plot_spectrum_min_max(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
@@ -646,7 +647,6 @@ class Filterbank(object):
         except KeyError:
             plt.title(self.filename)
 
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
         plt.xlim(plot_f[0], plot_f[-1])
         if logged:
             plt.ylim(db(fig_min),db(fig_max))
@@ -744,7 +744,6 @@ class Filterbank(object):
             plt.xlabel(xlabel)
 
         ax.autoscale(axis='both',tight=True)
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
 
     def plot_kurtosis(self, f_start=None, f_stop=None, if_id=0, **kwargs):
         """ Plot kurtosis
@@ -772,7 +771,6 @@ class Filterbank(object):
         plt.ylabel("Kurtosis")
         plt.xlabel("Frequency [MHz]")
 
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
         plt.xlim(plot_f[0], plot_f[-1])
 
     def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kutosis=True, **kwargs):
