@@ -249,7 +249,7 @@ class Reader(object):
         """ Given the blob dimensions, calculate how many fit in the data selection.
         """
 
-        n_blobs = int(np.ceil(np.prod(selection_shape)) / float(np.prod(blob_dim)))
+        n_blobs = int(np.ceil(1.0 * np.prod(self.selection_shape) / np.prod(blob_dim)))
 
         return n_blobs
 
