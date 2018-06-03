@@ -223,25 +223,27 @@ class Reader(object):
 
     def calc_n_coarse_chan(self):
         """ This makes an attempt to calculate the number of coarse channels in a given file.
-            It assumes for now that a single coarse channel is 2.9296875 MHz
+
+            Note:
+                This is unlikely to work on non-Breakthrough Listen data, as a-priori knowledge of
+                the digitizer system is required.
+                For Parkes, it assumes 2^20 point FFTs.
+                For GBT, it assumes channel bandwidth  2.9296875 MHz
         """
-
-        # Could add a telescope based coarse channel bandwidth, or other discriminative.
-        # if telescope_id == 'GBT':
-        # or actually as is currently
-        # if self.header['telescope_id'] == 6:
-
-
         nchans = int(self.header['nchans'])
-        # For 3 Hz channels we are using 2^20 length FFTs
-#EE: not all 3Hz data has 2^20 FFT length...
-#         if nchans >= 1048576:
-#             return int(nchans / 1048576)
-#         else:
-        coarse_chan_bw = 2.9296875
-        bandwidth = abs(self.f_stop - self.f_start)
-        n_coarse_chan = bandwidth / coarse_chan_bw
-        return n_coarse_chan
+
+        if self.header['telescope_id'] == 6:
+            coarse_chan_bw = 2.9296875
+            bandwidth = abs(self.f_stop - self.f_start)
+            n_coarse_chan = int(bandwidth / coarse_chan_bw)
+            return n_coarse_chan
+
+        elif self.header['telescope_id'] == 4:
+            # For 3 Hz channels we are using 2^20 length FFTs
+            if nchans >= 2**20:
+                return int(nchans / 2**20)
+        else:
+            raise RuntimeError("This function currently only works for BL Parkes or GBT data.")
 
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
