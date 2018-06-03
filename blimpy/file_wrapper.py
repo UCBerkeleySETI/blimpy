@@ -20,16 +20,21 @@ level_log = logging.INFO
 
 if level_log == logging.INFO:
     stream = sys.stdout
-    format = '%(name)-15s %(levelname)-8s %(message)s'
+    lformat = '%(name)-15s %(levelname)-8s %(message)s'
 else:
     stream =  sys.stderr
-    format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
+    lformat = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
 
-logging.basicConfig(format=format,stream=stream,level = level_log)
+logging.basicConfig(format=lformat, stream=stream, level=level_log)
 
 
 class Reader(object):
     """ Basic reader object """
+
+    def __init__(self):
+
+        self.t_begin = 0
+        self.t_end   = 0
 
     def _setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None, init=False):
         """Making sure the selection if time and frequency are within the file limits.
@@ -255,7 +260,7 @@ class Reader(object):
             return False
 
 
-class  H5Reader(Reader):
+class H5Reader(Reader):
     """ This class handles .h5 files.
     """
 
@@ -286,8 +291,8 @@ class  H5Reader(Reader):
             self.h5 = h5py.File(self.filename)
             self.read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
-            self.n_ints_in_file  = self.h5["data"].shape[self.time_axis] #
-            self.n_channels_in_file  = self.h5["data"].shape[self.freq_axis] #
+            self.n_ints_in_file = self.h5["data"].shape[self.time_axis] #
+            self.n_channels_in_file = self.h5["data"].shape[self.freq_axis] #
             self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
             self._n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
@@ -295,11 +300,11 @@ class  H5Reader(Reader):
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
             if self.header['foff'] < 0:
-                self.f_end  = self.header['fch1']
-                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+                self.f_end = self.header['fch1']
+                self.f_begin = self.f_end + self.n_channels_in_file*self.header['foff']
             else:
-                self.f_begin  = self.header['fch1']
-                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+                self.f_begin = self.header['fch1']
+                self.f_end = self.f_begin + self.n_channels_in_file*self.header['foff']
 
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
@@ -422,7 +427,7 @@ class  H5Reader(Reader):
 
         return blob
 
-class  FilReader(Reader):
+class FilReader(Reader):
     """ This class handles .fil files.
     """
 
@@ -729,4 +734,3 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
     else:
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)
-
