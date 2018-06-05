@@ -114,7 +114,8 @@ class Filterbank(object):
             self.filename = filename
             if HAS_HDF5:
                 if h5py.is_hdf5(filename):
-                    self.read_hdf5(filename, f_start, f_stop, t_start, t_stop, load_data)
+                    # TODO: self.read_hdf5(filename, f_start, f_stop, t_start, t_stop, load_data)
+                    self.read_hdf5(filename, load_data)
                 else:
                     self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
             else:
@@ -184,9 +185,9 @@ class Filterbank(object):
 
         i_start, i_stop = 0, self.header[b'nchans']
         if f_start:
-            i_start = (f_start - f0) / f_delt
+            i_start = int((f_start - f0) / f_delt)
         if f_stop:
-            i_stop  = (f_stop - f0)  / f_delt
+            i_stop  = int((f_stop - f0)  / f_delt)
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -270,7 +271,7 @@ class Filterbank(object):
         ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         # Seek to first integration
-        f.seek(ii_start * n_bits * n_ifs * n_chans / 8, 1)
+        f.seek(int(ii_start * n_bits * n_ifs * n_chans / 8), 1)
 
         # Set up indexes used in file read (taken out of loop for speed)
         i0 = np.min((chan_start_idx, chan_stop_idx))
@@ -411,9 +412,9 @@ class Filterbank(object):
         n_coarse_chan = int(n_coarse_chan)
 
         n_chan = self.data.shape[-1]
-        n_chan_per_coarse = n_chan / n_coarse_chan
+        n_chan_per_coarse = int(n_chan / n_coarse_chan)
 
-        mid_chan = (n_chan_per_coarse / 2)
+        mid_chan = int(n_chan_per_coarse / 2)
 
         for ii in range(n_coarse_chan):
             ss = ii*n_chan_per_coarse
@@ -450,8 +451,8 @@ class Filterbank(object):
         foff = self.header[b'foff']
 
         #convert input frequencies into what their corresponding index would be
-        i_start = (f_start - fch1) / foff
-        i_stop  = (f_stop - fch1)  / foff
+        i_start = int((f_start - fch1) / foff)
+        i_stop  = int((f_stop - fch1)  / foff)
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -499,7 +500,7 @@ class Filterbank(object):
         coarse_chan_bw = 2.9296875
 
         bandwidth = abs(self.header[b'nchans']*self.header[b'foff'])
-        n_coarse_chan = bandwidth / coarse_chan_bw
+        n_coarse_chan = int(bandwidth / coarse_chan_bw)
 
         return n_coarse_chan
 
@@ -558,7 +559,7 @@ class Filterbank(object):
         # Rebin to max number of points
         dec_fac_x = 1
         if plot_data.shape[0] > MAX_PLT_POINTS:
-            dec_fac_x = plot_data.shape[0] / MAX_PLT_POINTS
+            dec_fac_x = int(plot_data.shape[0] / MAX_PLT_POINTS)
 
         plot_data = rebin(plot_data, dec_fac_x, 1)
         plot_f    = rebin(plot_f, dec_fac_x, 1)
@@ -620,7 +621,7 @@ class Filterbank(object):
         dec_fac_x = 1
         MAX_PLT_POINTS = 8*64  # Low resoluition to see the difference.
         if plot_data.shape[0] > MAX_PLT_POINTS:
-            dec_fac_x = plot_data.shape[0] / MAX_PLT_POINTS
+            dec_fac_x = int(plot_data.shape[0] / MAX_PLT_POINTS)
 
         plot_data = rebin(plot_data, dec_fac_x, 1)
         plot_min = rebin(plot_min, dec_fac_x, 1)
@@ -673,10 +674,10 @@ class Filterbank(object):
         # Make sure waterfall plot is under 4k*4k
         dec_fac_x, dec_fac_y = 1, 1
         if plot_data.shape[0] > MAX_IMSHOW_POINTS[0]:
-            dec_fac_x = plot_data.shape[0] / MAX_IMSHOW_POINTS[0]
+            dec_fac_x = int(plot_data.shape[0] / MAX_IMSHOW_POINTS[0])
 
         if plot_data.shape[1] > MAX_IMSHOW_POINTS[1]:
-            dec_fac_y =  plot_data.shape[1] /  MAX_IMSHOW_POINTS[1]
+            dec_fac_y =  int(plot_data.shape[1] /  MAX_IMSHOW_POINTS[1])
 
         plot_data = rebin(plot_data, dec_fac_x, dec_fac_y)
 
@@ -918,7 +919,7 @@ class Filterbank(object):
 
         print("[Filterbank] Warning: Non-standard function to write in filterbank (.fil) format. Please use Waterfall.")
 
-        n_bytes  = self.header[b'nbits'] / 8
+        n_bytes  = int(self.header[b'nbits'] / 8)
         with open(filename_out, "w") as fileh:
             fileh.write(generate_sigproc_header(self))
             j = self.data
