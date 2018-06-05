@@ -23,6 +23,7 @@ TODO: check the file seek logic works correctly for multiple IFs
 
 
 import sys
+import six
 
 from astropy.time import Time
 import scipy.stats
@@ -153,6 +154,8 @@ class Filterbank(object):
         self.filename = filename
         self.h5 = h5py.File(filename)
         for key, val in self.h5[b'data'].attrs.items():
+            if six.PY3:
+                key = bytes(key, 'ascii')
             if key == b'src_raj':
                 self.header[key] = Angle(val, unit='hr')
             elif key == b'src_dej':

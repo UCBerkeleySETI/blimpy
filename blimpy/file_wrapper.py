@@ -6,6 +6,7 @@ import os
 import sys
 import numpy as np
 import h5py
+import six
 
 from astropy.coordinates import Angle
 
@@ -107,11 +108,11 @@ class Reader(object):
 
         #Set up the data type
         if self._n_bytes  == 4:
-            return 'float32'
+            return b'float32'
         elif self._n_bytes  == 2:
-            return 'int16'
+            return b'int16'
         elif self._n_bytes  == 1:
-            return 'int8'
+            return b'int8'
 
 
 
@@ -122,7 +123,7 @@ class Reader(object):
         #Check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
         #Check to see how many frequency channels requested
-        n_chan = (self.f_stop - self.f_start) / abs(self.header['foff'])
+        n_chan = (self.f_stop - self.f_start) / abs(self.header[b'foff'])
 
         n_bytes  = self._n_bytes
         selection_size = int(n_ints*n_chan*n_bytes)
@@ -136,9 +137,9 @@ class Reader(object):
         #Check how many integrations requested
         n_ints = self.t_stop - self.t_start
         #Check how many frequency channels requested
-        n_chan = int(np.round((self.f_stop - self.f_start) / abs(self.header['foff'])))
+        n_chan = int(np.round((self.f_stop - self.f_start) / abs(self.header[b'foff'])))
 
-        selection_shape = (n_ints,self.header['nifs'],n_chan)
+        selection_shape = (n_ints,self.header[b'nifs'],n_chan)
 
         return selection_shape
 
@@ -146,16 +147,16 @@ class Reader(object):
         """Setup channel borders
         """
 
-        if self.header['foff'] < 0:
+        if self.header[b'foff'] < 0:
             f0 = self.f_end
         else:
             f0 = self.f_begin
 
         i_start, i_stop = 0, self.n_channels_in_file
         if self.f_start:
-            i_start = np.round((self.f_start - f0) / self.header['foff'])
+            i_start = np.round((self.f_start - f0) / self.header[b'foff'])
         if self.f_stop:
-            i_stop  = np.round((self.f_stop - f0)  / self.header['foff'])
+            i_stop  = np.round((self.f_stop - f0)  / self.header[b'foff'])
 
         #calculate closest true index value
         chan_start_idx = np.int(i_start)
@@ -171,12 +172,12 @@ class Reader(object):
         """Updating frequency borders from channel values
         """
 
-        if self.header['foff'] > 0:
-            self.f_start = self.f_begin + self.chan_start_idx*abs(self.header['foff'])
-            self.f_stop = self.f_begin + self.chan_stop_idx*abs(self.header['foff'])
+        if self.header[b'foff'] > 0:
+            self.f_start = self.f_begin + self.chan_start_idx*abs(self.header[b'foff'])
+            self.f_stop = self.f_begin + self.chan_stop_idx*abs(self.header[b'foff'])
         else:
-            self.f_start = self.f_end - self.chan_stop_idx*abs(self.header['foff'])
-            self.f_stop = self.f_end - self.chan_start_idx*abs(self.header['foff'])
+            self.f_start = self.f_end - self.chan_stop_idx*abs(self.header[b'foff'])
+            self.f_stop = self.f_end - self.chan_start_idx*abs(self.header[b'foff'])
 
     def populate_timestamps(self,update_header=False):
         """  Populate time axis.
@@ -191,8 +192,8 @@ class Reader(object):
             ii_stop = self.t_stop
 
         ## Setup time axis
-        t0 = self.header['tstart']
-        t_delt = self.header['tsamp']
+        t0 = self.header[b'tstart']
+        t_delt = self.header[b'tsamp']
 
         if update_header:
             timestamps = ii_start * t_delt / 24./60./60 + t0
@@ -206,7 +207,7 @@ class Reader(object):
          Populate frequency axis
         """
 
-        if self.header['foff'] < 0:
+        if self.header[b'foff'] < 0:
             f0 = self.f_end
         else:
             f0 = self.f_begin
@@ -215,7 +216,7 @@ class Reader(object):
 
         #create freq array
         i_vals = np.arange(self.chan_start_idx, self.chan_stop_idx)
-        freqs = self.header['foff'] * i_vals + f0
+        freqs = self.header[b'foff'] * i_vals + f0
 
         return freqs
 
@@ -228,15 +229,15 @@ class Reader(object):
                 For Parkes, it assumes 2^20 point FFTs.
                 For GBT, it assumes channel bandwidth  2.9296875 MHz
         """
-        nchans = int(self.header['nchans'])
+        nchans = int(self.header[b'nchans'])
 
-        if self.header['telescope_id'] == 6:
+        if self.header[b'telescope_id'] == 6:
             coarse_chan_bw = 2.9296875
             bandwidth = abs(self.f_stop - self.f_start)
             n_coarse_chan = int(bandwidth / coarse_chan_bw)
             return n_coarse_chan
 
-        elif self.header['telescope_id'] == 4:
+        elif self.header[b'telescope_id'] == 4:
             # For 3 Hz channels we are using 2^20 length FFTs
             if nchans >= 2**20:
                 return int(nchans / 2**20)
@@ -296,18 +297,18 @@ class H5Reader(Reader):
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
             self.n_ints_in_file = self.h5["data"].shape[self.time_axis] #
             self.n_channels_in_file = self.h5["data"].shape[self.freq_axis] #
-            self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
+            self.n_beams_in_file = self.header[b'nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
-            self._n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
+            self._n_bytes = self.header[b'nbits'] / 8  #number of bytes per digit.
             self._d_type = self._setup_dtype()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
-            if self.header['foff'] < 0:
-                self.f_end = self.header['fch1']
-                self.f_begin = self.f_end + self.n_channels_in_file*self.header['foff']
+            if self.header[b'foff'] < 0:
+                self.f_end = self.header[b'fch1']
+                self.f_begin = self.f_end + self.n_channels_in_file*self.header[b'foff']
             else:
-                self.f_begin = self.header['fch1']
-                self.f_end = self.f_begin + self.n_channels_in_file*self.header['foff']
+                self.f_begin = self.header[b'fch1']
+                self.f_end = self.f_begin + self.n_channels_in_file*self.header[b'foff']
 
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
@@ -361,9 +362,11 @@ class H5Reader(Reader):
         self.header = {}
 
         for key, val in self.h5['data'].attrs.items():
-            if key == 'src_raj':
+            if six.PY3:
+                key = bytes(key, 'ascii')
+            if key == b'src_raj':
                 self.header[key] = Angle(val, unit='hr')
-            elif key == 'src_dej':
+            elif key == b'src_dej':
                 self.header[key] = Angle(val, unit='deg')
             else:
                 self.header[key] = val
@@ -425,7 +428,7 @@ class H5Reader(Reader):
 
         blob = self.h5["data"][blob_start[self.time_axis]:blob_end[self.time_axis],:,blob_start[self.freq_axis]:blob_end[self.freq_axis]]
 
-#         if self.header['foff'] < 0:
+#         if self.header[b'foff'] < 0:
 #             blob = blob[:,:,::-1]
 
         return blob
@@ -454,20 +457,20 @@ class FilReader(Reader):
             self.header = self.read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
             self.idx_data = sigproc.len_header(self.filename)
-            self.n_channels_in_file  = self.header['nchans']
-            self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
+            self.n_channels_in_file  = self.header[b'nchans']
+            self.n_beams_in_file = self.header[b'nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
-            self._n_bytes = self.header['nbits'] / 8  #number of bytes per digit.
+            self._n_bytes = self.header[b'nbits'] / 8  #number of bytes per digit.
             self._d_type = self._setup_dtype()
             self._setup_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
-            if self.header['foff'] < 0:
-                self.f_end  = self.header['fch1']
-                self.f_begin  = self.f_end + self.n_channels_in_file*self.header['foff']
+            if self.header[b'foff'] < 0:
+                self.f_end  = self.header[b'fch1']
+                self.f_begin  = self.f_end + self.n_channels_in_file*self.header[b'foff']
             else:
-                self.f_begin  = self.header['fch1']
-                self.f_end  = self.f_begin + self.n_channels_in_file*self.header['foff']
+                self.f_begin  = self.header[b'fch1']
+                self.f_end  = self.f_begin + self.n_channels_in_file*self.header[b'foff']
 
             self.t_begin = 0
             self.t_end = self.n_ints_in_file
@@ -565,9 +568,9 @@ class FilReader(Reader):
         #Update frequencies ranges from channel number.
         self._setup_freqs()
 
-        n_chans = self.header['nchans']
+        n_chans = self.header[b'nchans']
         n_chans_selected = self.selection_shape[self.freq_axis]
-        n_ifs   = self.header['nifs']
+        n_ifs   = self.header[b'nifs']
 
         # Load binary data
         f = open(self.filename, 'rb')
@@ -588,7 +591,7 @@ class FilReader(Reader):
                 dd = np.fromfile(f, count=n_chans_selected, dtype=self._d_type)
 
                 # Reverse array if frequency axis is flipped
-#                     if self.header['foff'] < 0:
+#                     if self.header[b'foff'] < 0:
 #                         dd = dd[::-1]
 
                 self.data[ii, jj] = dd
@@ -658,7 +661,7 @@ class FilReader(Reader):
 
                 blob[blobt] = dd
 
-#         if self.header['foff'] < 0:
+#         if self.header[b'foff'] < 0:
 #             blob = blob[:,:,::-1]
 
         return blob
@@ -728,10 +731,13 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
     # Get file extension to determine type
     ext = filename.split(".")[-1].strip().lower()
 
-    if ext == 'h5':
+    if six.PY3:
+        ext = bytes(ext, 'ascii')
+
+    if ext == b'h5':
         # Open HDF5 file
         return H5Reader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
-    elif ext == 'fil':
+    elif ext == b'fil':
         # Open FIL file
         return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
     else:
