@@ -50,13 +50,13 @@ class Reader(object):
         # This avoids resetting values
         if init is True:
             if t_start is None:
-                self.t_start = self.t_begin
+                t_start = self.t_begin
             if t_stop is None:
-                self.t_stop = self.t_end
+                t_stop = self.t_end
             if f_start is None:
-                self.f_start = self.f_begin
+                f_start = self.f_begin
             if f_stop is None:
-                self.f_stop = self.f_end
+                f_stop = self.f_end
         else:
             if f_start is None:
                 f_start = self.f_start
