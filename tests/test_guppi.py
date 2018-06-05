@@ -7,7 +7,7 @@ def todo_test_guppi():
 
     guppi = GuppiRaw(filename)
 
-    print guppi
+    print(guppi)
 
     header = guppi.read_first_header()
 
