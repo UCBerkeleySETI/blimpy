@@ -13,15 +13,15 @@ def test_filterbank_data_load_range_freq():
     ff = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil', f_start=8419.24, f_stop=8419.35)
     hf = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5', f_start=8419.24, f_stop=8419.35)
 
-    print ff.data.shape
-    print hf.data.shape
-    print ff.freqs.shape
-    print hf.freqs.shape
+    print(ff.data.shape)
+    print(hf.data.shape)
+    print(ff.freqs.shape)
+    print(hf.freqs.shape)()
 
-    print ff.data[0].max(), ff.data[0].argmax()
-    print hf.data[0].max(), hf.data[0].argmax()
-    print ff.data[-1].max(), ff.data[-1].argmax()
-    print hf.data[-1].max(), hf.data[-1].argmax()
+    print(ff.data[0].max(), ff.data[0].argmax())
+    print(hf.data[0].max(), hf.data[0].argmax())
+    print(ff.data[-1].max(), ff.data[-1].argmax())
+    print(hf.data[-1].max(), hf.data[-1].argmax())()
 
     # Assert data is loaded to the same shape and has same values
     assert ff.data.shape == hf.data.shape == (16, 1, 39371)
@@ -47,12 +47,12 @@ def test_waterfall_data_load_range_freq():
     fw = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.fil', f_start=8419.24, f_stop=8419.35)
     hw = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.h5', f_start=8419.24, f_stop=8419.35)
 
-    print fw.data.shape
-    print hw.data.shape
-    print hw.data[0].max(), hw.data[0].argmax()
-    print fw.data[0].max(), fw.data[0].argmax()
-    print hw.data[-1].max(), hw.data[-1].argmax()
-    print fw.data[-1].max(), fw.data[-1].argmax()
+    print(fw.data.shape)
+    print(hw.data.shape)
+    print(hw.data[0].max(), hw.data[0].argmax())
+    print(fw.data[0].max(), fw.data[0].argmax())
+    print(hw.data[-1].max(), hw.data[-1].argmax())
+    print(fw.data[-1].max(), fw.data[-1].argmax())
 
     # Assert data is loaded to the same shape and has same values
     assert hw.data.shape == fw.data.shape == (16, 1, 39370)
@@ -66,7 +66,7 @@ def test_waterfall_data_load_range_freq():
     assert hw.data[0].argmax() == fw.data[0].argmax() == 18959
     assert hw.data[-1].argmax() == fw.data[-1].argmax() == 18996
 
-    # And plot
+    # And plot(
     plt.subplot(2,1,1)
     fw.plot_spectrum()
 
