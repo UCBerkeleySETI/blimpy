@@ -587,20 +587,20 @@ class FilReader(Reader):
 
         # Load binary data
         f = open(self.filename, 'rb')
-        f.seek(self.idx_data)
+        f.seek(int(self.idx_data))
 
         # now check to see how many integrations requested
         n_ints = self.t_stop - self.t_start
 
         # Seek to first integration
-        f.seek(self.t_start * self._n_bytes  * n_ifs * n_chans, 1)
+        f.seek(int(self.t_start * self._n_bytes  * n_ifs * n_chans), 1)
 
         #Loading  data
         self.data = np.zeros((n_ints, n_ifs, n_chans_selected), dtype=self._d_type)
 
         for ii in range(n_ints):
             for jj in range(n_ifs):
-                f.seek(self._n_bytes  * self.chan_start_idx, 1) # 1 = from current location
+                f.seek(int(self._n_bytes  * self.chan_start_idx), 1) # 1 = from current location
                 dd = np.fromfile(f, count=n_chans_selected, dtype=self._d_type)
 
                 # Reverse array if frequency axis is flipped
@@ -609,7 +609,7 @@ class FilReader(Reader):
 
                 self.data[ii, jj] = dd
 
-                f.seek(self._n_bytes  * (n_chans - self.chan_stop_idx), 1)  # Seek to start of next block
+                f.seek(int(self._n_bytes  * (n_chans - self.chan_stop_idx)), 1)  # Seek to start of next block
 
     def _find_blob_start(self):
         """Find first blob from selection.
@@ -655,7 +655,7 @@ class FilReader(Reader):
 
             #Load binary data
             with open(self.filename, 'rb') as f:
-                f.seek(self.idx_data + self._n_bytes  * (blob_start + n_blob*blob_flat_size))
+                f.seek(int(self.idx_data + self._n_bytes  * (blob_start + n_blob*blob_flat_size)))
                 dd = np.fromfile(f, count=updated_blob_flat_size, dtype=self._d_type)
 
             if dd.shape[0] == updated_blob_flat_size:
@@ -669,7 +669,7 @@ class FilReader(Reader):
 
                 #Load binary data
                 with open(self.filename, 'rb') as f:
-                    f.seek(self.idx_data + self._n_bytes * (blob_start + n_blob*blob_dim[self.time_axis]*self.n_channels_in_file + blobt*self.n_channels_in_file))
+                    f.seek(int(self.idx_data + self._n_bytes * (blob_start + n_blob*blob_dim[self.time_axis]*self.n_channels_in_file + blobt*self.n_channels_in_file)))
                     dd = np.fromfile(f, count=blob_dim[self.freq_axis], dtype=self._d_type)
 
                 blob[blobt] = dd
@@ -686,7 +686,7 @@ class FilReader(Reader):
         raise NotImplementedError('To be implemented')
 
         # go to start of the data
-        self.filfile.seek(self.datastart)
+        self.filfile.seek(int(self.datastart))
         # read data into 2-D numpy array
 #        data=np.fromfile(self.filfile,dtype=self.dtype).reshape(self.channels,self.blocksize,order='F')
         data=np.fromfile(self.filfile,dtype=self.dtype).reshape(self.blocksize, self.channels)
@@ -701,7 +701,7 @@ class FilReader(Reader):
         raise NotImplementedError('To be implemented')
 
         # go to start of the row
-        self.filfile.seek(self.datastart+self.channels*rownumber*(self.nbits/8))
+        self.filfile.seek(int(self.datastart+self.channels*rownumber*(self.nbits/8)))
         # read data into 2-D numpy array
         data=np.fromfile(self.filfile,count=self.channels,dtype=self.dtype).reshape(1, self.channels)
         if reverse:
@@ -715,7 +715,7 @@ class FilReader(Reader):
         raise NotImplementedError('To be implemented')
 
         # go to start of the row
-        self.filfile.seek(self.datastart+self.channels*rownumber*(self.nbits/8))
+        self.filfile.seek(int(self.datastart+self.channels*rownumber*(self.nbits/8)))
         # read data into 2-D numpy array
         data=np.fromfile(self.filfile,count=self.channels*n_rows,dtype=self.dtype).reshape(n_rows, self.channels)
         if reverse:
