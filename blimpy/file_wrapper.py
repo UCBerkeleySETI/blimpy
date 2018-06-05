@@ -48,7 +48,16 @@ class Reader(object):
         """
 
         # This avoids resetting values
-        if not init:
+        if init is True:
+            if t_start is None:
+                self.t_start = self.t_begin
+            if t_stop is None:
+                self.t_stop = self.t_end
+            if f_start is None:
+                self.f_start = self.f_begin
+            if f_stop is None:
+                self.f_stop = self.f_end
+        else:
             if f_start is None:
                 f_start = self.f_start
             if f_stop is None:
@@ -58,47 +67,44 @@ class Reader(object):
             if t_stop is None:
                 t_stop = self.t_stop
 
-        if t_stop is not None and t_start is not None:
-            if t_stop >= 0 and t_start >= 0 and t_stop < t_start:
-                t_stop, t_start = t_start,t_stop
-                logger.warning('Given t_stop < t_start, assuming reversed values.')
-            if f_stop and f_start and f_stop < f_start:
-                f_stop, f_start = f_start,f_stop
-                logger.warning('Given f_stop < f_start, assuming reversed values.')
+        # By now, all values start/stop are populated.
 
-        if t_start is not None:
-            if t_start >= self.t_begin and t_start < self.t_end:
-                self.t_start = int(t_start)
-            else:
-                if not init or t_start != None:
-                    logger.warning('Setting t_start = %f, since t_start not given or not valid.'%self.t_begin)
-                self.t_start = self.t_begin
+        if t_stop >= 0 and t_start >= 0 and t_stop < t_start:
+            t_stop, t_start = t_start,t_stop
+            logger.warning('Given t_stop < t_start, assuming reversed values.')
+        if f_stop and f_start and f_stop < f_start:
+            f_stop, f_start = f_start,f_stop
+            logger.warning('Given f_stop < f_start, assuming reversed values.')
 
-        if t_stop is not None:
-            if t_stop and t_stop <= self.t_end  and t_stop > self.t_begin:
-                self.t_stop = int(t_stop)
-            else:
-                if not init or t_stop:
-                    logger.warning('Setting t_stop = %f, since t_stop not given or not valid.'%self.t_end)
-                self.t_stop = self.t_end
+        if t_start >= self.t_begin and t_start < self.t_end:
+            self.t_start = int(t_start)
+        else:
+            if not init or t_start != None:
+                logger.warning('Setting t_start = %f, since t_start not given or not valid.'%self.t_begin)
+            self.t_start = self.t_begin
 
-        if f_start is not None:
-            if f_start and f_start >= self.f_begin and f_start < self.f_end:
-                self.f_start = f_start
-            else:
-                if not init or f_start:
-                    logger.warning('Setting f_start = %f, since f_start not given or not valid.'%self.f_begin)
-                self.f_start = self.f_begin
+        if t_stop <= self.t_end  and t_stop > self.t_begin:
+            self.t_stop = int(t_stop)
+        else:
+            if not init or t_stop:
+                logger.warning('Setting t_stop = %f, since t_stop not given or not valid.'%self.t_end)
+            self.t_stop = self.t_end
 
-        if f_stop is not None:
-            if f_stop and f_stop <= self.f_end and f_stop > self.f_begin:
-                self.f_stop = f_stop
-            else:
-                if not init or f_stop:
-                    logger.warning('Setting f_stop = %f, since f_stop not given or not valid.'%self.f_end)
-                self.f_stop = self.f_end
+        if f_start >= self.f_begin and f_start < self.f_end:
+            self.f_start = f_start
+        else:
+            if not init or f_start:
+                logger.warning('Setting f_start = %f, since f_start not given or not valid.'%self.f_begin)
+            self.f_start = self.f_begin
 
-        #calculate shape of selection
+        if f_stop <= self.f_end and f_stop > self.f_begin:
+            self.f_stop = f_stop
+        else:
+            if not init or f_stop:
+                logger.warning('Setting f_stop = %f, since f_stop not given or not valid.'%self.f_end)
+            self.f_stop = self.f_end
+
+        # Now we have setup bounds, we can calculate shape of selection
         self.selection_shape = self._calc_selection_shape()
 
     def _init_empty_selection(self):
