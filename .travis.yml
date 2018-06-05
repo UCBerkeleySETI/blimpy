@@ -15,9 +15,7 @@ install:
 
 # command to install dependencies
 script: 
-    - python tests/test_filterbank.py
-    - python tests/test_unpack.py
-#    - python tests/test_guppi.py
+    - cd tests; pytest
     
 branches:
   only:
