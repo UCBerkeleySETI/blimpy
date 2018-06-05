@@ -168,7 +168,7 @@ class Filterbank(object):
             self.n_ints_in_file  = self.data.shape[0]
             self.file_size_bytes = os.path.getsize(self.filename)
 
-#         if self.header['foff'] < 0:
+#         if self.header[b'foff'] < 0:
 #             self.data = self.data[..., ::-1] # Reverse data
 
         else:
@@ -329,16 +329,16 @@ class Filterbank(object):
 
     def compute_lst(self):
         """ Compute LST for observation """
-        if self.header['telescope_id'] == 6:
+        if self.header[b'telescope_id'] == 6:
             self.coords = gbt_coords
-        elif self.header['telescope_id'] == 4:
+        elif self.header[b'telescope_id'] == 4:
             self.coords = parkes_coords
         else:
             raise RuntimeError("Currently only Parkes and GBT supported")
         if HAS_SLALIB:
             # dut1 = (0.2 /3600.0) * np.pi/12.0
             dut1 = 0.0
-            mjd = self.header['tstart']
+            mjd = self.header[b'tstart']
             tellong = np.deg2rad(self.coords[1])
             last = s.sla_gmst(mjd) - tellong + s.sla_eqeqx(mjd) + dut1
             # lmst = s.sla_gmst(mjd) - tellong
@@ -353,9 +353,9 @@ class Filterbank(object):
         uses the MJD, RA and DEC of observation to compute
         along with the telescope location. Requires pyslalib
         """
-        ra = Angle(self.header['src_raj'], unit='hourangle')
-        dec = Angle(self.header['src_dej'], unit='degree')
-        mjdd = self.header['tstart']
+        ra = Angle(self.header[b'src_raj'], unit='hourangle')
+        dec = Angle(self.header[b'src_dej'], unit='degree')
+        mjdd = self.header[b'tstart']
         rarad = ra.to('radian').value
         dcrad = dec.to('radian').value
         last = self.compute_lst()
@@ -498,7 +498,7 @@ class Filterbank(object):
         # Could add a telescope based coarse channel bandwidth, or other discriminative.
         # if telescope_id == 'GBT':
         # or actually as is currently
-        # if self.header['telescope_id'] == 6:
+        # if self.header[b'telescope_id'] == 6:
 
         coarse_chan_bw = 2.9296875
 
@@ -534,7 +534,7 @@ class Filterbank(object):
             c: color for line
             kwargs: keyword args to be passed to matplotlib plot()
         """
-        if self.header['nbits'] <=2:
+        if self.header[b'nbits'] <=2:
             logged = False
             t='all'
         ax = plt.gca()
@@ -720,7 +720,7 @@ class Filterbank(object):
         ax = plt.gca()
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        if logged and self.header['nbits'] >= 8:
+        if logged and self.header[b'nbits'] >= 8:
             plot_data = db(plot_data)
 
         #Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
@@ -791,7 +791,7 @@ class Filterbank(object):
             if_id (int): IF identification (if multiple IF signals in file)
             kwargs: keyword args to be passed to matplotlib plot() and imshow()
         """
-        if self.header['nbits'] <=2:
+        if self.header[b'nbits'] <=2:
             logged = False
 
         nullfmt = NullFormatter()  # no labels
