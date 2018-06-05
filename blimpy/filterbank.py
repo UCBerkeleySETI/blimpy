@@ -116,7 +116,7 @@ class Filterbank(object):
             if HAS_HDF5:
                 if h5py.is_hdf5(filename):
                     # TODO: self.read_hdf5(filename, f_start, f_stop, t_start, t_stop, load_data)
-                    self.read_hdf5(filename, load_data)
+                    self.read_hdf5(filename, f_start, f_stop, t_start, t_stop, load_data)
                 else:
                     self.read_filterbank(filename, f_start, f_stop, t_start, t_stop, load_data)
             else:
@@ -141,7 +141,8 @@ class Filterbank(object):
             print("Calibrating the band pass.")
             self.calibrate_band_pass_N1()
 
-    def read_hdf5(self, filename, load_data=True):
+    def read_hdf5(self, filename, f_start=None, f_stop=None,
+                        t_start=None, t_stop=None, load_data=True):
         """ Populate Filterbank instance with data from HDF5 file
 
         Note:
@@ -163,9 +164,13 @@ class Filterbank(object):
             else:
                 self.header[key] = val
 
+        self.n_ints_in_file = self.h5[b"data"].shape[0]
+        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start=f_start, f_stop=f_stop)
+        ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
+
         if load_data:
-            self.data = self.h5[b"data"][:]
-            self.n_ints_in_file  = self.data.shape[0]
+            self.data = self.h5[b"data"][ii_start:ii_stop, :, chan_start_idx:chan_stop_idx]
+
             self.file_size_bytes = os.path.getsize(self.filename)
 
 #         if self.header[b'foff'] < 0:
@@ -177,8 +182,6 @@ class Filterbank(object):
             self.n_ints_in_file  = 0
             self.file_size_bytes = os.path.getsize(self.filename)
 
-        self._setup_freqs()
-        self._setup_time_axis()
 
     def _setup_freqs(self, f_start=None, f_stop=None):
         """ Setup frequency axis """
@@ -270,7 +273,7 @@ class Filterbank(object):
         self.n_ints_in_file  = n_ints_in_file
         self.file_size_bytes = filesize
 
-        ## Setup frequency axis
+        ## Setup time axis
         ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
 
         # Seek to first integration
@@ -468,7 +471,7 @@ class Filterbank(object):
 
         return freqs
 
-    def grab_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, if_id=0):
+    def grab_data(self, f_start=None, f_stop=None, t_start=None, t_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
 
         Args:
@@ -480,13 +483,20 @@ class Filterbank(object):
             (freqs, data) (np.arrays): frequency axis in MHz and data subset
         """
 
-        i_start, i_stop, chan_start_idx, chan_stop_idx = self._setup_freqs(f_start=f_start, f_stop=f_stop)
+        if f_start is None:
+            f_start = self.freqs[0]
+        if f_stop is None:
+            f_stop = self.freqs[-1]
 
-        # TODO: FIX THIS. CURRENTLY UNUSED
-        #ii_start, ii_stop, n_ints = self._setup_time_axis(t_start=t_start, t_stop=t_stop)
+        i0 = np.argmin(np.abs(self.freqs - f_start))
+        i1 = np.argmin(np.abs(self.freqs - f_stop))
 
-        plot_f    = self.freqs
-        plot_data = np.squeeze(self.data)#[ii_start:ii_stop, if_id, chan_start_idx:chan_stop_idx]
+        if i0 < i1:
+            plot_f    = self.freqs[i0:i1 + 1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i0:i1 + 1])
+        else:
+            plot_f    = self.freqs[i1:i0 + 1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
 
         return plot_f, plot_data
 
@@ -494,7 +504,7 @@ class Filterbank(object):
         """ This makes an attempt to calculate the number of coarse channels in a given file.
             It assumes for now that a single coarse channel is 2.9296875 MHz
         """
-
+        print("Warning: this is deprecated in Filterbank(). Please use equivalent in Waterfall()")
         # Could add a telescope based coarse channel bandwidth, or other discriminative.
         # if telescope_id == 'GBT':
         # or actually as is currently
@@ -653,7 +663,7 @@ class Filterbank(object):
         if logged:
             plt.ylim(db(fig_min),db(fig_max))
 
-    def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True,cb=True,MJD_time=False, **kwargs):
+    def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True, cb=True, MJD_time=False, **kwargs):
         """ Plot waterfall of data
 
         Args:
