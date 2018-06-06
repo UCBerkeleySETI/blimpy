@@ -9,6 +9,7 @@ install:
   - sudo apt-get install -qq libhdf5-serial-dev
   - pip install --upgrade pip setuptools wheel
   - pip install --only-binary=numpy,scipy numpy scipy
+  - pip install coverage
   - pip install matplotlib
   - CFLAGS=-I/usr/include/hdf5/serial pip install git+https://github.com/h5py/h5py
   - CFLAGS=-I/usr/include/hdf5/serial pip install git+https://github.com/kiyo-masui/bitshuffle
