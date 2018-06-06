@@ -517,8 +517,20 @@ class Waterfall(Filterbank):
         self.freqs = self.populate_freqs()
         self.timestamps = self.populate_timestamps()
 
-        plot_f    = self.freqs
-        plot_data = np.squeeze(self.data)
+        if f_start is None:
+            f_start = self.freqs[0]
+        if f_stop is None:
+            f_stop = self.freqs[-1]
+
+        i0 = np.argmin(np.abs(self.freqs - f_start))
+        i1 = np.argmin(np.abs(self.freqs - f_stop))
+
+        if i0 < i1:
+            plot_f    = self.freqs[i0:i1 + 1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i0:i1 + 1])
+        else:
+            plot_f    = self.freqs[i1:i0 + 1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
 
         return plot_f, plot_data
 
