@@ -14,7 +14,7 @@ def lin(x):
 
 def closest(xarr, val):
     """ Return the index of the closest in xarr to value val """
-    idx_closest = np.argmin(np.abs(xarr - val))
+    idx_closest = np.argmin(np.abs(np.array(xarr) - val))
     return idx_closest
 
 def rebin(d, n_x, n_y=None):
@@ -30,6 +30,10 @@ def rebin(d, n_x, n_y=None):
     """
 
     if d.ndim == 2:
+        if n_y is None:
+            n_y = 1
+        if n_x is None:
+            n_x = 1
         d = d[:int(d.shape[0] // n_x) * n_x, :int(d.shape[1] // n_y) * n_y]
         d = d.reshape((d.shape[0] // n_x, n_x, d.shape[1] // n_y, n_y))
         d = d.mean(axis=3)
@@ -82,7 +86,6 @@ def unpack(data, nbit):
         tmpdata = tmpdata << 7 # Shift into high bits to avoid needing to sign extend
         updata = tmpdata
         return updata.view(data.dtype)
-
 
 
 def unpack_2to8(data):
