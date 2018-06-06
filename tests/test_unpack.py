@@ -7,8 +7,8 @@ def test_1to8():
     b = np.array([0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0])
     c = unpack_1to8(a)
     assert np.allclose(b, c)
-    print b
-    print c
+    print(b)
+    print(c)
 
 def test_2to8():
     # Create an array that should come out as [0, 1, 2, 3, 3, 2, 1, 0]
@@ -54,16 +54,16 @@ def test_unpack():
     a = np.array([0b00000001, 0b00100011], dtype=np.uint8)
     b = np.array([0, 1, 2, 3], dtype=np.uint8)
     c = unpack(a, 4)
-    print b
-    print c
+    print(b)
+    print(c)
     assert np.allclose(b, c)
 
     # Test 1-bit unpack
     a = np.array([0b01010101, 0b10101010], dtype=np.uint8)
     b = np.array([0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0])
     c = unpack(a, 1)
-    print b
-    print c
+    print(b)
+    print(c)
     assert np.allclose(b, c)
 
     # Test 8-bit!
