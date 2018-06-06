@@ -16,12 +16,12 @@ def test_filterbank_data_load_range_freq():
     print(ff.data.shape)
     print(hf.data.shape)
     print(ff.freqs.shape)
-    print(hf.freqs.shape)()
+    print(hf.freqs.shape)
 
     print(ff.data[0].max(), ff.data[0].argmax())
     print(hf.data[0].max(), hf.data[0].argmax())
     print(ff.data[-1].max(), ff.data[-1].argmax())
-    print(hf.data[-1].max(), hf.data[-1].argmax())()
+    print(hf.data[-1].max(), hf.data[-1].argmax())
 
     # Assert data is loaded to the same shape and has same values
     assert ff.data.shape == hf.data.shape == (16, 1, 39371)
@@ -84,13 +84,13 @@ def test_grab_data_works_across_all_fil_h5():
 
     for ii, rr in enumerate(all_readers):
         f, d = rr.grab_data(f_start=8419.29, f_stop=8419.30)
-        print f.shape, d.shape
+        print(f.shape, d.shape)
         assert f.shape == (3580,)
         assert d.shape == (16, 3580)
 
     for ii, rr in enumerate(all_readers):
         f, d = rr.grab_data(f_start=8419.29685, f_stop=8419.2971)
-        print f.shape, d.shape
+        print(f.shape, d.shape)
         assert f.shape == (91,)
         assert d.shape == (16, 91)
 
