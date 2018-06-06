@@ -66,6 +66,10 @@ def test_unpack():
     print c
     assert np.allclose(b, c)
 
+    # Test 8-bit!
+    c = unpack(a, 8)
+    assert np.allclose(a, c)
+
 if __name__ == "__main__":
     test_1to8()
     test_2to8()
