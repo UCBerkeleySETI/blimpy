@@ -1,5 +1,6 @@
 from blimpy import utils
 import numpy as np
+import pytest
 
 def test_utils():
     assert utils.db(100) == 20.0
@@ -22,6 +23,10 @@ def test_rebin():
     assert np.allclose(bR, [1.5, 1.5, 1.5, 1.5])
     bR = utils.rebin(b, 2, None)
     assert np.allclose(bR, [1.5, 1.5, 1.5, 1.5])
+
+    c = np.zeros([10, 10, 10])
+    with pytest.raises(RuntimeError):
+        utils.rebin(c, 2, 2)
 
 if __name__ == "__main__":
     test_utils()
