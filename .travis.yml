@@ -16,7 +16,9 @@ install:
 
 # command to install dependencies
 script: 
-    - cd tests; pytest
+    - cd tests; coverage run --source=blimpy -m py.test
+
+after_success: coveralls
     
 branches:
   only:
