@@ -237,23 +237,27 @@ class Reader(object):
             Note:
                 This is unlikely to work on non-Breakthrough Listen data, as a-priori knowledge of
                 the digitizer system is required.
-                For Parkes, it assumes 2^20 point FFTs.
-                For GBT, it assumes channel bandwidth  2.9296875 MHz
+
         """
         nchans = int(self.header[b'nchans'])
 
-        if self.header[b'telescope_id'] == 6:
-            coarse_chan_bw = 2.9296875
-            bandwidth = abs(self.f_stop - self.f_start)
-            n_coarse_chan = int(bandwidth / coarse_chan_bw)
-            return n_coarse_chan
-
-        elif self.header[b'telescope_id'] == 4:
-            # For 3 Hz channels we are using 2^20 length FFTs
-            if nchans >= 2**20:
-                return int(nchans / 2**20)
+        # Do we have a file with enough channels that it has coarse channelization?
+        if nchans >= 2**20:
+            # Does the common FFT length of 2^20 divide through without a remainder?
+            # This should work for most GBT and all Parkes hires data
+            if nchans % 2**20 == 0:
+                n_coarse_chan = nchans // 2**20
+                return n_coarse_chan
+            # Early GBT data has non-2^N FFT length, check if it is GBT data
+            elif self.header[b'telescope_id'] == 6:
+                coarse_chan_bw = 2.9296875
+                bandwidth = abs(self.f_stop - self.f_start)
+                n_coarse_chan = int(bandwidth / coarse_chan_bw)
+                return n_coarse_chan
+            else:
+                raise RuntimeError("Couldn't figure out n_coarse_chan")
         else:
-            raise RuntimeError("This function currently only works for BL Parkes or GBT data.")
+            raise RuntimeError("This function currently only works for hires BL Parkes or GBT data.")
 
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
