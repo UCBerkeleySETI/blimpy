@@ -500,23 +500,6 @@ class Filterbank(object):
 
         return plot_f, plot_data
 
-    def calc_n_coarse_chan(self):
-        """ This makes an attempt to calculate the number of coarse channels in a given file.
-            It assumes for now that a single coarse channel is 2.9296875 MHz
-        """
-        print("Warning: this is deprecated in Filterbank(). Please use equivalent in Waterfall()")
-        # Could add a telescope based coarse channel bandwidth, or other discriminative.
-        # if telescope_id == 'GBT':
-        # or actually as is currently
-        # if self.header[b'telescope_id'] == 6:
-
-        coarse_chan_bw = 2.9296875
-
-        bandwidth = abs(self.header[b'nchans']*self.header[b'foff'])
-        n_coarse_chan = int(bandwidth / coarse_chan_bw)
-
-        return n_coarse_chan
-
     def _calc_extent(self,plot_f=None,plot_t=None,MJD_time=False):
         """ Setup ploting edges.
         """
