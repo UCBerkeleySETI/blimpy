@@ -646,7 +646,7 @@ class FilReader(Reader):
         else:
             updated_blob_dim = blob_dim
 
-        blob_start = self._find_blob_start(blob_dim)
+        blob_start = self._find_blob_start()
         blob = np.zeros(updated_blob_dim,dtype=self._d_type)
 
         #EE: For now; also assuming one polarization and one beam.
