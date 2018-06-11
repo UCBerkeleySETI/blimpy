@@ -138,13 +138,17 @@ class Waterfall(Filterbank):
             self.__load_data()
 
         elif header_dict is not None and data_array is not None:
-            self.gen_from_header(header_dict, data_array)
+            self.filename = b''
+            self.header = header_dict
+            self.data = data_array
+            self.n_ints_in_file = 0
+            self._setup_freqs()
+
         else:
-            pass
+            self.filename = b''
 
     def __load_data(self):
-        """
-        """
+        """ Helper for loading data form a container. Should not be called manually. """
 
         self.data = self.container.data
 
@@ -161,16 +165,16 @@ class Waterfall(Filterbank):
         """
 
         #Updating frequency of first channel from selection
-        if self.header['foff'] < 0:
-            self.header['fch1'] = self.container.f_stop
+        if self.header[b'foff'] < 0:
+            self.header[b'fch1'] = self.container.f_stop
         else:
-            self.header['fch1'] = self.container.f_start
+            self.header[b'fch1'] = self.container.f_start
 
         #Updating number of coarse channels.
-        self.header['nchans'] = self.container.selection_shape[self.freq_axis]
+        self.header[b'nchans'] = self.container.selection_shape[self.freq_axis]
 
         #Updating time stamp for first time bin from selection
-        self.header['tstart'] = self.container.populate_timestamps(update_header=True)
+        self.header[b'tstart'] = self.container.populate_timestamps(update_header=True)
 
     def populate_freqs(self):
         """
@@ -238,7 +242,7 @@ class Waterfall(Filterbank):
         n_blobs = self.container.calc_n_blobs(blob_dim)
 
         #Write header of .fil file
-        n_bytes  = self.header['nbits'] / 8
+        n_bytes  = self.header[b'nbits'] / 8
         with open(filename_out, "w") as fileh:
             fileh.write(generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
 
@@ -265,7 +269,7 @@ class Waterfall(Filterbank):
             filename_out (str): Name of output file
         """
 
-        n_bytes  = self.header['nbits'] / 8
+        n_bytes  = self.header[b'nbits'] / 8
         with open(filename_out, "w") as fileh:
             fileh.write(generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
             j = self.data
@@ -314,8 +318,8 @@ class Waterfall(Filterbank):
 
         with h5py.File(filename_out, 'w') as h5:
 
-            h5.attrs['CLASS'] = 'FILTERBANK'
-            h5.attrs['VERSION'] = '1.0'
+            h5.attrs[b'CLASS'] = b'FILTERBANK'
+            h5.attrs[b'VERSION'] = b'1.0'
 
             if HAS_BITSHUFFLE:
                 bs_compression = bitshuffle.h5.H5FILTER
@@ -339,13 +343,13 @@ class Waterfall(Filterbank):
                             compression_opts=bs_compression_opts,
                             dtype='uint8')
 
-            dset.dims[0].label = "frequency"
-            dset.dims[1].label = "feed_id"
-            dset.dims[2].label = "time"
+            dset.dims[0].label = b"frequency"
+            dset.dims[1].label = b"feed_id"
+            dset.dims[2].label = b"time"
 
-            dset_mask.dims[0].label = "frequency"
-            dset_mask.dims[1].label = "feed_id"
-            dset_mask.dims[2].label = "time"
+            dset_mask.dims[0].label = b"frequency"
+            dset_mask.dims[1].label = b"feed_id"
+            dset_mask.dims[2].label = b"time"
 
             # Copy over header information as attributes
             for key, value in self.header.items():
@@ -406,8 +410,8 @@ class Waterfall(Filterbank):
 
         with h5py.File(filename_out, 'w') as h5:
 
-            h5.attrs['CLASS'] = 'FILTERBANK'
-            h5.attrs['VERSION'] = '1.0'
+            h5.attrs[b'CLASS']   = b'FILTERBANK'
+            h5.attrs[b'VERSION'] = b'1.0'
 
             if HAS_BITSHUFFLE:
                 bs_compression = bitshuffle.h5.H5FILTER
@@ -431,13 +435,13 @@ class Waterfall(Filterbank):
                         compression_opts=bs_compression_opts,
                         dtype='uint8')
 
-            dset.dims[0].label = "frequency"
-            dset.dims[1].label = "feed_id"
-            dset.dims[2].label = "time"
+            dset.dims[0].label = b"frequency"
+            dset.dims[1].label = b"feed_id"
+            dset.dims[2].label = b"time"
 
-            dset_mask.dims[0].label = "frequency"
-            dset_mask.dims[1].label = "feed_id"
-            dset_mask.dims[2].label = "time"
+            dset_mask.dims[0].label = b"frequency"
+            dset_mask.dims[1].label = b"feed_id"
+            dset_mask.dims[2].label = b"time"
 
             # Copy over header information as attributes
             for key, value in self.header.items():
@@ -467,17 +471,17 @@ class Waterfall(Filterbank):
         """
 
         #Usually '.0000.' is in self.filename
-        if np.abs(self.header['foff']) < 1e-5:
+        if np.abs(self.header[b'foff']) < 1e-5:
             logger.info('Detecting high frequency resolution data.')
             chunk_dim = (1,1,1048576) #1048576 is the number of channels in a coarse channel.
             return chunk_dim
         #Usually '.0001.' is in self.filename
-        elif np.abs(self.header['tsamp']) < 1e-3:
+        elif np.abs(self.header[b'tsamp']) < 1e-3:
             logger.info('Detecting high time resolution data.')
             chunk_dim = (2048,1,512) #512 is the total number of channels per single band (ie. blc00)
             return chunk_dim
         #Usually '.0002.' is in self.filename
-        elif np.abs(self.header['foff']) < 1e-2 and np.abs(self.header['foff'])  >= 1e-5:
+        elif np.abs(self.header[b'foff']) < 1e-2 and np.abs(self.header[b'foff'])  >= 1e-5:
             logger.info('Detecting intermediate frequency and time resolution data.')
             chunk_dim = (10,1,65536)  #65536 is the total number of channels per single band (ie. blc00)
 #            chunk_dim = (1,1,65536/4)
@@ -496,30 +500,7 @@ class Waterfall(Filterbank):
 
         return n_coarse_chan
 
-    def blank_dc(self, n_coarse_chan):
-        """ Blank DC bins in coarse channels.
 
-        Note: currently only works if entire waterfall file is read
-        """
-
-        if n_coarse_chan < 1:
-            logger.warning('Coarse channel number < 1, unable to blank DC bin.')
-            return None
-
-        if not n_coarse_chan % int(n_coarse_chan) == 0:
-            logger.warning('Selection does not contain an interger number of coarse channels, unable to blank DC bin.')
-            return None
-
-        n_coarse_chan = int(n_coarse_chan)
-
-        n_chan = self.data.shape[-1]
-        n_chan_per_coarse = n_chan / n_coarse_chan
-
-        mid_chan = (n_chan_per_coarse / 2)
-
-        for ii in range(n_coarse_chan):
-            ss = ii*n_chan_per_coarse
-            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
 
     def grab_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
@@ -536,8 +517,20 @@ class Waterfall(Filterbank):
         self.freqs = self.populate_freqs()
         self.timestamps = self.populate_timestamps()
 
-        plot_f    = self.freqs
-        plot_data = np.squeeze(self.data)
+        if f_start is None:
+            f_start = self.freqs[0]
+        if f_stop is None:
+            f_stop = self.freqs[-1]
+
+        i0 = np.argmin(np.abs(self.freqs - f_start))
+        i1 = np.argmin(np.abs(self.freqs - f_stop))
+
+        if i0 < i1:
+            plot_f    = self.freqs[i0:i1 + 1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i0:i1 + 1])
+        else:
+            plot_f    = self.freqs[i1:i0 + 1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
 
         return plot_f, plot_data
 
