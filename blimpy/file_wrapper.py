@@ -255,9 +255,9 @@ class Reader(object):
                 n_coarse_chan = int(bandwidth / coarse_chan_bw)
                 return n_coarse_chan
             else:
-                raise RuntimeError("Couldn't figure out n_coarse_chan")
+                logger.warning("Couldn't figure out n_coarse_chan")
         else:
-            raise RuntimeError("This function currently only works for hires BL Parkes or GBT data.")
+            logger.warning("This function currently only works for hires BL Parkes or GBT data.")
 
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
