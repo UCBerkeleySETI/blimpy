@@ -79,28 +79,28 @@ class Reader(object):
         if t_start >= self.t_begin and t_start < self.t_end:
             self.t_start = int(t_start)
         else:
-            if not init or t_start != None:
+            if init is False or t_start != None:
                 logger.warning('Setting t_start = %f, since t_start not given or not valid.'%self.t_begin)
             self.t_start = self.t_begin
 
         if t_stop <= self.t_end  and t_stop > self.t_begin:
             self.t_stop = int(t_stop)
         else:
-            if not init or t_stop:
+            if init is False or t_stop:
                 logger.warning('Setting t_stop = %f, since t_stop not given or not valid.'%self.t_end)
             self.t_stop = self.t_end
 
         if f_start >= self.f_begin and f_start < self.f_end:
             self.f_start = f_start
         else:
-            if not init or f_start:
+            if init is False or f_start:
                 logger.warning('Setting f_start = %f, since f_start not given or not valid.'%self.f_begin)
             self.f_start = self.f_begin
 
         if f_stop <= self.f_end and f_stop > self.f_begin:
             self.f_stop = f_stop
         else:
-            if not init or f_stop:
+            if init is False or f_stop:
                 logger.warning('Setting f_stop = %f, since f_stop not given or not valid.'%self.f_end)
             self.f_stop = self.f_end
 
