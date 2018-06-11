@@ -14,7 +14,7 @@ def lin(x):
 
 def closest(xarr, val):
     """ Return the index of the closest in xarr to value val """
-    idx_closest = np.argmin(np.abs(xarr - val))
+    idx_closest = np.argmin(np.abs(np.array(xarr) - val))
     return idx_closest
 
 def rebin(d, n_x, n_y=None):
@@ -30,13 +30,17 @@ def rebin(d, n_x, n_y=None):
     """
 
     if d.ndim == 2:
-        d = d[:int(d.shape[0] / n_x) * n_x, :int(d.shape[1] / n_y) * n_y]
-        d = d.reshape((d.shape[0] / n_x, n_x, d.shape[1] / n_y, n_y))
+        if n_y is None:
+            n_y = 1
+        if n_x is None:
+            n_x = 1
+        d = d[:int(d.shape[0] // n_x) * n_x, :int(d.shape[1] // n_y) * n_y]
+        d = d.reshape((d.shape[0] // n_x, n_x, d.shape[1] // n_y, n_y))
         d = d.mean(axis=3)
         d = d.mean(axis=1)
     elif d.ndim == 1:
-        d = d[:int(d.shape[0] / n_x) * n_x]
-        d = d.reshape((d.shape[0] / n_x, n_x))
+        d = d[:int(d.shape[0] // n_x) * n_x]
+        d = d.reshape((d.shape[0] // n_x, n_x))
         d = d.mean(axis=1)
     else:
         raise RuntimeError("Only NDIM <= 2 supported")
@@ -56,34 +60,22 @@ def unpack(data, nbit):
     if nbit == 8:
         return data
     elif nbit == 4:
-        #The process is this:
-        #ABCDEFGH [Bits of one 4+4-bit value]
-        #00000000ABCDEFGH [astype(uint16)]
-        #0000ABCDEFGH0000 [<< 4]
-        #0000ABCDXXXXEFGH [bitwise 'or' of previous two lines]
-        #0000111100001111 [0x0F0F]
-        #0000ABCD0000EFGH [bitwise 'and' of previous two lines]
-        #ABCD0000EFGH0000 [<< 4]
-        #which effectively pads the two 4-bit values with zeros on the right
-        # Note: This technique assumes LSB-first ordering
-        tmpdata = data.astype(np.int16)#np.empty(upshape, dtype=np.int16)
-        tmpdata = (tmpdata | (tmpdata <<  8)) & 0x0F0F
-        tmpdata = tmpdata << 4 # Shift into high bits to avoid needing to sign extend
-        updata = tmpdata
-        return updata.view(data.dtype)
+        data = unpack_4to8(data)
+        return data
     elif nbit == 2:
         data = unpack_2to8(data)
         return data
     elif nbit == 1:
-        tmpdata = data.astype(np.int64)#np.empty(upshape, dtype=np.int16)
-        tmpdata = (tmpdata | (tmpdata << 32)) & 0x0000000F0000000F
-        tmpdata = (tmpdata | (tmpdata << 16)) & 0x0003000300030003
-        tmpdata = (tmpdata | (tmpdata <<  8)) & 0x0101010101010101
-        tmpdata = tmpdata << 7 # Shift into high bits to avoid needing to sign extend
-        updata = tmpdata
-        return updata.view(data.dtype)
+        data = unpack_1to8(data)
+        return data
 
+def unpack_1to8(data):
+    """ Promote 1-bit unisgned data into 8-bit unsigned data.
 
+    Args:
+        data: Numpy array with dtype == uint8
+    """
+    return np.unpackbits(data)
 
 def unpack_2to8(data):
     """ Promote 2-bit unisgned data into 8-bit unsigned data.
@@ -116,3 +108,28 @@ def unpack_2to8(data):
     tmp = (tmp | (tmp << 6))  & 0x3030303
     tmp = tmp.byteswap()
     return tmp.view('uint8')
+
+def unpack_4to8(data):
+    """ Promote 2-bit unisgned data into 8-bit unsigned data.
+
+    Args:
+        data: Numpy array with dtype == uint8
+
+    Notes:
+        # The process is this:
+        # ABCDEFGH [Bits of one 4+4-bit value]
+        # 00000000ABCDEFGH [astype(uint16)]
+        # 0000ABCDEFGH0000 [<< 4]
+        # 0000ABCDXXXXEFGH [bitwise 'or' of previous two lines]
+        # 0000111100001111 [0x0F0F]
+        # 0000ABCD0000EFGH [bitwise 'and' of previous two lines]
+        # ABCD0000EFGH0000 [<< 4]
+        # which effectively pads the two 4-bit values with zeros on the right
+        # Note: This technique assumes LSB-first ordering
+    """
+
+    tmpdata = data.astype(np.int16)  # np.empty(upshape, dtype=np.int16)
+    tmpdata = (tmpdata | (tmpdata << 4)) & 0x0F0F
+    # tmpdata = tmpdata << 4 # Shift into high bits to avoid needing to sign extend
+    updata = tmpdata.byteswap()
+    return updata.view(data.dtype)

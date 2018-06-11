@@ -9,15 +9,18 @@ install:
   - sudo apt-get install -qq libhdf5-serial-dev
   - pip install --upgrade pip setuptools wheel
   - pip install --only-binary=numpy,scipy numpy scipy
+  - pip install coverage
+  - pip install coveralls
   - pip install matplotlib
-  - pip install git+https://github.com/kiyo-masui/bitshuffle
+  - CFLAGS=-I/usr/include/hdf5/serial pip install git+https://github.com/h5py/h5py
+  - CFLAGS=-I/usr/include/hdf5/serial pip install git+https://github.com/kiyo-masui/bitshuffle
   - pip install .
 
 # command to install dependencies
 script: 
-    - python tests/test_filterbank.py
-    - python tests/test_unpack.py
-#    - python tests/test_guppi.py
+    - cd tests; coverage run --source=blimpy -m py.test
+
+after_success: coveralls
     
 branches:
   only:
