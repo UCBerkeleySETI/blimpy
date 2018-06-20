@@ -243,7 +243,7 @@ class Waterfall(Filterbank):
 
         #Write header of .fil file
         n_bytes  = self.header[b'nbits'] / 8
-        with open(filename_out, "w") as fileh:
+        with open(filename_out, "wb") as fileh:
             fileh.write(generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
 
         logger.info('Using %i n_blobs to write the data.'% n_blobs)
@@ -270,7 +270,7 @@ class Waterfall(Filterbank):
         """
 
         n_bytes  = self.header[b'nbits'] / 8
-        with open(filename_out, "w") as fileh:
+        with open(filename_out, "wb") as fileh:
             fileh.write(generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
             j = self.data
             if n_bytes == 4:
