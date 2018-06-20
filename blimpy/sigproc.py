@@ -330,7 +330,7 @@ def to_sigproc_keyword(keyword, value=None):
         value_str (str): serialized string to write to file.
     """
 
-    keyword = str(keyword)
+#    keyword = str(keyword)
 
     if value is None:
         return np.int32(len(keyword)).tostring() + keyword
