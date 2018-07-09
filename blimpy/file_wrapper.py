@@ -283,7 +283,8 @@ class H5Reader(Reader):
     """ This class handles .h5 files.
     """
 
-    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=None):
+    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=None,
+                 max_data_array_size=None):
         """ Constructor.
 
         Args:
@@ -335,8 +336,11 @@ class H5Reader(Reader):
             #Update frequencies ranges from channel number.
             self._setup_freqs()
 
-            # Max size of data array to load into memory (1GB in bytes)
-            MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
+            if max_data_array_size is None:
+                # Max size of data array to load into memory (1GB in bytes)
+                MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
+            else:
+                MAX_DATA_ARRAY_SIZE_UNIT = max_data_array_size
 
             #Applying data size limit to load.
             if max_load is not None:
@@ -453,7 +457,8 @@ class FilReader(Reader):
     """ This class handles .fil files.
     """
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None,
+                 max_data_array_size=None):
         """ Constructor.
 
         Args:
@@ -507,8 +512,11 @@ class FilReader(Reader):
             # set start of data, at real length of header  (future development.)
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
-            # Max size of data array to load into memory (1GB in bytes)
-            self.MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
+            if max_data_array_size is None:
+                # Max size of data array to load into memory (1GB in bytes)
+                MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
+            else:
+                MAX_DATA_ARRAY_SIZE_UNIT = max_data_array_size
 
             #Applying data size limit to load.
             if max_load is not None:
@@ -516,7 +524,7 @@ class FilReader(Reader):
                     logger.warning('Setting data limit > 1GB, please handle with care!')
                     self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
-                self.MAX_DATA_ARRAY_SIZE = self.MAX_DATA_ARRAY_SIZE_UNIT
+                self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
 
             if self.file_size_bytes > self.MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
@@ -727,7 +735,8 @@ class FilReader(Reader):
         return data
 
 
-def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=None):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,
+              load_data=True, max_load=None, max_data_array_size=None):
     """Open a supported file type or fall back to Python built in open function.
 
     ================== ==================================================
@@ -753,10 +762,12 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
 
     if ext == b'h5':
         # Open HDF5 file
-        return H5Reader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
+        return H5Reader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
+                        load_data=load_data, max_load=max_load, max_data_array_size=max_data_array_size)
     elif ext == b'fil':
         # Open FIL file
-        return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
+        return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load,
+                         max_data_array_size=max_data_array_size)
     else:
         # Fall back to regular Python `open` function
         return open(filename, *args, **kwargs)

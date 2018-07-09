@@ -94,7 +94,8 @@ MAX_BLOB_MB         = 1024                   # Max size of blob in MB
 class Waterfall(Filterbank):
     """ Class for loading and writing blimpy data (.fil, .h5) """
 
-    def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None, header_dict=None, data_array=None):
+    def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None, header_dict=None, data_array=None,
+                 max_data_array_size=None):
         """ Class for loading and plotting blimpy data.
 
         This class parses the blimpy file and stores the header and data
@@ -120,7 +121,8 @@ class Waterfall(Filterbank):
         if filename:
             self.filename = filename
             self.ext = filename.split(".")[-1].strip().lower()  #File extension
-            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data,max_load=max_load)
+            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
+                                          load_data=load_data, max_load=max_load, max_data_array_size=max_data_array_size)
             self.file_header = self.container.header
             self.header = self.file_header
             self.n_ints_in_file = self.container.n_ints_in_file
