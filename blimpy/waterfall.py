@@ -110,7 +110,7 @@ class Waterfall(Filterbank):
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
-            max_load (bool): maximum data amount to load Default:1GB.
+            max_load (float): maximum data amount to load Default:1GB.
             header_dict (dict): Create blimpy from header dictionary + data array
             data_array (np.array): Create blimpy from header dict + data array
         """
