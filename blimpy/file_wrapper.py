@@ -508,7 +508,7 @@ class FilReader(Reader):
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
             # Max size of data array to load into memory (1GB in bytes)
-            self.MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
+            MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
 
             #Applying data size limit to load.
             if max_load is not None:
@@ -516,7 +516,7 @@ class FilReader(Reader):
                     logger.warning('Setting data limit > 1GB, please handle with care!')
                     self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
-                self.MAX_DATA_ARRAY_SIZE = self.MAX_DATA_ARRAY_SIZE_UNIT
+                self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
 
             if self.file_size_bytes > self.MAX_DATA_ARRAY_SIZE:
                 self.large_file = True
