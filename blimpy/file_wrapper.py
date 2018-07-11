@@ -283,7 +283,7 @@ class H5Reader(Reader):
     """ This class handles .h5 files.
     """
 
-    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=None):
+    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=1.):
         """ Constructor.
 
         Args:
@@ -339,10 +339,9 @@ class H5Reader(Reader):
             MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
 
             #Applying data size limit to load.
-            if max_load is not None:
-                if max_load > 1:
-                    logger.warning('Setting data limit > 1GB, please handle with care!')
-                    self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
+            if max_load > 0 and max_load != 1.:
+                logger.warning('Setting data limit != 1GB, please handle with care!')
+                self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
                 self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
 
@@ -453,7 +452,7 @@ class FilReader(Reader):
     """ This class handles .fil files.
     """
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=1.):
         """ Constructor.
 
         Args:
@@ -511,10 +510,9 @@ class FilReader(Reader):
             MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
 
             #Applying data size limit to load.
-            if max_load is not None:
-                if max_load > 1:
-                    logger.warning('Setting data limit > 1GB, please handle with care!')
-                    self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
+            if max_load > 0 and max_load != 1.:
+                logger.warning('Setting data limit != 1GB, please handle with care!')
+                self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
                 self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
 
@@ -727,7 +725,7 @@ class FilReader(Reader):
         return data
 
 
-def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=None):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=1.):
     """Open a supported file type or fall back to Python built in open function.
 
     ================== ==================================================
