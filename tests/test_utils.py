@@ -2,6 +2,7 @@ from blimpy import utils
 import numpy as np
 import pytest
 
+
 def test_utils():
     assert utils.db(100) == 20.0
     assert utils.lin(20)  == 100.0
@@ -27,6 +28,7 @@ def test_rebin():
     c = np.zeros([10, 10, 10])
     with pytest.raises(RuntimeError):
         utils.rebin(c, 2, 2)
+
 
 if __name__ == "__main__":
     test_utils()
