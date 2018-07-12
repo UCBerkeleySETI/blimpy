@@ -1,5 +1,5 @@
 import blimpy as bl
-from blimpy import sigproc
+
 import numpy as np
 from pprint import pprint
 import pytest
@@ -52,23 +52,14 @@ def test_plotting_doesnt_cause_exceptions():
     b.plot_waterfall()
     b.plot_time_series()
 
-def test_sigproc_is_fil():
-    """ Check that the is_fil function works """
 
-    assert sigproc.is_filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5') is False
-    assert sigproc.is_filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil') is True
-
-def test_file_wrapper_open_file():
-    from blimpy.file_wrapper import open_file
-    open_file('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    open_file('Voyager_data/Voyager1.single_coarse.fine_res.fil')
-
-    with pytest.raises(NotImplementedError):
-        open_file('run_tests.sh')
+def test_cmdtool():
+    with pytest.raises(SystemExit):
+        bl.waterfall.cmd_tool()
 
 
 if __name__ == "__main__":
     compare_filterbank_fil_to_h5()
     test_plotting_doesnt_cause_exceptions()
-    test_sigproc_is_fil()
-    test_file_wrapper_open_file()
+
+    test_cmdtool()
