@@ -31,6 +31,7 @@ else:
 
 logging.basicConfig(format=lformat, stream=stream, level=level_log)
 
+MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.0
 
 class Reader(object):
     """ Basic reader object """
@@ -336,17 +337,11 @@ class H5Reader(Reader):
             #Update frequencies ranges from channel number.
             self._setup_freqs()
 
-            if max_data_array_size is None:
-                # Max size of data array to load into memory (1GB in bytes)
-                MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
-            else:
-                MAX_DATA_ARRAY_SIZE_UNIT = max_data_array_size
-
             #Applying data size limit to load.
             if max_load is not None:
-                if max_load > 1:
+                if max_load > 1.0:
                     logger.warning('Setting data limit > 1GB, please handle with care!')
-                    self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
+                self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
                 self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
 
@@ -512,17 +507,13 @@ class FilReader(Reader):
             # set start of data, at real length of header  (future development.)
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
-            if max_data_array_size is None:
-                # Max size of data array to load into memory (1GB in bytes)
-                MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
-            else:
-                MAX_DATA_ARRAY_SIZE_UNIT = max_data_array_size
+
 
             #Applying data size limit to load.
             if max_load is not None:
-                if max_load > 1:
-                    logger.warning('Setting data limit > 1GB, please handle with care!')
-                    self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
+                if max_load > 1.0:
+                    logger.warning('Setting data limit != 1GB, please handle with care!')
+                self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
                 self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
 
@@ -552,12 +543,8 @@ class FilReader(Reader):
 
     def _setup_n_ints_in_file(self):
         """ Calculate the number of integrations in the file. """
-        n_bytes  = self._n_bytes
-        n_chans = self.n_channels_in_file
-        n_ifs   = self.n_beams_in_file
+        self.n_ints_in_file = sigproc.calc_n_ints_in_file(self.filename)
 
-        n_bytes_data = self.file_size_bytes - self.idx_data
-        self.n_ints_in_file = n_bytes_data / (n_bytes * n_chans * n_ifs)
 
     def read_header(self, return_idxs=False):
         """ Read blimpy header and return a Python dictionary of key:value pairs
@@ -584,7 +571,8 @@ class FilReader(Reader):
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
+            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, "
+                           "header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
             self.data = np.array([0],dtype=self._d_type)
             return None
 
@@ -736,7 +724,7 @@ class FilReader(Reader):
 
 
 def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,
-              load_data=True, max_load=None, max_data_array_size=None):
+              load_data=True, max_load=None):
     """Open a HDF5 or filterbank file
 
     Returns instance of a Reader to read data from file.
@@ -765,10 +753,9 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,
     if h5py.is_hdf5(filename):
         # Open HDF5 file
         return H5Reader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
-                        load_data=load_data, max_load=max_load, max_data_array_size=max_data_array_size)
+                        load_data=load_data, max_load=max_load)
     elif sigproc.is_filterbank(filename):
         # Open FIL file
-        return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load,
-                         max_data_array_size=max_data_array_size)
+        return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
     else:
         raise NotImplementedError('Cannot open this type of file with Waterfall')
