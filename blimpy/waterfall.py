@@ -120,7 +120,7 @@ class Waterfall(Filterbank):
 
         if filename:
             self.filename = filename
-            self.ext = filename.split(".")[-1].strip().lower()  #File extension
+            self.ext = os.path.splitext(filename)[-1].lower()
             self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
                                           load_data=load_data, max_load=max_load, max_data_array_size=max_data_array_size)
             self.file_header = self.container.header
