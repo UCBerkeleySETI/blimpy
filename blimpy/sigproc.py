@@ -211,6 +211,22 @@ def read_next_header_keyword(fh):
                 val = Angle(val, unit=u.deg)
         return keyword, val, idx
 
+def is_filterbank(filename):
+    """ Open file and confirm if it is a filterbank file or not. """
+    with open(filename, 'rb') as fh:
+        is_fil = True
+
+        # Check this is a blimpy file
+        try:
+            keyword, value, idx = read_next_header_keyword(fh)
+            try:
+                assert keyword == b'HEADER_START'
+            except AssertionError:
+                is_fil = False
+        except KeyError:
+            is_fil = False
+        return is_fil
+
 def read_header(filename, return_idxs=False):
     """ Read blimpy header and return a Python dictionary of key:value pairs
 
