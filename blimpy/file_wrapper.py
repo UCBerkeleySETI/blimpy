@@ -737,14 +737,16 @@ class FilReader(Reader):
 
 def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,
               load_data=True, max_load=None, max_data_array_size=None):
-    """Open a supported file type or fall back to Python built in open function.
+    """Open a HDF5 or filterbank file
+
+    Returns instance of a Reader to read data from file.
 
     ================== ==================================================
     Filename extension File type
     ================== ==================================================
-    h5                 HDF5 format
+    h5, hdf5           HDF5 format
     fil                fil format
-    *other*            Open with regular python :func:`open` function.
+    *other*            Will raise NotImplementedError
     ================== ==================================================
 
     """
@@ -760,14 +762,13 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,
     if six.PY3:
         ext = bytes(ext, 'ascii')
 
-    if ext == b'h5':
+    if h5py.is_hdf5(filename):
         # Open HDF5 file
         return H5Reader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
                         load_data=load_data, max_load=max_load, max_data_array_size=max_data_array_size)
-    elif ext == b'fil':
+    elif sigproc.is_filterbank(filename):
         # Open FIL file
         return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load,
                          max_data_array_size=max_data_array_size)
     else:
-        # Fall back to regular Python `open` function
-        return open(filename, *args, **kwargs)
+        raise NotImplementedError('Cannot open this type of file with Waterfall')
