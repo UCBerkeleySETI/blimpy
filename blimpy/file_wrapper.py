@@ -284,7 +284,7 @@ class H5Reader(Reader):
     """ This class handles .h5 files.
     """
 
-    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=None,
+    def __init__(self, filename, f_start=None, f_stop=None, t_start=None, t_stop=None, load_data=True, max_load=1.):
                  max_data_array_size=None):
         """ Constructor.
 
@@ -452,8 +452,7 @@ class FilReader(Reader):
     """ This class handles .fil files.
     """
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None,
-                 max_data_array_size=None):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=1.):
         """ Constructor.
 
         Args:
@@ -507,6 +506,8 @@ class FilReader(Reader):
             # set start of data, at real length of header  (future development.)
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
+            # Max size of data array to load into memory (1GB in bytes)
+            MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.
 
 
             #Applying data size limit to load.
@@ -723,8 +724,7 @@ class FilReader(Reader):
         return data
 
 
-def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,
-              load_data=True, max_load=None):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=1.):
     """Open a HDF5 or filterbank file
 
     Returns instance of a Reader to read data from file.
