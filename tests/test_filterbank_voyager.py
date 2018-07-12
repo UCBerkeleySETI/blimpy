@@ -68,7 +68,7 @@ def test_file_wrapper_open_file():
 
 
 if __name__ == "__main__":
-    #compare_filterbank_fil_to_h5()
-    #test_plotting_doesnt_cause_exceptions()
+    compare_filterbank_fil_to_h5()
+    test_plotting_doesnt_cause_exceptions()
     test_sigproc_is_fil()
     test_file_wrapper_open_file()
