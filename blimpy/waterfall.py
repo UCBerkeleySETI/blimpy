@@ -110,7 +110,8 @@ class Waterfall(Filterbank):
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
-            max_load (float): maximum data amount to load Default:1GB.
+            max_load (float): maximum data to load in GB. Default: 1GB. 
+                              e.g. 0.1 is 100 MB
             header_dict (dict): Create blimpy from header dictionary + data array
             data_array (np.array): Create blimpy from header dict + data array
         """
@@ -119,8 +120,9 @@ class Waterfall(Filterbank):
 
         if filename:
             self.filename = filename
-            self.ext = filename.split(".")[-1].strip().lower()  #File extension
-            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop,load_data=load_data,max_load=max_load)
+            self.ext = os.path.splitext(filename)[-1].lower()
+            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
+                                          load_data=load_data, max_load=max_load)
             self.file_header = self.container.header
             self.header = self.file_header
             self.n_ints_in_file = self.container.n_ints_in_file
