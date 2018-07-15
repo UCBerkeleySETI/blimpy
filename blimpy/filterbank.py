@@ -264,13 +264,8 @@ class Filterbank(object):
         filesize = os.path.getsize(self.filename)
         n_bytes_data = filesize - self.idx_data
 
-        if n_bits == 2:
-            n_ints_in_file = int(4 * n_bytes_data / (n_chans * n_ifs))
-        else:
-            n_ints_in_file = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
-
         # Finally add some other info to the class as objects
-        self.n_ints_in_file  = n_ints_in_file
+        self.n_ints_in_file  = calc_n_ints_in_file(self.filename)
         self.file_size_bytes = filesize
 
         ## Setup time axis
@@ -917,7 +912,7 @@ class Filterbank(object):
         print("[Filterbank] Warning: Non-standard function to write in filterbank (.fil) format. Please use Waterfall.")
 
         n_bytes  = int(self.header[b'nbits'] / 8)
-        with open(filename_out, "w") as fileh:
+        with open(filename_out, "wb") as fileh:
             fileh.write(generate_sigproc_header(self))
             j = self.data
             if n_bytes == 4:
