@@ -3,6 +3,7 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import Angle
 import os
+import six
 
 try:
     import h5py
@@ -73,38 +74,6 @@ header_keyword_types = {
     b'src_dej'      : b'angle',
     }
 
-def grab_header(filename):
-    """ Extract the blimpy header from the file
-
-    Args:
-        filename (str): name of file to open
-
-    Returns:
-        header_str (str): blimpy header as a binary string
-    """
-    f = open(filename, 'rb')
-    eoh_found = False
-
-    header_str = ''
-    header_sub_count = 0
-    while not eoh_found:
-        header_sub = f.read(512)
-        header_sub_count += 1
-        if b'HEADER_START' in header_sub:
-            idx_start = header_sub.index(b'HEADER_START') + len(b'HEADER_START')
-            header_sub = header_sub[idx_start:]
-
-        if b'HEADER_END' in header_sub:
-            eoh_found = True
-            idx_end = header_sub.index(b'HEADER_END')
-            header_sub = header_sub[:idx_end]
-
-        if header_sub_count >= MAX_HEADER_BLOCKS:
-            raise RuntimeError("MAX HEADER LENGTH REACHED. THIS FILE IS FUBARRED.")
-        header_str += header_sub
-
-    f.close()
-    return header_str
 
 def len_header(filename):
     """ Return the length of the blimpy header, in bytes
@@ -129,47 +98,6 @@ def len_header(filename):
         idx_end = (header_sub_count -1) * 512 + idx_end
     return idx_end
 
-def parse_header(filename):
-    """ Parse a header of a blimpy, looking for allowed keywords
-
-    Uses header_keyword_types dictionary as a lookup for data types.
-
-    Args:
-        filename (str): name of file to open
-
-    Returns:
-        header_dict (dict): A dictioary of header key:value pairs
-    """
-    header = grab_header(filename)
-    header_dict = {}
-
-    #print header
-    for keyword in header_keyword_types.keys():
-        if keyword in header:
-            dtype = header_keyword_types.get(keyword, b'str')
-            idx = header.index(keyword) + len(keyword)
-            dtype = header_keyword_types[keyword]
-            if dtype == b'<l':
-                val = struct.unpack(dtype, header[idx:idx+4])[0]
-                header_dict[keyword] = val
-            if dtype == b'<d':
-                val = struct.unpack(dtype, header[idx:idx+8])[0]
-                header_dict[keyword] = val
-            if dtype == b'str':
-                str_len = struct.unpack('<L', header[idx:idx+4])[0]
-                str_val = header[idx+4:idx+4+str_len]
-                header_dict[keyword] = str_val
-            if dtype == b'angle':
-                val = struct.unpack('<d', header[idx:idx+8])[0]
-                val = fil_double_to_angle(val)
-
-                if keyword == b'src_raj':
-                    val = Angle(val, unit=u.hour)
-                else:
-                   val = Angle(val, unit=u.deg)
-                header_dict[keyword] = val
-
-    return header_dict
 
 def read_next_header_keyword(fh):
     """
@@ -205,11 +133,29 @@ def read_next_header_keyword(fh):
         if dtype == b'angle':
             val = struct.unpack('<d', fh.read(8))[0]
             val = fil_double_to_angle(val)
-            if keyword == 'src_raj':
+            if keyword == b'src_raj':
                 val = Angle(val, unit=u.hour)
             else:
                 val = Angle(val, unit=u.deg)
         return keyword, val, idx
+
+
+def is_filterbank(filename):
+    """ Open file and confirm if it is a filterbank file or not. """
+    with open(filename, 'rb') as fh:
+        is_fil = True
+
+        # Check this is a blimpy file
+        try:
+            keyword, value, idx = read_next_header_keyword(fh)
+            try:
+                assert keyword == b'HEADER_START'
+            except AssertionError:
+                is_fil = False
+        except KeyError:
+            is_fil = False
+        return is_fil
+
 
 def read_header(filename, return_idxs=False):
     """ Read blimpy header and return a Python dictionary of key:value pairs
@@ -330,7 +276,7 @@ def to_sigproc_keyword(keyword, value=None):
         value_str (str): serialized string to write to file.
     """
 
-#    keyword = str(keyword)
+    keyword = bytes(keyword)
 
     if value is None:
         return np.int32(len(keyword)).tostring() + keyword
@@ -377,6 +323,7 @@ def generate_sigproc_header(f):
     header_string += to_sigproc_keyword(b'HEADER_END')
     return header_string
 
+
 def to_sigproc_angle(angle_val):
     """ Convert an astropy.Angle to the ridiculous sigproc angle format string. """
     x = str(angle_val)
@@ -399,11 +346,13 @@ def to_sigproc_angle(angle_val):
     num = str(d).zfill(2) + str(m).zfill(2) + str(s).zfill(2)+ '.' + str(ss).split(".")[-1]
     return np.float64(num).tostring()
 
+
 def calc_n_ints_in_file(filename):
     """ Calculate number of integrations in a given file """
     # Load binary data
     h = read_header(filename)
     n_bytes  = int(h[b'nbits'] / 8)
+
     n_chans = h[b'nchans']
     n_ifs   = h[b'nifs']
     idx_data = len_header(filename)
@@ -411,5 +360,10 @@ def calc_n_ints_in_file(filename):
     f.seek(idx_data)
     filesize = os.path.getsize(filename)
     n_bytes_data = filesize - idx_data
-    n_ints = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
+
+    if h[b'nbits'] == 2:
+        n_ints = int(4 * n_bytes_data / (n_chans * n_ifs))
+    else:
+        n_ints = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
+
     return n_ints

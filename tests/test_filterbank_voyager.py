@@ -1,6 +1,8 @@
 import blimpy as bl
+
 import numpy as np
 from pprint import pprint
+import pytest
 
 def compare_filterbank_fil_to_h5():
     """ Load Voyager dataset and test that both fil and hdf5 readers return same headers and data """
@@ -50,6 +52,14 @@ def test_plotting_doesnt_cause_exceptions():
     b.plot_waterfall()
     b.plot_time_series()
 
+
+def test_cmdtool():
+    with pytest.raises(SystemExit):
+        bl.waterfall.cmd_tool()
+
+
 if __name__ == "__main__":
     compare_filterbank_fil_to_h5()
     test_plotting_doesnt_cause_exceptions()
+
+    test_cmdtool()
