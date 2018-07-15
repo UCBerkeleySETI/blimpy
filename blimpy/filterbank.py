@@ -730,7 +730,7 @@ class Filterbank(object):
         # Reverse oder if vertical orientation.
         if orientation is not None:
             if 'v' in orientation:
-                plt.plot(plot_data, plot_t[::-1], **kwargs)
+                plt.plot(plot_data, plot_t, **kwargs)
             else:
                 plt.plot(plot_t, plot_data, **kwargs)
                 plt.xlabel(xlabel)
