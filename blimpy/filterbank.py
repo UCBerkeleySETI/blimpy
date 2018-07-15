@@ -686,6 +686,7 @@ class Filterbank(object):
 
         plt.imshow(plot_data,
             aspect='auto',
+            origin='lower',
             rasterized=True,
             interpolation='nearest',
             extent=extent,
