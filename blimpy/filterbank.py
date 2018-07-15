@@ -696,7 +696,7 @@ class Filterbank(object):
         else:
             plt.ylabel("Time [s]")
 
-    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation=None, MJD_time=False, **kwargs):
+    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation='h', MJD_time=False, **kwargs):
         """ Plot the time series.
 
          Args:
@@ -723,20 +723,24 @@ class Filterbank(object):
         plot_t = np.linspace(extent[2],extent[3],len(self.timestamps))
 
         if MJD_time:
-            xlabel = "Time [MJD]"
+            tlabel = "Time [MJD]"
         else:
-            xlabel = "Time [s]"
+            tlabel = "Time [s]"
+
+        if logged:
+            plabel = "Power [dB]"
+        else:
+            plabel = "Power [counts]"
 
         # Reverse oder if vertical orientation.
-        if orientation is not None:
-            if 'v' in orientation:
-                plt.plot(plot_data, plot_t, **kwargs)
-            else:
-                plt.plot(plot_t, plot_data, **kwargs)
-                plt.xlabel(xlabel)
+        if 'v' in orientation:
+            plt.plot(plot_data, plot_t, **kwargs)
+            plt.xlabel(plabel)
+
         else:
             plt.plot(plot_t, plot_data, **kwargs)
-            plt.xlabel(xlabel)
+            plt.xlabel(tlabel)
+            plt.ylabel(plabel)
 
         ax.autoscale(axis='both',tight=True)
 
@@ -841,7 +845,7 @@ class Filterbank(object):
         print('Plotting Timeseries')
         self.plot_time_series(f_start=f_start, f_stop=f_stop, orientation='v')
         axTimeseries.yaxis.set_major_formatter(nullfmt)
-        axTimeseries.xaxis.set_major_formatter(nullfmt)
+#        axTimeseries.xaxis.set_major_formatter(nullfmt)
 
         # --------
         # Could exclude since it takes much longer to run than the other plots.
