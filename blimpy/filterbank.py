@@ -805,15 +805,6 @@ class Filterbank(object):
         rect_header = [left3 - .05, bottom, 0.2, height]
 
         # --------
-        axWaterfall = plt.axes(rect_waterfall)
-        print('Plotting Waterfall')
-        self.plot_waterfall(f_start=f_start, f_stop=f_stop, logged=logged, cb=False)
-        plt.xlabel('')
-
-        # no labels
-        axWaterfall.xaxis.set_major_formatter(nullfmt)
-
-        # --------
         #         axColorbar = plt.axes(rect_colorbar)
         #         print 'Ploting Colorbar'
         #         print plot_data.max()
@@ -830,15 +821,35 @@ class Filterbank(object):
         #         heatmap = axColorbar.pcolor(plot_data, edgecolors = 'none', picker=True)
         #         plt.colorbar(heatmap, cax = axColorbar)
 
+
         # --------
-        axSpectrum = plt.axes(rect_spectrum)
+        axMinMax = plt.axes(rect_min_max)
+        print('Plotting Min Max')
+        self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
+        plt.title('')
+        axMinMax.yaxis.tick_right()
+        axMinMax.yaxis.set_label_position("right")
+
+        # --------
+        axSpectrum = plt.axes(rect_spectrum,sharex=axMinMax)
         print('Plotting Spectrum')
         self.plot_spectrum(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
         axSpectrum.yaxis.tick_right()
         axSpectrum.yaxis.set_label_position("right")
         plt.xlabel('')
-        axSpectrum.xaxis.set_major_formatter(nullfmt)
+#        axSpectrum.xaxis.set_major_formatter(nullfmt)
+        plt.setp(axSpectrum.get_xticklabels(), visible=False)
+
+        # --------
+        axWaterfall = plt.axes(rect_waterfall,sharex=axMinMax)
+        print('Plotting Waterfall')
+        self.plot_waterfall(f_start=f_start, f_stop=f_stop, logged=logged, cb=False)
+        plt.xlabel('')
+
+        # no labels
+#        axWaterfall.xaxis.set_major_formatter(nullfmt)
+        plt.setp(axWaterfall.get_xticklabels(), visible=False)
 
         # --------
         axTimeseries = plt.axes(rect_timeseries)
@@ -854,13 +865,6 @@ class Filterbank(object):
             print('Plotting Kurtosis')
             self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
 
-        # --------
-        axMinMax = plt.axes(rect_min_max)
-        print('Plotting Min Max')
-        self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
-        plt.title('')
-        axMinMax.yaxis.tick_right()
-        axMinMax.yaxis.set_label_position("right")
 
         # --------
         axHeader = plt.axes(rect_header)
