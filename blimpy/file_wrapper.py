@@ -258,6 +258,12 @@ class Reader(object):
                 return n_coarse_chan
             else:
                 logger.warning("Couldn't figure out n_coarse_chan")
+        elif self.header[b'telescope_id'] == 6 and nchans < 2**20:
+            #For GBT non-hires data
+                coarse_chan_bw = 2.9296875
+                bandwidth = abs(self.f_stop - self.f_start)
+                n_coarse_chan = int(bandwidth / coarse_chan_bw)
+                return n_coarse_chan
         else:
             logger.warning("This function currently only works for hires BL Parkes or GBT data.")
 
