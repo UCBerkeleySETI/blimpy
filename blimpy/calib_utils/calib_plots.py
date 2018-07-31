@@ -84,17 +84,25 @@ def plot_calibrated_diode(dio_cross,chan_per_coarse=8,**kwargs):
     tsamp = obs.header['tsamp']
     data = obs.data
     I,Q,U,V = get_stokes(data)
+    data = None
+    obs = None
 
     #Calculate Mueller Matrix variables for each coarse channel
     psis = phase_offsets(U,V,freqs,tsamp,chan_per_coarse,**kwargs)
     G = gain_offsets(I,Q,tsamp,chan_per_coarse,**kwargs)
 
     #Apply the Mueller matrix to original noise diode data and refold
-    Icorr,Qcorr,Ucorr,Vcorr = apply_Mueller(I,Q,U,V,G,psis,chan_per_coarse)
-    I_OFF,I_ON = foldcal(Icorr,tsamp,**kwargs)
-    Q_OFF,Q_ON = foldcal(Qcorr,tsamp,**kwargs)
-    U_OFF,U_ON = foldcal(Ucorr,tsamp,**kwargs)
-    V_OFF,V_ON = foldcal(Vcorr,tsamp,**kwargs)
+    I,Q,U,V = apply_Mueller(I,Q,U,V,G,psis,chan_per_coarse)
+    I_OFF,I_ON = foldcal(I,tsamp,**kwargs)
+    Q_OFF,Q_ON = foldcal(Q,tsamp,**kwargs)
+    U_OFF,U_ON = foldcal(U,tsamp,**kwargs)
+    V_OFF,V_ON = foldcal(V,tsamp,**kwargs)
+
+    #Delete data arrays for space
+    I = None
+    Q = None
+    U = None
+    V = None
 
     #Plot new ON-OFF spectra
     plt.plot(freqs,I_ON-I_OFF,'k-',label='I')
@@ -208,4 +216,5 @@ def plot_diode_fold(dio_cross,**kwargs):
     plt.title('Noise Diode Fold')
     plt.show()
 
+#def plot_gain_offsets(dio_cross, **kwargs):
 

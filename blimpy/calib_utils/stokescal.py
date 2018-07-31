@@ -46,7 +46,7 @@ def convert_to_coarse(data,chan_per_coarse):
     #Return the average over each coarse channel
     return np.mean(data_shaped[:,2:-1],axis=1)
 
-def phase_offsets(Udat,Vdat,freqs,tsamp,chan_per_coarse,fit=False,**kwargs):
+def phase_offsets(Udat,Vdat,tsamp,chan_per_coarse,fit=False,**kwargs):
     '''
     Calculates phase difference between X and Y feeds given U and V
     data from a noise diode measurement on the target
@@ -136,14 +136,19 @@ def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse):
     Ucorr = U*np.cos(phase_offsets)+V*np.sin(phase_offsets)
     Vcorr = -1*U*np.sin(phase_offsets)+V*np.cos(phase_offsets)
 
+    I = Icorr
+    Q = Qcorr
+    U = Ucorr
+    V = Vcorr
+
     #Reshape arrays to original shape
-    Icorr = np.reshape(np.swapaxes(Icorr,2,3),shape)
-    Qcorr = np.reshape(np.swapaxes(Qcorr,2,3),shape)
-    Ucorr = np.reshape(np.swapaxes(Ucorr,2,3),shape)
-    Vcorr = np.reshape(np.swapaxes(Vcorr,2,3),shape)
+    I = np.reshape(np.swapaxes(I,2,3),shape)
+    Q = np.reshape(np.swapaxes(Q,2,3),shape)
+    U = np.reshape(np.swapaxes(U,2,3),shape)
+    V = np.reshape(np.swapaxes(V,2,3),shape)
 
     #Return corrected data arrays
-    return Icorr,Qcorr,Ucorr,Vcorr
+    return I,Q,U,V
 
 def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     '''
@@ -154,17 +159,23 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     obs = Waterfall(diode_cross,max_load=150)
     cross_dat = obs.data
     tsamp = obs.header['tsamp']
-    freqs = obs.populate_freqs()
-    Idat,Qdat,Udat,Vdat = get_stokes(cross_dat)
 
     #Calculate number of coarse channels in the noise diode measurement (usually 8)
     dio_ncoarse = obs.calc_n_coarse_chan()
     dio_nchans = obs.header['nchans']
     dio_chan_per_coarse = dio_nchans/dio_ncoarse
-
+    obs = None
+    Idat,Qdat,Udat,Vdat = get_stokes(cross_dat)
+    cross_dat = None
     #Calculate differential gain and phase from noise diode measurements
     gams = gain_offsets(Idat,Qdat,tsamp,dio_chan_per_coarse,**kwargs)
-    psis = phase_offsets(Udat,Vdat,freqs,tsamp,dio_chan_per_coarse,**kwargs)
+    psis = phase_offsets(Udat,Vdat,tsamp,dio_chan_per_coarse,**kwargs)
+
+    #Clear data arrays for space
+    Idat = None
+    Qdat = None
+    Udat = None
+    Vdat = None
 
     #Get corrected Stokes parameters
     cross_obs = Waterfall(cross_pols,max_load=150)
@@ -172,35 +183,36 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     obs_nchans = cross_obs.header['nchans']
     obs_chan_per_coarse = obs_nchans/obs_ncoarse
     cross_dat = cross_obs.data
+    cross_obs = None
     I,Q,U,V = get_stokes(cross_dat)
 
-    Icorr,Qcorr,Ucorr,Vcorr = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse)
+    I,Q,U,V = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse)
 
     #Use onefile (default) to produce one filterbank file containing all Stokes information
     if onefile==True:
-        cross_obs.data[:,0,:] = np.squeeze(Icorr)
-        cross_obs.data[:,1,:] = np.squeeze(Qcorr)
-        cross_obs.data[:,2,:] = np.squeeze(Ucorr)
-        cross_obs.data[:,3,:] = np.squeeze(Vcorr)
+        cross_obs.data[:,0,:] = np.squeeze(I)
+        cross_obs.data[:,1,:] = np.squeeze(Q)
+        cross_obs.data[:,2,:] = np.squeeze(U)
+        cross_obs.data[:,3,:] = np.squeeze(V)
         cross_obs.write_to_fil(cross_pols[:-15]+'.SIQUV.polcal.fil')
         print 'Calibrated Stokes parameters written to '+cross_pols[:-15]+'.SIQUV.polcal.fil'
         return
 
     #Write corrected Stokes parameters to four filterbank files if onefile==False
     obs = Waterfall(obs_I,max_load=150)
-    obs.data = Icorr
+    obs.data = I
     obs.write_to_fil(cross_pols[:-15]+'.SI.polcal.fil')   #assuming file is named *.cross_pols.fil
     print 'Calibrated Stokes I written to '+cross_pols[:-15]+'.SI.polcal.fil'
 
-    obs.data = Qcorr
+    obs.data = Q
     obs.write_to_fil(cross_pols[:-15]+'.Q.polcal.fil')   #assuming file is named *.cross_pols.fil
     print 'Calibrated Stokes Q written to '+cross_pols[:-15]+'.Q.polcal.fil'
 
-    obs.data = Ucorr
+    obs.data = U
     obs.write_to_fil(cross_pols[:-15]+'.U.polcal.fil')   #assuming file is named *.cross_pols.fil
     print 'Calibrated Stokes U written to '+cross_pols[:-15]+'.U.polcal.fil'
 
-    obs.data = Vcorr
+    obs.data = V
     obs.write_to_fil(cross_pols[:-15]+'.V.polcal.fil')   #assuming file is named *.cross_pols.fil
     print 'Calibrated Stokes V written to '+cross_pols[:-15]+'.V.polcal.fil'
 
