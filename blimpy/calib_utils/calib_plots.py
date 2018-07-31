@@ -71,7 +71,7 @@ def plot_Stokes_diode(dio_cross,diff=True,**kwargs):
     plt.xlabel('Frequency (MHz)')
     plt.title('Uncalibrated Full Stokes Noise Diode Spectrum')
     plt.ylabel('Power (Counts)')
-    plt.show()
+
 
 def plot_calibrated_diode(dio_cross,chan_per_coarse=8,**kwargs):
     '''
@@ -88,7 +88,7 @@ def plot_calibrated_diode(dio_cross,chan_per_coarse=8,**kwargs):
     obs = None
 
     #Calculate Mueller Matrix variables for each coarse channel
-    psis = phase_offsets(U,V,freqs,tsamp,chan_per_coarse,**kwargs)
+    psis = phase_offsets(U,V,tsamp,chan_per_coarse,**kwargs)
     G = gain_offsets(I,Q,tsamp,chan_per_coarse,**kwargs)
 
     #Apply the Mueller matrix to original noise diode data and refold
@@ -114,9 +114,9 @@ def plot_calibrated_diode(dio_cross,chan_per_coarse=8,**kwargs):
     plt.xlabel('Frequency (MHz)')
     plt.title('Calibrated Full Stokes Noise Diode Spectrum')
     plt.ylabel('Power (Counts)')
-    plt.show()
 
-def plot_phase_offsets(dio_cross,chan_per_coarse=8,**kwargs):
+
+def plot_phase_offsets(dio_cross,chan_per_coarse=8,ax1=None,ax2=None,legend=True,**kwargs):
     '''
     Plots the calculated phase offsets of each coarse channel along with
     the UV noise diode spectrum for comparison
@@ -129,28 +129,76 @@ def plot_phase_offsets(dio_cross,chan_per_coarse=8,**kwargs):
     I,Q,U,V = get_stokes(data)
 
     #Get phase offsets and convert to degrees
-    coarse_psis = phase_offsets(U,V,freqs,tsamp,chan_per_coarse,**kwargs)
+    coarse_psis = phase_offsets(U,V,tsamp,chan_per_coarse,**kwargs)
     coarse_freqs = convert_to_coarse(freqs,chan_per_coarse)
     coarse_degs = np.degrees(coarse_psis)
 
     #Plot phase offsets
-    plt.subplot(211)
+    if ax2==None:
+        plt.subplot(211)
+    else:
+        axPsi = plt.axes(ax2)
+        plt.setp(axPsi.get_xticklabels(),visible=False)
     plt.plot(coarse_freqs,coarse_degs,'ko',markersize=2,label='Coarse Channel $\psi$')
-    plt.ylabel('Phase (Degrees)')
+    plt.ylabel('Degrees')
     plt.grid(True)
-    plt.legend()
     plt.title('XY Phase Offsets')
+    if legend==True:
+        plt.legend()
 
     #Plot U and V spectra
-    plt.subplot(212)
+    if ax1==None:
+        plt.subplot(212)
+    else:
+        axUV = plt.axes(ax1)
     plt.plot(freqs,Udiff,'g-',label='U')
     plt.plot(freqs,Vdiff,'m-',label='V')
-    plt.legend()
     plt.xlabel('Frequency (MHz)')
     plt.ylabel('Power (Counts)')
     plt.grid(True)
-    plt.show()
+    if legend==True:
+        plt.legend()
 
+def plot_gain_offsets(dio_cross,dio_chan_per_coarse=8,ax1=None,ax2=None,legend=True,**kwargs):
+    '''
+    Plots the calculated gain offsets of each coarse channel along with
+    the time averaged power spectra of the X and Y feeds
+    '''
+    #Get ON-OFF ND spectra
+    Idiff,Qdiff,Udiff,Vdiff,freqs = get_diff(dio_cross,**kwargs)
+    obs = Waterfall(dio_cross,max_load=150)
+    tsamp = obs.header['tsamp']
+    data = obs.data
+    I,Q,U,V = get_stokes(data)
+
+    #Get phase offsets and convert to degrees
+    coarse_G = phase_offsets(I,Q,tsamp,dio_chan_per_coarse,**kwargs)
+    coarse_freqs = convert_to_coarse(freqs,dio_chan_per_coarse)
+
+    #Get X and Y spectra for the noise diode ON and OFF
+    XX_OFF,XX_ON = foldcal(np.expand_dims(data[:,0,:],axis=1),tsamp,**kwargs)
+    YY_OFF,YY_ON = foldcal(np.expand_dims(data[:,1,:],axis=1),tsamp,**kwargs)
+
+    if ax1==None:
+        plt.subplot(211)
+    else:
+        axG = plt.axes(ax1)
+        plt.setp(axG.get_xticklabels(),visible=False)
+    plt.plot(coarse_freqs,coarse_G,'ko',markersize=2)
+    plt.ylabel(r'$\frac{\Delta G}{2}$',rotation=90)
+    plt.title('XY Gain Difference')
+    plt.grid(True)
+
+    if ax2==None:
+        plt.subplot(212)
+    else:
+        axXY = plt.axes(ax2,sharex=axG)
+    plt.plot(freqs,XX_OFF,'b-',label='XX')
+    plt.plot(freqs,YY_OFF,'r-',label='YY')
+    plt.xlabel('Frequency (MHz)')
+    plt.ylabel('Power (Counts)')
+    if legend==True:
+        plt.legend()
 
 def plot_UVfit(dio_cross,chan_per_coarse=8,**kwargs):
     '''
@@ -183,11 +231,11 @@ def plot_UVfit(dio_cross,chan_per_coarse=8,**kwargs):
     plt.plot(freqs,Vfit,'k-',label='V fit')
     plt.legend()
     plt.xlabel('Frequency (MHz)')
-    plt.ylabel('Power (Counts')
+    plt.ylabel('Power (Counts)')
 
-    plt.show()
 
-def plot_diode_fold(dio_cross,**kwargs):
+
+def plot_diode_fold(dio_cross,min_samp=-500,max_samp=7000,**kwargs):
     '''
     Plots the calculated average power and time sampling of ON (red) and
     OFF (blue) for a noise diode measurement over the observation time series
@@ -210,11 +258,62 @@ def plot_diode_fold(dio_cross,**kwargs):
     for i in OFFints:
         plt.plot(np.arange(i[0],i[1]),np.full((i[1]-i[0]),np.mean(I_OFF)),'b-')
 
-    plt.legend()
+    #Calculate plotting limits
+    lowlim = np.mean(I_OFF)-(np.mean(I_ON)-np.mean(I_OFF))/2
+    hilim = np.mean(I_ON)+(np.mean(I_ON)-np.mean(I_OFF))/2
+
+    plt.xlim((min_samp,max_samp))
+    plt.ylim((lowlim,hilim))
     plt.xlabel('Time Sample Number')
     plt.ylabel('Power (Counts)')
     plt.title('Noise Diode Fold')
-    plt.show()
 
-#def plot_gain_offsets(dio_cross, **kwargs):
+
+def plot_fullcalib(dio_cross,**kwargs):
+    '''
+    Generates and shows five plots: Uncalibrated diode, calibrated diode, fold information,
+    phase offsets, and gain offsets for a noise diode measurement.
+    '''
+
+    plt.figure("Multiple Calibration Plots", figsize=(12,9))
+    left, width = 0.075,0.435
+    bottom, height = 0.45,0.5
+    width2 = 0.232
+    bottom2, height2 = 0.115,0.0975
+
+    rect_uncal = [left,bottom,width,height]
+    rect_cal = [left+width+0.025,bottom,width,height]
+    rect_fold = [left,bottom2,width2,0.22]
+    rect_gain1 = [left+width2+0.1,bottom2,width2,height2]
+    rect_phase1 = [left+width2*2+0.1*2,bottom2,width2,height2]
+    rect_gain2 = [left+width2+0.1,bottom2+height2+0.025,width2,height2]
+    rect_phase2 = [left+width2*2+0.1*2,bottom2+height2+0.025,width2,height2]
+
+    #--------
+    axFold = plt.axes(rect_fold)
+    print('Plotting Diode Fold')
+    plot_diode_fold(dio_cross,min_samp=2000,max_samp=5500,**kwargs)
+
+    #--------
+    print('Plotting Gain Offsets')
+    plot_gain_offsets(dio_cross,ax1=rect_gain2,ax2=rect_gain1,legend=False,**kwargs)
+
+    #--------
+    print('Plotting Phase Offsets')
+    plot_phase_offsets(dio_cross,ax1=rect_phase1,ax2=rect_phase2,legend=False,**kwargs)
+    plt.ylabel('')
+
+    #--------
+    ax_uncal = plt.axes(rect_uncal)
+    print('Plotting Uncalibrated Diode')
+    plot_Stokes_diode(dio_cross,**kwargs)
+
+    #--------
+    ax_cal = plt.axes(rect_cal,sharey=ax_uncal)
+    print('Plotting Calibrated Diode')
+    plot_calibrated_diode(dio_cross,**kwargs)
+    plt.ylabel('')
+    plt.setp(ax_cal.get_yticklabels(),visible=False)
+
+    plt.show()
 
