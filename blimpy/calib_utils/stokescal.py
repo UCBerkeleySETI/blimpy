@@ -132,23 +132,26 @@ def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse):
     Icorr = a*(I-gain_offsets*Q)
     Qcorr = a*(-1*gain_offsets*I+Q)
 
+    #Clear uncalibrated I and Q
+    I = None
+    Q = None
+
     #Apply bottom right corner of electronics chain inverse Mueller matrix
     Ucorr = U*np.cos(phase_offsets)+V*np.sin(phase_offsets)
     Vcorr = -1*U*np.sin(phase_offsets)+V*np.cos(phase_offsets)
 
-    I = Icorr
-    Q = Qcorr
-    U = Ucorr
-    V = Vcorr
+    #Clear uncalibrated U and V
+    U = None
+    V = None
 
     #Reshape arrays to original shape
-    I = np.reshape(np.swapaxes(I,2,3),shape)
-    Q = np.reshape(np.swapaxes(Q,2,3),shape)
-    U = np.reshape(np.swapaxes(U,2,3),shape)
-    V = np.reshape(np.swapaxes(V,2,3),shape)
+    Icorr = np.reshape(np.swapaxes(Icorr,2,3),shape)
+    Qcorr = np.reshape(np.swapaxes(Qcorr,2,3),shape)
+    Ucorr = np.reshape(np.swapaxes(Ucorr,2,3),shape)
+    Vcorr = np.reshape(np.swapaxes(Vcorr,2,3),shape)
 
     #Return corrected data arrays
-    return I,Q,U,V
+    return Icorr,Qcorr,Ucorr,Vcorr
 
 def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     '''
