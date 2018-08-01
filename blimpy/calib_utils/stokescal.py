@@ -1,4 +1,3 @@
-
 from blimpy import Waterfall
 import numpy as np
 from scipy.optimize import curve_fit
@@ -174,7 +173,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     gams = gain_offsets(Idat,Qdat,tsamp,dio_chan_per_coarse,**kwargs)
     psis = phase_offsets(Udat,Vdat,tsamp,dio_chan_per_coarse,**kwargs)
 
-    #Clear data arrays for space
+    #Clear data arrays to save memory
     Idat = None
     Qdat = None
     Udat = None
@@ -186,7 +185,6 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     obs_nchans = cross_obs.header['nchans']
     obs_chan_per_coarse = obs_nchans/obs_ncoarse
     cross_dat = cross_obs.data
-    cross_obs = None
     I,Q,U,V = get_stokes(cross_dat)
 
     I,Q,U,V = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse)
@@ -218,6 +216,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     obs.data = V
     obs.write_to_fil(cross_pols[:-15]+'.V.polcal.fil')   #assuming file is named *.cross_pols.fil
     print 'Calibrated Stokes V written to '+cross_pols[:-15]+'.V.polcal.fil'
+
 
 def fracpols(str, **kwargs):
     '''Output fractional linear and circular polarizations for a
