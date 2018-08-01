@@ -40,6 +40,7 @@ def cmd_tool():
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float, help='Stop frequency in MHz')
     parser.add_argument('-x', '--output_file', action='store', default=None, dest='out_format', type=str, help='Output file format [.h5 or .fil].')
     parser.add_argument('-o', '--output_filename', action='store', default=None, dest='out_fname', type=str, help='Ouput file name to write (to HDF5 or FIL).')
+    parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1GB')
 
     args = parser.parse_args()
 
@@ -100,7 +101,7 @@ def cmd_tool():
         logger.warning('Higher frequency not given, setting to ' + str(f_max_file) + ' MHz to match file.')
 
     #Read start frequency and bandwidth from data set
-    file_big = Waterfall(args.in_fname)
+    file_big = Waterfall(args.in_fname, max_load = max_load)
     f_min_file = file_big.header['fch1']
     f_max_file = file_big.header['fch1'] + file_big.header['nchans']*file_big.header['foff']
 
@@ -144,7 +145,7 @@ def cmd_tool():
     logger.info('Extacting from ' + str(f_start_real) + ' MHz to ' + str(f_stop_real) + ' MHz.')
 
     # create waterfall object
-    file_small = Waterfall(args.in_fname, f_start = f_start_real, f_stop = f_stop_real)
+    file_small = Waterfall(args.in_fname, f_start = f_start_real, f_stop = f_stop_real, max_load = max_load)
 
     # write waterfall object
     if args.out_fname[len(args.out_fname)-4:] == '.fil':
