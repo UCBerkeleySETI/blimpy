@@ -6,27 +6,22 @@ from fluxcal import foldcal
 def get_stokes(cross_dat, **kwargs):
     '''Output stokes parameters (I,Q,U,V) for a rawspec
     cross polarization data array'''
-    #Load observation data
-    #obs = Waterfall(, max_load=150, **kwargs)
-    dat = cross_dat
-
-    #Obtain cross polarization data arrays
-    XX = dat[:,0,:]
-    YY = dat[:,1,:]
-    Re_XY = dat[:,2,:]
-    Im_XY = dat[:,3,:]
-
-    #Add a dimension to each to match blimpy file format
-    XX = np.expand_dims(XX,axis=1)
-    YY = np.expand_dims(YY,axis=1)
-    Re_XY = np.expand_dims(Re_XY,axis=1)
-    Im_XY = np.expand_dims(Im_XY,axis=1)
 
     #Compute Stokes Parameters
-    I = XX+YY
-    Q = XX-YY
-    U = 2*Re_XY
-    V = -2*Im_XY
+    #I = XX+YY
+    I = cross_dat[:,0,:]+cross_dat[:,1,:]
+    #Q = XX-YY
+    Q = cross_dat[:,0,:]-cross_dat[:,1,:]
+    #U = 2*Re(XY)
+    U = 2*cross_dat[:,2,:]
+    #V = -2*Im(XY)
+    V = -2*cross_dat[:,3,:]
+
+    #Add middle dimension to match Filterbank format
+    I = np.expand_dims(I,axis=1)
+    Q = np.expand_dims(Q,axis=1)
+    U = np.expand_dims(U,axis=1)
+    V = np.expand_dims(V,axis=1)
 
     #Compute linear polarization
     #L=np.sqrt(np.square(Q)+np.square(U))
@@ -170,6 +165,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     Idat,Qdat,Udat,Vdat = get_stokes(cross_dat)
     cross_dat = None
     #Calculate differential gain and phase from noise diode measurements
+    print 'Calculating Mueller Matrix variables'
     gams = gain_offsets(Idat,Qdat,tsamp,dio_chan_per_coarse,**kwargs)
     psis = phase_offsets(Udat,Vdat,tsamp,dio_chan_per_coarse,**kwargs)
 
@@ -180,13 +176,16 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     Vdat = None
 
     #Get corrected Stokes parameters
+    print 'Opening '+cross_pols
     cross_obs = Waterfall(cross_pols,max_load=150)
     obs_ncoarse = cross_obs.calc_n_coarse_chan()
     obs_nchans = cross_obs.header['nchans']
     obs_chan_per_coarse = obs_nchans/obs_ncoarse
-    cross_dat = cross_obs.data
-    I,Q,U,V = get_stokes(cross_dat)
 
+    print 'Grabbing Stokes parameters'
+    I,Q,U,V = get_stokes(cross_obs.data)
+
+    print 'Applying Mueller Matrix'
     I,Q,U,V = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse)
 
     #Use onefile (default) to produce one filterbank file containing all Stokes information
