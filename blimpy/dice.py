@@ -145,7 +145,7 @@ def cmd_tool():
     logger.info('Extacting from ' + str(f_start_real) + ' MHz to ' + str(f_stop_real) + ' MHz.')
 
     # create waterfall object
-    file_small = Waterfall(args.in_fname, f_start = f_start_real, f_stop = f_stop_real, max_load = max_load)
+    file_small = Waterfall(args.in_fname, f_start = f_start_real, f_stop = f_stop_real, max_load = args.max_load)
 
     # write waterfall object
     if args.out_fname[len(args.out_fname)-4:] == '.fil':
