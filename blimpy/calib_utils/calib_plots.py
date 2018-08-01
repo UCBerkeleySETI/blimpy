@@ -317,3 +317,15 @@ def plot_fullcalib(dio_cross,**kwargs):
 
     plt.show()
 
+def plot_diodespec(ON_obs,OFF_obs,calflux,calfreq,spec_in,units='mJy',**kwargs):
+
+    dspec = diode_spec(ON_obs,OFF_obs,calflux,calfreq,spec_in,**kwargs)
+    obs = Waterfall(ON_obs,max_load=150)
+    freqs = obs.populate_freqs()
+    chan_per_coarse = obs.header['nchans']/obs.calc_n_coarse_chan()
+    coarse_freqs = convert_to_coarse(freqs,chan_per_coarse)
+
+    plt.plot(coarse_freqs,dspec)
+    plt.xlabel('Frequency (MHz)')
+    plt.ylabel('Flux Density ('+units+')')
+    plt.title('Noise Diode Spectrum')
