@@ -49,25 +49,29 @@ def foldcal(data,tsamp, diode_p=0.04,numsamps=1000,switch=False,inds=False):
         else:
             return np.squeeze(np.mean(av_OFF,axis=0)), np.squeeze(np.mean(av_ON,axis=0)),OFFints,ONints
 
-def integrate_chans(spec,freqs,chan_per_core):
+def integrate_chans(spec,freqs,chan_per_coarse):
     '''Integrates each core channel of a given spectrum'''
 
-    num_cores = spec.size/chan_per_core     #Calculate number of coarse channels
+    num_coarse = spec.size/chan_per_coarse     #Calculate number of coarse channels
 
-    spec_shaped = np.array(np.reshape(spec,(num_cores,chan_per_core)))
-    freqs_shaped = np.array(np.reshape(freqs,(num_cores,chan_per_core)))
+    spec_shaped = np.array(np.reshape(spec,(num_coarse,chan_per_coarse)))
+    freqs_shaped = np.array(np.reshape(freqs,(num_coarse,chan_per_coarse)))
 
     return -1*trapz(spec_shaped,freqs_shaped,axis=1)   #Integrate along core channel axis
 
-def integrate_calib(name,chan_per_core,**kwargs):
+def integrate_calib(name,chan_per_coarse,fullstokes=False,**kwargs):
     '''Folds noise diode data and integrates along coarse channels'''
     #Load data
     obs = Waterfall(name,max_load=150)
     data = obs.data
 
     #If the data has cross_pols format calculate Stokes I
-    if data.shape[1]>1:
+    if fullstokes==False and data.shape[1]>1:
         data = data[:,0,:]+data[:,1,:]
+        data = np.expand_dims(data,axis=1)
+    #If the data as IQUV format get Stokes I
+    if fullstokes==True:
+        data = data[:,0,:]
         data = np.expand_dims(data,axis=1)
 
     tsamp = obs.header['tsamp']
@@ -78,8 +82,8 @@ def integrate_calib(name,chan_per_core,**kwargs):
     freqs = obs.populate_freqs()
 
     #Find ON and OFF average spectra
-    ON_int = integrate_chans(ON,freqs,chan_per_core)
-    OFF_int = integrate_chans(OFF,freqs,chan_per_core)
+    ON_int = integrate_chans(ON,freqs,chan_per_coarse)
+    OFF_int = integrate_chans(OFF,freqs,chan_per_coarse)
 
     #If "ON" is actually "OFF" switch them
     if np.sum(ON_int)<np.sum(OFF_int):
@@ -87,7 +91,7 @@ def integrate_calib(name,chan_per_core,**kwargs):
         ON_int = OFF_int
         OFF_int = temp
 
-    return ON_int,OFF_int
+    return OFF_int,ON_int
 
 def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
     '''
@@ -104,22 +108,29 @@ def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
     else:
         return const*np.power(np.mean(centerfreqs),spec_in)
 
-def get_centerfreqs(freqs,chan_per_core):
+def get_centerfreqs(freqs,chan_per_coarse):
     '''Returns central frequency of each coarse channel'''
 
-    num_cores = freqs.size/chan_per_core
-    freqs = np.reshape(freqs,(num_cores,chan_per_core))
+    num_coarse = freqs.size/chan_per_coarse
+    freqs = np.reshape(freqs,(num_coarse,chan_per_coarse))
     return np.mean(freqs,axis=1)
 
-def diode_spec(ON_obs,OFF_obs,chan_per_core,calflux,calfreq,spec_in,oneflux=True,**kwargs):
-    '''Calculate the coarse channel spectrum of the noise diode in Jy'''
+def diode_spec(ON_obs,OFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs):
+    '''
+    Calculate the coarse channel spectrum of the noise diode in Jy given two noise diode
+    measurements ON and OFF the calibrator source with the same frequency and time resolution
+    '''
+    #Load frequencies and calculate number of channels per coarse channel
+    obs = Waterfall(ON_obs,max_load=150)
+    freqs = obs.populate_freqs()
+    ncoarse = obs.calc_n_coarse_chan()
+    nchans = obs.header['nchans']
+    chan_per_coarse = nchans/ncoarse
 
     #Calculate noise diode ON and noise diode OFF spectra for both observations
     #ON_OFF -- Noise diode ON, Calibrator OFF etc.
-    ON_ON,ON_OFF = integrate_calib(ON_obs,chan_per_core,**kwargs)
-    OFF_ON,OFF_OFF = integrate_calib(OFF_obs,chan_per_core,**kwargs)
-    obs = Waterfall(ON_obs,max_load=150)
-    freqs = obs.populate_freqs()
+    ON_OFF,ON_ON = integrate_calib(ON_obs,chan_per_coarse,**kwargs)
+    OFF_OFF,OFF_ON = integrate_calib(OFF_obs,chan_per_coarse,**kwargs)
 
     #Find difference in counts between observations on the calibrator and off the calibrator
     caldiff1 = ON_ON-OFF_ON
@@ -127,7 +138,7 @@ def diode_spec(ON_obs,OFF_obs,chan_per_core,calflux,calfreq,spec_in,oneflux=True
     caldiff = (caldiff1+caldiff2)/2
 
     #Obtain spectrum of the calibrator source for the given frequency range
-    centerfreqs = get_centerfreqs(freqs,chan_per_core)
+    centerfreqs = get_centerfreqs(freqs,chan_per_coarse)
     calfluxes = get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux)
 
     #Calculate Jy/count factors for each coarse channel
@@ -145,7 +156,7 @@ def diode_spec(ON_obs,OFF_obs,chan_per_core,calflux,calfreq,spec_in,oneflux=True
     diodiff = (diodiff1+diodiff2)/2
     return diodiff
 
-def calibrate_fluxes(name,dio_name,dspec,dio_chan_per_core,obs_chan_per_core,**kwargs):
+def calibrate_fluxes(name,dio_name,dspec,fullstokes=False,**kwargs):
     '''
     Produce calibrated Stokes I for an observation given a noise diode
     measurement on the source and a diode spectrum with the same number of
@@ -154,20 +165,23 @@ def calibrate_fluxes(name,dio_name,dspec,dio_chan_per_core,obs_chan_per_core,**k
 
     #Find folded spectra of the target source with the noise diode ON and OFF
     obs = Waterfall(name,max_load=150)
-    dON,dOFF = integrate_calib(dio_name,dio_chan_per_core,**kwargs)
+    ncoarse = obs.calc_n_coarse_chan()
+    dio_obs = Waterfall(dio_name,max_load=150)
+    dio_chan_per_coarse = dio_obs.header['nchans']/ncoarse
+    dOFF,dON = integrate_calib(dio_name,dio_chan_per_coarse,fullstokes,**kwargs)
 
     #Find Jy/count for each coarse channel using the diode spectrum
     data = obs.data
     scale_facs = dspec/(dON-dOFF)
 
     nchans = obs.header['nchans']
-    ncoarse = nchans/obs_chan_per_core
+    obs_chan_per_coarse = nchans/ncoarse
 
     ax0_size = np.size(data,0)
     ax1_size = np.size(data,1)
 
     #Reshape data array of target observation and multiply coarse channels by the scale factors
-    data = np.reshape(data,(ax0_size,ax1_size,ncoarse,obs_chan_per_core))
+    data = np.reshape(data,(ax0_size,ax1_size,ncoarse,obs_chan_per_coarse))
     data = np.swapaxes(data,2,3)
 
     data = data*scale_facs
