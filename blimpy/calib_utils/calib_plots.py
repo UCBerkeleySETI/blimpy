@@ -200,41 +200,6 @@ def plot_gain_offsets(dio_cross,dio_chan_per_coarse=8,ax1=None,ax2=None,legend=T
     if legend==True:
         plt.legend()
 
-def plot_UVfit(dio_cross,chan_per_coarse=8,**kwargs):
-    '''
-    Plots phase offsets and sinusoidal fits of U and V for a noise diode measurement.
-    NOTE: ONLY WORKS WHEN USING THE FIT METHOD OF FINDING PHASE OFFSETS.
-    '''
-
-    I,Q,U,V = get_stokes(dio_cross)
-    tsamp = Waterfall(dio_cross,max_load=150).header['tsamp']
-
-    Idiff,Qdiff,Udiff,Vdiff,freqs = get_diff(dio_cross,**kwargs)
-    coarse_psis,Ufit,Vfit = phase_offsets(U,V,freqs,tsamp,chan_per_coarse,fit=True,**kwargs)
-    coarse_freqs = convert_to_coarse(freqs,chan_per_coarse)
-
-    coarse_degs = np.degrees(coarse_psis)
-    coarse_degs = coarse_degs % 360
-
-    plt.subplot(211)
-    plt.plot(coarse_freqs,coarse_degs,'ko',label='Fit Phase')
-    plt.ylabel('Phase (Degrees)')
-    plt.grid(True)
-    plt.legend()
-    plt.title('UV Noise Diode Fits')
-    plt.yticks(np.arange(0,360,step=45))
-
-    plt.subplot(212)
-    plt.plot(freqs,Udiff,'g--',label='U')
-    plt.plot(freqs,Vdiff,'m--',label='V')
-    plt.plot(freqs,Ufit,'k-',label='U fit')
-    plt.plot(freqs,Vfit,'k-',label='V fit')
-    plt.legend()
-    plt.xlabel('Frequency (MHz)')
-    plt.ylabel('Power (Counts)')
-
-
-
 def plot_diode_fold(dio_cross,min_samp=-500,max_samp=7000,**kwargs):
     '''
     Plots the calculated average power and time sampling of ON (red) and
