@@ -233,7 +233,7 @@ class Reader(object):
 
         return freqs
 
-    def calc_n_coarse_chan(self):
+    def calc_n_coarse_chan(self, chan_bw=None):
         """ This makes an attempt to calculate the number of coarse channels in a given file.
 
             Note:
@@ -242,9 +242,12 @@ class Reader(object):
 
         """
         nchans = int(self.header[b'nchans'])
-
         # Do we have a file with enough channels that it has coarse channelization?
-        if nchans >= 2**20:
+        if chan_bw is not None:
+            bandwidth = abs(self.f_stop - self.f_start)
+            n_coarse_chan = int(bandwidth / chan_bw)
+            return n_coarse_chan
+        elif nchans >= 2**20:
             # Does the common FFT length of 2^20 divide through without a remainder?
             # This should work for most GBT and all Parkes hires data
             if nchans % 2**20 == 0:
@@ -260,13 +263,14 @@ class Reader(object):
                 logger.warning("Couldn't figure out n_coarse_chan")
         elif self.header[b'telescope_id'] == 6 and nchans < 2**20:
             #For GBT non-hires data
-                coarse_chan_bw = 2.9296875
-                bandwidth = abs(self.f_stop - self.f_start)
-                n_coarse_chan = int(bandwidth / coarse_chan_bw)
-                return n_coarse_chan
+            coarse_chan_bw = 2.9296875
+            bandwidth = abs(self.f_stop - self.f_start)
+            n_coarse_chan = int(bandwidth / coarse_chan_bw)
+            return n_coarse_chan
         else:
             logger.warning("This function currently only works for hires BL Parkes or GBT data.")
-
+            
+            
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
         """
