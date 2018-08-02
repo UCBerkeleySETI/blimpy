@@ -51,29 +51,6 @@ def phase_offsets(Udat,Vdat,tsamp,chan_per_coarse,fit=False,**kwargs):
     Udiff = U_ON-U_OFF
     Vdiff = V_ON-V_OFF
 
-    '''The following is used if using a fit to calculate the phase offsets.'''
-    #Fit U data with a cosine and V data with a sine
-    #Ufit,Upars = fit_sinusoid(freqs,Udiff,kind='cos')
-    #Vfit,Vpars = fit_sinusoid(freqs,Vdiff,kind='sin')
-
-    #Calculate phase offsets for each frequency of the best fits
-    #U_phase = Upars[1]*(freqs-Upars[2])
-    #V_phase = Vpars[1]*(freqs-Vpars[2])
-
-    #If the fit calculated a negative sine or cosine curve, add a phase of pi
-    #if Upars[0]<0:
-    #    U_phase += np.pi
-    #if Vpars[0]<0:
-    #    V_phase += np.pi
-
-    #Return phase offset for each coarse channel
-    #if fit==False:
-    #    return convert_to_coarse(V_phase,chan_per_coarse)
-    #else:
-    #    return convert_to_coarse(V_phase,chan_per_coarse),Ufit,Vfit
-
-
-    # Return the arctan of V/U for each coarse channel
     return convert_to_coarse(np.arctan2(Vdiff,Udiff),chan_per_coarse)
 
 def gain_offsets(Idat,Qdat,tsamp,chan_per_coarse,**kwargs):
@@ -264,37 +241,4 @@ def write_polfils(str, str_I, **kwargs):
     obs.data = circ
     obs.write_to_fil(str[:-15]+'.circpol.fil')   #assuming file is named *.cross_pols.fil
 
-def fit_sinusoid(freqs,ary,kind,chan_per_core=8):
-    '''
-    Calculates a sinusoidal (sin or cos) fit given a range of frequencies and data
-    '''
-
-    freqs_clean=np.array(freqs)
-    ary_clean=np.array(ary)
-
-    freqs_clean[::chan_per_core]=np.NaN
-    freqs_clean[1::chan_per_core]=np.NaN
-    freqs_clean[(chan_per_core-1)::chan_per_core]=np.NaN
-    ary_clean[::chan_per_core]=np.NaN
-    ary_clean[1::chan_per_core]=np.NaN
-    ary_clean[(chan_per_core-1)::chan_per_core]=np.NaN
-
-    freqs_clean = [x for x in freqs_clean if str(x) != 'nan']
-    ary_clean = [x for x in ary_clean if str(x) != 'nan']
-
-    f_est = np.pi/75
-    if kind=='sin':
-        popt,pcov = curve_fit(sine,freqs_clean,ary_clean,p0=[10.0,f_est,0.0,0.0])
-        return sine(freqs,*popt),popt
-    else:
-        popt,pcov = curve_fit(cosine,freqs_clean,ary_clean,p0=[10.0,f_est,0.0,0.0])
-        return cosine(freqs,*popt),popt
-
-def sine(x,a,b,h,c):
-    return(a*np.sin(b*(x-h))+c)
-
-def cosine(x,a,b,h,c):
-    return(a*np.cos(b*(x-h))+c)
-
 #end module
-
