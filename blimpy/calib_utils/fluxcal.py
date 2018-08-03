@@ -57,8 +57,8 @@ def integrate_chans(spec,freqs,chan_per_coarse):
     spec_shaped = np.array(np.reshape(spec,(num_coarse,chan_per_coarse)))
     freqs_shaped = np.array(np.reshape(freqs,(num_coarse,chan_per_coarse)))
 
-    return -1*trapz(spec_shaped,freqs_shaped,axis=1)   #Integrate along core channel axis
-
+    #return -1*trapz(spec_shaped,freqs_shaped,axis=1)   #Integrate along core channel axis
+    return np.mean(spec_shaped[:,2:-1],axis=1)
 def integrate_calib(name,chan_per_coarse,fullstokes=False,**kwargs):
     '''Folds noise diode data and integrates along coarse channels'''
     #Load data
@@ -190,8 +190,9 @@ def calibrate_fluxes(name,dio_name,dspec,fullstokes=False,**kwargs):
 
     #Write calibrated data to a new filterbank file with ".fluxcal" extension
     obs.data = data
-    obs.write_to_fil(name[:-4]+'.fluxcal.fil')
+    obs.write_to_filterbank(name[:-4]+'.fluxcal.fil')
     print 'Finished: calibrated product written to ' + name[:-4]+'.fluxcal.fil'
 
 
 #end module
+
