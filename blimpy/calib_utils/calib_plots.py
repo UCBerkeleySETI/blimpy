@@ -13,6 +13,7 @@ def get_diff(dio_cross,**kwargs):
     freqs = obs.populate_freqs()
     tsamp = obs.header['tsamp']
     data = obs.data
+    obs = None
 
     I,Q,U,V = get_stokes(data)
 
@@ -83,9 +84,9 @@ def plot_calibrated_diode(dio_cross,chan_per_coarse=8,**kwargs):
     freqs = obs.populate_freqs()
     tsamp = obs.header['tsamp']
     data = obs.data
+    obs = None
     I,Q,U,V = get_stokes(data)
     data = None
-    obs = None
 
     #Calculate Mueller Matrix variables for each coarse channel
     psis = phase_offsets(U,V,tsamp,chan_per_coarse,**kwargs)
@@ -126,6 +127,7 @@ def plot_phase_offsets(dio_cross,chan_per_coarse=8,ax1=None,ax2=None,legend=True
     obs = Waterfall(dio_cross,max_load=150)
     tsamp = obs.header['tsamp']
     data = obs.data
+    obs = None
     I,Q,U,V = get_stokes(data)
 
     #Get phase offsets and convert to degrees
@@ -169,6 +171,7 @@ def plot_gain_offsets(dio_cross,dio_chan_per_coarse=8,ax1=None,ax2=None,legend=T
     obs = Waterfall(dio_cross,max_load=150)
     tsamp = obs.header['tsamp']
     data = obs.data
+    obs = None
     I,Q,U,V = get_stokes(data)
 
     #Get phase offsets and convert to degrees
@@ -209,6 +212,7 @@ def plot_diode_fold(dio_cross,min_samp=-500,max_samp=7000,**kwargs):
     obs = Waterfall(dio_cross,max_load=150)
     tsamp = obs.header['tsamp']
     data = obs.data
+    obs = None
     I,Q,U,V = get_stokes(data)
 
     #Calculate time series, OFF and ON averages, and time samples for each
@@ -280,16 +284,19 @@ def plot_fullcalib(dio_cross,**kwargs):
     plt.ylabel('')
     plt.setp(ax_cal.get_yticklabels(),visible=False)
 
+    plt.savefig(dio_cross[:-4]+'.stokescalib.png',dpi=2000)
     plt.show()
 
 def plot_diodespec(ON_obs,OFF_obs,calflux,calfreq,spec_in,units='mJy',**kwargs):
+
 
     dspec = diode_spec(ON_obs,OFF_obs,calflux,calfreq,spec_in,**kwargs)
     obs = Waterfall(ON_obs,max_load=150)
     freqs = obs.populate_freqs()
     chan_per_coarse = obs.header['nchans']/obs.calc_n_coarse_chan()
     coarse_freqs = convert_to_coarse(freqs,chan_per_coarse)
-
+    plt.ion()
+    plt.figure()
     plt.plot(coarse_freqs,dspec)
     plt.xlabel('Frequency (MHz)')
     plt.ylabel('Flux Density ('+units+')')
