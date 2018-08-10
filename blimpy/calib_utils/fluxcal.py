@@ -58,7 +58,8 @@ def integrate_chans(spec,freqs,chan_per_coarse):
     freqs_shaped = np.array(np.reshape(freqs,(num_coarse,chan_per_coarse)))
 
     #return -1*trapz(spec_shaped,freqs_shaped,axis=1)   #Integrate along core channel axis
-    return np.mean(spec_shaped[:,2:-1],axis=1)
+    return np.mean(spec_shaped[:,1:-1],axis=1)
+
 def integrate_calib(name,chan_per_coarse,fullstokes=False,**kwargs):
     '''Folds noise diode data and integrates along coarse channels'''
     #Load data
@@ -69,7 +70,7 @@ def integrate_calib(name,chan_per_coarse,fullstokes=False,**kwargs):
     if fullstokes==False and data.shape[1]>1:
         data = data[:,0,:]+data[:,1,:]
         data = np.expand_dims(data,axis=1)
-    #If the data as IQUV format get Stokes I
+    #If the data has IQUV format get Stokes I
     if fullstokes==True:
         data = data[:,0,:]
         data = np.expand_dims(data,axis=1)
@@ -91,6 +92,7 @@ def integrate_calib(name,chan_per_coarse,fullstokes=False,**kwargs):
         ON_int = OFF_int
         OFF_int = temp
 
+    #Return coarse channel spectrum of OFF and ON
     return OFF_int,ON_int
 
 def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
@@ -101,7 +103,6 @@ def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
     Use oneflux to choose between calculating the flux for each core channel (False)
     or using one value for the entire frequency range (True)
     '''
-
     const = calflux/np.power(calfreq,spec_in)
     if oneflux==False:
         return const*np.power(centerfreqs,spec_in)
@@ -137,6 +138,9 @@ def diode_spec(ON_obs,OFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs):
     caldiff2 = ON_OFF-OFF_OFF
     caldiff = (caldiff1+caldiff2)/2
 
+    f_on = ON_ON/ON_OFF-1
+    f_off = OFF_ON/OFF_OFF-1
+
     #Obtain spectrum of the calibrator source for the given frequency range
     centerfreqs = get_centerfreqs(freqs,chan_per_coarse)
     calfluxes = get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux)
@@ -144,19 +148,28 @@ def diode_spec(ON_obs,OFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs):
     #Calculate Jy/count factors for each coarse channel
     scalefacs = calfluxes/caldiff
 
+    dio = calfluxes/(1/f_on-1/f_off)
+    Tsys = dio/f_off
+
+    g_off = OFF_OFF/Tsys
+    g_on = ON_OFF/(Tsys+calfluxes)
+    print(g_off)
+    print(g_on)
     #Convert all observations to Jy
-    ON_ON_scaled = ON_ON*scalefacs
-    ON_OFF_scaled = ON_OFF*scalefacs
-    OFF_ON_scaled = OFF_ON*scalefacs
-    OFF_OFF_scaled = OFF_OFF*scalefacs
+    #ON_ON_scaled = ON_ON*scalefacs
+    #ON_OFF_scaled = ON_OFF*scalefacs
+    #OFF_ON_scaled = OFF_ON*scalefacs
+    #OFF_OFF_scaled = OFF_OFF*scalefacs
 
     #Find diode spectrum in Jy
-    diodiff1 = ON_ON_scaled-ON_OFF_scaled
-    diodiff2 = OFF_ON_scaled-OFF_OFF_scaled
-    diodiff = (diodiff1+diodiff2)/2
-    return diodiff
+    #diodiff1 = ON_ON_scaled-ON_OFF_scaled
+    #diodiff2 = OFF_ON_scaled-OFF_OFF_scaled
+    #diodiff = (diodiff1+diodiff2)/2
 
-def calibrate_fluxes(name,dio_name,dspec,fullstokes=False,**kwargs):
+    #return coarse channel diode spectrum
+    return np.mean(dio),np.mean(Tsys)
+
+def calibrate_fluxes(name,dio_name,dspec,Tsys,fullstokes=False,**kwargs):
     '''
     Produce calibrated Stokes I for an observation given a noise diode
     measurement on the source and a diode spectrum with the same number of
@@ -173,6 +186,7 @@ def calibrate_fluxes(name,dio_name,dspec,fullstokes=False,**kwargs):
     #Find Jy/count for each coarse channel using the diode spectrum
     data = obs.data
     scale_facs = dspec/(dON-dOFF)
+    print(scale_facs)
 
     nchans = obs.header['nchans']
     obs_chan_per_coarse = nchans/ncoarse
@@ -185,6 +199,7 @@ def calibrate_fluxes(name,dio_name,dspec,fullstokes=False,**kwargs):
     data = np.swapaxes(data,2,3)
 
     data = data*scale_facs
+    data = data-Tsys
     data = np.swapaxes(data,2,3)
     data = np.reshape(data,(ax0_size,ax1_size,nchans))
 
