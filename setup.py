@@ -8,24 +8,35 @@ __version__ = '1.3.4'
 # create entry points
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
 entry_points = {
-    'console_scripts' :
-        ['filutil = blimpy.filterbank:cmd_tool',
-         'watutil = blimpy.waterfall:cmd_tool',
-         'rawutil = blimpy.guppi:cmd_tool',
-         'fil2h5 = blimpy.fil2h5:cmd_tool',
-         'h52fil = blimpy.h52fil:cmd_tool',
-         'matchfils = blimpy.match_fils:cmd_tool',
-         'bldice = blimpy.dice:cmd_tool'
+    'console_scripts' : [
+        'filutil = blimpy.filterbank:cmd_tool',
+        'watutil = blimpy.waterfall:cmd_tool',
+        'rawutil = blimpy.guppi:cmd_tool',
+        'fil2h5 = blimpy.fil2h5:cmd_tool',
+        'h52fil = blimpy.h52fil:cmd_tool',
+        'matchfils = blimpy.match_fils:cmd_tool',
+        'bldice = blimpy.dice:cmd_tool'
      ]
-    }
+}
+
+install_requires = [
+        'astropy',
+        'numpy',
+        'cython',
+        'h5py',
+        'scipy',
+        'matplotlib',
+        'bitshuffle',
+        'pyslalib',
+]
 
 setup(name='blimpy',
-    version = __version__,
-    description = 'Python utilities for Breakthrough Listen SETI observations',
-    long_description = "Python utilities for Breakthrough Listen SETI observations. It includes data handling, formating, dicing and plotting.",
-    platforms = ['*nix'],
-    license = 'MIT',
-    install_requires = ['astropy', 'numpy', 'cython', 'h5py'],
+    version=__version__,
+    description='Python utilities for Breakthrough Listen SETI observations',
+    long_description="Python utilities for Breakthrough Listen SETI observations. It includes data handling, formating, dicing and plotting.",
+    platform =['*nix'],
+    license='MIT',
+    install_requires=install_requires,
     url='https://github.com/ucberkeleyseti/blimpy',
     author='Danny Price, Emilio Enriquez, Griffin Foster, Greg Hellbourg',
     author_email='dancpr@berkeley.edu',
