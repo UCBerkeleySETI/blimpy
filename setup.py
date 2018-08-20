@@ -26,9 +26,14 @@ install_requires = [
         'h5py',
         'scipy',
         'matplotlib',
-        'bitshuffle',
-        'pyslalib',
 ]
+
+extras_require = {
+        'full': [
+            'bitshuffle',
+            'pyslalib',
+        ]
+}
 
 setup(name='blimpy',
     version=__version__,
@@ -37,6 +42,7 @@ setup(name='blimpy',
     platform =['*nix'],
     license='MIT',
     install_requires=install_requires,
+    extras_require=extras_require,
     url='https://github.com/ucberkeleyseti/blimpy',
     author='Danny Price, Emilio Enriquez, Griffin Foster, Greg Hellbourg',
     author_email='dancpr@berkeley.edu',
