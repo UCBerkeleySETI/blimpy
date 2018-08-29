@@ -981,7 +981,7 @@ def cmd_tool(args=None):
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
-    parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
+    parser.add_argument('-p', action='store',  default='ank', dest='what_to_plot', type=str,
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot; \
                         "t" for time series; "mm" for spectrum including min max; "k" for kurtosis; \
                         "a" for all available plots and information; and "ank" for all but kurtosis.')
