@@ -126,8 +126,9 @@ class Reader(object):
             return b'int16'
         elif self._n_bytes  == 1:
             return b'int8'
-
-
+        else:
+            logger.warning('Having trouble setting dtype, assuming float32.')
+            return b'float32'
 
     def _calc_selection_size(self):
         """Calculate size of data of interest.
@@ -148,11 +149,11 @@ class Reader(object):
         """
 
         #Check how many integrations requested
-        n_ints = self.t_stop - self.t_start
+        n_ints = int(self.t_stop - self.t_start)
         #Check how many frequency channels requested
         n_chan = int(np.round((self.f_stop - self.f_start) / abs(self.header[b'foff'])))
 
-        selection_shape = (n_ints,self.header[b'nifs'],n_chan)
+        selection_shape = (n_ints,int(self.header[b'nifs']),n_chan)
 
         return selection_shape
 
@@ -209,9 +210,9 @@ class Reader(object):
         t_delt = self.header[b'tsamp']
 
         if update_header:
-            timestamps = ii_start * t_delt / 24./60./60 + t0
+            timestamps = ii_start * t_delt / 24./60./60. + t0
         else:
-            timestamps = np.arange(ii_start, ii_stop) * t_delt / 24./60./60 + t0
+            timestamps = np.arange(ii_start, ii_stop) * t_delt / 24./60./60. + t0
 
         return timestamps
 
@@ -325,7 +326,7 @@ class H5Reader(Reader):
             self.n_channels_in_file = self.h5["data"].shape[self.freq_axis] #
             self.n_beams_in_file = self.header[b'nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
-            self._n_bytes = self.header[b'nbits'] / 8  #number of bytes per digit.
+            self._n_bytes = int(self.header[b'nbits'] / 8)  #number of bytes per digit.
             self._d_type = self._setup_dtype()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
 
@@ -484,7 +485,7 @@ class FilReader(Reader):
             self.n_channels_in_file  = self.header[b'nchans']
             self.n_beams_in_file = self.header[b'nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
-            self._n_bytes = self.header[b'nbits'] / 8  #number of bytes per digit.
+            self._n_bytes = int(self.header[b'nbits'] / 8)  #number of bytes per digit.
             self._d_type = self._setup_dtype()
             self._setup_n_ints_in_file()
             self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
@@ -668,7 +669,7 @@ class FilReader(Reader):
                 blob = dd.reshape(updated_blob_dim)
             else:
                 logger.info('DD shape != blob shape.')
-                blob = dd.reshape((dd.shape[0]/blob_dim[self.freq_axis],blob_dim[self.beam_axis],blob_dim[self.freq_axis]))
+                blob = dd.reshape((int(dd.shape[0]/blob_dim[self.freq_axis]),blob_dim[self.beam_axis],blob_dim[self.freq_axis]))
         else:
 
             for blobt in range(updated_blob_dim[self.time_axis]):
@@ -707,7 +708,7 @@ class FilReader(Reader):
         raise NotImplementedError('To be implemented')
 
         # go to start of the row
-        self.filfile.seek(int(self.datastart+self.channels*rownumber*(self.nbits/8)))
+        self.filfile.seek(int(self.datastart+self.channels*rownumber*(int(self.nbits/8))))
         # read data into 2-D numpy array
         data=np.fromfile(self.filfile,count=self.channels,dtype=self.dtype).reshape(1, self.channels)
         if reverse:
@@ -721,7 +722,7 @@ class FilReader(Reader):
         raise NotImplementedError('To be implemented')
 
         # go to start of the row
-        self.filfile.seek(int(self.datastart+self.channels*rownumber*(self.nbits/8)))
+        self.filfile.seek(int(self.datastart+self.channels*rownumber*(int(self.nbits/8))))
         # read data into 2-D numpy array
         data=np.fromfile(self.filfile,count=self.channels*n_rows,dtype=self.dtype).reshape(n_rows, self.channels)
         if reverse:
