@@ -1,7 +1,5 @@
 """
-# test_voyager_data_load.py
-
-The hard-coded numbers in these tests can be found in the voyager_test_setup.ipynb
+# test_heavy.py
 
 """
 
