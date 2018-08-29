@@ -1,13 +1,15 @@
 import blimpy as bl
 import numpy as np
 from pprint import pprint
+from tests.data import voyager_fil, voyager_h5
+
 
 def compare_waterfall_fil_to_h5():
     """ Load Voyager dataset and test that both fil and hdf5 readers return same headers and data """
 
     print("Loading FIL and HDF5 data with Waterfall()..."),
-    a = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    b = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+    a = bl.Waterfall(voyager_h5)
+    b = bl.Waterfall(voyager_fil)
     print("OK")
 
     print("Reading headers..")
@@ -33,8 +35,8 @@ def compare_waterfall_fil_to_h5():
 
 def compare_waterfall_fil_to_h5_methods_and_attributes():
     """ Compare attributes and check methods """
-    a = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    b = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+    a = bl.Waterfall(voyager_h5)
+    b = bl.Waterfall(voyager_fil)
 
     print("Comparing attributes of classes match where expected")
     assert a.beam_axis == b.beam_axis
@@ -90,8 +92,8 @@ def compare_waterfall_fil_to_h5_methods_and_attributes():
 
 def compare_waterfall_fil_h5_conatiners():
     """ Compare the two containers for fil.container and h5.container """
-    a = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    b = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+    a = bl.Waterfall(voyager_h5)
+    b = bl.Waterfall(voyager_fil)
 
     dir_a = dir(a.container)
     dir_b = dir(b.container)
@@ -108,8 +110,8 @@ def compare_waterfall_fil_h5_conatiners():
 
 def test_plotting_doesnt_cause_exceptions():
     """ Try running the plotting routines. They should not raise expections even without X windows """
-    a = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    b = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+    a = bl.Waterfall(voyager_h5)
+    b = bl.Waterfall(voyager_fil)
 
     a.plot_all()
     a.plot_kurtosis()

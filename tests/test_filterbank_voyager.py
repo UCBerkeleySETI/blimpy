@@ -1,15 +1,16 @@
 import blimpy as bl
-
 import numpy as np
 from pprint import pprint
 import pytest
+from tests.data import voyager_fil, voyager_h5
+
 
 def compare_filterbank_fil_to_h5():
     """ Load Voyager dataset and test that both fil and hdf5 readers return same headers and data """
 
     print("Loading FIL and HDF5 data with Waterfall()..."),
-    a = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    b = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+    a = bl.Filterbank(voyager_h5)
+    b = bl.Filterbank(voyager_fil)
     print("OK")
 
     print("Reading headers..")
@@ -35,8 +36,8 @@ def compare_filterbank_fil_to_h5():
 
 def test_plotting_doesnt_cause_exceptions():
     """ Try running the plotting routines. They should not raise expections even without X windows """
-    a = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    b = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+    a = bl.Filterbank(voyager_h5)
+    b = bl.Filterbank(voyager_fil)
 
     a.plot_all()
     a.plot_kurtosis()
