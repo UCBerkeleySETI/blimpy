@@ -269,8 +269,7 @@ class Reader(object):
             return n_coarse_chan
         else:
             logger.warning("This function currently only works for hires BL Parkes or GBT data.")
-            
-            
+
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
         """
@@ -643,9 +642,9 @@ class FilReader(Reader):
         if n_blob > n_blobs or n_blob < 0:
             raise ValueError('Please provide correct n_blob value. Given %i, but max values is %i'%(n_blob,n_blobs))
 
-        #This prevents issues when the last blob is smaller than the others in time
+        #This prevents issues when the last blob is smaller than the others in time.
         if blob_dim[self.time_axis]*(n_blob+1) > self.selection_shape[self.time_axis]:
-            updated_blob_dim = (self.selection_shape[self.time_axis] - blob_dim[self.time_axis]*n_blob, 1, blob_dim[self.freq_axis])
+            updated_blob_dim = (int(self.selection_shape[self.time_axis] - blob_dim[self.time_axis]*n_blob), 1, int(blob_dim[self.freq_axis]))
         else:
             updated_blob_dim = blob_dim
 
