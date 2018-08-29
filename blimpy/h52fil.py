@@ -34,7 +34,7 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 #------
 
 
-def make_fil_file(filename,out_dir='./', new_filename=None, max_load = max_load):
+def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
     ''' Converts file to Sigproc filterbank (.fil) format.  Default saves output in current dir.
     '''
 
