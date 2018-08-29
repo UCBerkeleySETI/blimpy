@@ -772,7 +772,7 @@ class Filterbank(object):
 
         plt.xlim(plot_f[0], plot_f[-1])
 
-    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kutosis=True, **kwargs):
+    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis=True, **kwargs):
         """ Plot waterfall of data as well as spectrum; also, placeholder to make even more complicated plots in the future.
 
         Args:
@@ -860,7 +860,7 @@ class Filterbank(object):
 
         # --------
         # Could exclude since it takes much longer to run than the other plots.
-        if kutosis:
+        if kurtosis:
             axKurtosis = plt.axes(rect_kurtosis)
             print('Plotting Kurtosis')
             self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
@@ -1075,7 +1075,7 @@ def cmd_tool(args=None):
             fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all')
         elif args.what_to_plot == "ank":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
-            fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all',kutosis=False)
+            fil.plot_all(logged=True, f_start=args.f_start, f_stop=args.f_stop, t='all',kurtosis=False)
 
         if args.plt_filename != '':
             plt.savefig(args.plt_filename)
