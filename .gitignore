@@ -4,8 +4,10 @@
 *.fil
 *.egg-info/
 .virtualenv*/
+.lib/
 .venv*/
 .eggs/
 .pytest_cache/
 tests/test.h5
 tests/test_large.h5
+test.h5
