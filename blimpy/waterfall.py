@@ -576,7 +576,7 @@ def cmd_tool(args=None):
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                         help='Maximum data limit to load. Default:1GB')
 
-    if not args:
+    if args is None:
         args = sys.argv
     parse_args = parser.parse_args(args)
 
