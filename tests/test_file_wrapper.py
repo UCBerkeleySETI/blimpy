@@ -1,6 +1,6 @@
 import blimpy as bl
 import pytest
-from tests.data import voyager_fil, voyager_h5
+from tests.data import voyager_fil, voyager_h5, here
 
 
 def test_read_fns():
@@ -23,7 +23,7 @@ def test_file_wrapper_open_file():
     open_file(voyager_fil)
 
     with pytest.raises(NotImplementedError):
-        open_file('run_tests.sh')
+        open_file(here + '/run_tests.sh')
 
 
 if __name__ == "__main__":
