@@ -7,7 +7,11 @@
     July 28th 2017
 '''
 
-from .waterfall import Waterfall
+try:
+    from .waterfall import Waterfall
+except:
+    from waterfall import Waterfall
+
 from optparse import OptionParser
 import sys
 import os
@@ -28,7 +32,6 @@ else:
 
 logging.basicConfig(format=format,stream=stream,level = level_log)
 #------
-
 
 
 def make_fil_file(filename,out_dir='./', new_filename=None, max_load = max_load):
@@ -64,7 +67,6 @@ def cmd_tool():
     if opts.delete_input:
         logger.info("'Deleting input file: %s"%(filename))
         os.remove(filename)
-
 
 if __name__ == "__main__":
 

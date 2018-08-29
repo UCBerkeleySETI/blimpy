@@ -7,7 +7,11 @@
     July 28th 2017
 '''
 
-from .waterfall import Waterfall
+try:
+    from .waterfall import Waterfall
+except:
+    from waterfall import Waterfall
+
 from optparse import OptionParser
 import sys
 import os

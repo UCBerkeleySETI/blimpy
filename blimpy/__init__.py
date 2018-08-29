@@ -1,8 +1,14 @@
 from __future__ import absolute_import
 
-from .filterbank import Filterbank, read_header, fix_header
-from .guppi import GuppiRaw
-from . import utils
+
+try:
+    from . import waterfall
+    from .waterfall import Waterfall
+    from .filterbank import Filterbank, read_header, fix_header
+    from .guppi import GuppiRaw
+    from . import utils
+except ImportError:
+    print("Warning: Cannot import main utilities")
 
 try:
     from . import fil2h5
@@ -11,16 +17,14 @@ try:
 except:
     print("Warning: Cannot import HDF5 utilities")
 
-from . import file_wrapper
-from . import match_fils
-
 try:
-    from . import waterfall
-    from .waterfall import Waterfall
-except ImportError:
+    from . import file_wrapper
+    from . import match_fils
+except:
     pass
 
 from pkg_resources import get_distribution, DistributionNotFound
+
 try:
     __version__ = get_distribution('blimpy').version
 except DistributionNotFound:
