@@ -1,0 +1,19 @@
+FROM kernsuite/base:dev
+RUN docker-apt-install \
+     python-setuptools \
+     python-astropy \
+     python-scipy \
+     python-matplotlib \
+     python-bitshuffle \
+     python-h5py \
+     python-slalib \
+     python-pytest-runner \
+     python-pytest
+COPY . /code
+WORKDIR /code
+RUN find blimpy tests -name "*.pyc" -delete
+RUN python setup.py test
+
+
+
+
