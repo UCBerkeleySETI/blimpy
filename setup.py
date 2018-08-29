@@ -20,12 +20,14 @@ entry_points = {
 }
 
 install_requires = [
-        'astropy<3.0',      # 3 is not compatible with py2
+        'matplotlib<3.0;python_version=="2.7"',
+        'matplotlib;python_version>"2.7"',
+        'astropy<3.0;python_version=="2.7"',
+        'astropy;python_version>"2.7"',
         'numpy',
         'cython',
         'h5py',
         'scipy',
-        'matplotlib<3.0',   # 3 is not compatible with py2
 ]
 
 extras_require = {
