@@ -493,12 +493,12 @@ class Waterfall(Filterbank):
             chunk_dim = (1,1,512)
             return chunk_dim
 
-    def calc_n_coarse_chan(self):
+    def calc_n_coarse_chan(self, chan_bw=None):
         """ This makes an attempt to calculate the number of coarse channels in a given freq selection.
             It assumes for now that a single coarse channel is 2.9296875 MHz
         """
 
-        n_coarse_chan = self.container.calc_n_coarse_chan()
+        n_coarse_chan = self.container.calc_n_coarse_chan(chan_bw)
 
         return n_coarse_chan
 
