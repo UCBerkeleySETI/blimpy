@@ -1,0 +1,16 @@
+FROM kernsuite/base:3
+RUN docker-apt-install libhdf5-serial-dev gfortran python3-pip git
+RUN pip3 install --upgrade pip setuptools wheel
+RUN pip install --only-binary=numpy,scipy numpy scipy
+RUN pip install coverage
+RUN pip install coveralls
+RUN pip install matplotlib
+ENV CFLAGS="-I/usr/include/hdf5/serial -L/usr/lib/x86_64-linux-gnu/hdf5/serial"
+RUN pip install git+https://github.com/h5py/h5py
+RUN pip install git+https://github.com/kiyo-masui/bitshuffle
+ADD . /code
+WORKDIR /code
+RUN pip install ".[full]"
+WORKDIR /code/tests
+RUN coverage run --source=blimpy -m py.test
+RUN coveralls
