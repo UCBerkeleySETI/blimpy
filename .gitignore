@@ -5,3 +5,5 @@
 *.egg-info/
 .virtualenv*/
 .venv*/
+.eggs/
+.pytest_cache/
