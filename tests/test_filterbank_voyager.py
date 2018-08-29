@@ -56,7 +56,7 @@ def test_plotting_doesnt_cause_exceptions():
 
 def test_cmdtool():
     with pytest.raises(SystemExit):
-        bl.waterfall.cmd_tool()
+        bl.waterfall.cmd_tool(args=[])
 
 
 if __name__ == "__main__":

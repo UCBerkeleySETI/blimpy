@@ -643,24 +643,24 @@ class FilReader(Reader):
         if n_blob > n_blobs or n_blob < 0:
             raise ValueError('Please provide correct n_blob value. Given %i, but max values is %i'%(n_blob,n_blobs))
 
-        #This prevents issues when the last blob is smaller than the others in time.
+        # This prevents issues when the last blob is smaller than the others in time.
         if blob_dim[self.time_axis]*(n_blob+1) > self.selection_shape[self.time_axis]:
             updated_blob_dim = (int(self.selection_shape[self.time_axis] - blob_dim[self.time_axis]*n_blob), 1, int(blob_dim[self.freq_axis]))
         else:
-            updated_blob_dim = blob_dim
+            updated_blob_dim = [int(i) for i in blob_dim]
 
         blob_start = self._find_blob_start()
-        blob = np.zeros(updated_blob_dim,dtype=self._d_type)
+        blob = np.zeros(updated_blob_dim, dtype=self._d_type)
 
-        #EE: For now; also assuming one polarization and one beam.
+        # EE: For now; also assuming one polarization and one beam.
 
-        #Assuming the blob will loop over the whole frequency range.
+        # Assuming the blob will loop over the whole frequency range.
         if self.f_start == self.f_begin and self.f_stop == self.f_end:
 
             blob_flat_size = np.prod(blob_dim)
             updated_blob_flat_size = np.prod(updated_blob_dim)
 
-            #Load binary data
+            # Load binary data
             with open(self.filename, 'rb') as f:
                 f.seek(int(self.idx_data + self._n_bytes  * (blob_start + n_blob*blob_flat_size)))
                 dd = np.fromfile(f, count=updated_blob_flat_size, dtype=self._d_type)
