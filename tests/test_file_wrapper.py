@@ -1,10 +1,12 @@
 import blimpy as bl
 import pytest
+from tests.data import voyager_fil, voyager_h5, here
+
 
 def test_read_fns():
     """ These read functions are currently not implemented. """
-    a = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.fil')
-    b = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.h5')
+    a = bl.Waterfall(voyager_fil)
+    b = bl.Waterfall(voyager_h5)
     with pytest.raises(NotImplementedError):
         a.container.read_all()
         a.container.read_row(0)
@@ -14,13 +16,15 @@ def test_read_fns():
         b.container.read_row(0)
         b.container.read_rows(0, 2)
 
+
 def test_file_wrapper_open_file():
     from blimpy.file_wrapper import open_file
-    open_file('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    open_file('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+    open_file(voyager_h5)
+    open_file(voyager_fil)
 
     with pytest.raises(NotImplementedError):
-        open_file('run_tests.sh')
+        open_file(here + '/run_tests.sh')
+
 
 if __name__ == "__main__":
     test_read_fns()

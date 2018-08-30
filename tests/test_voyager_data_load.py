@@ -8,10 +8,12 @@ The hard-coded numbers in these tests can be found in the voyager_test_setup.ipy
 import blimpy as bl
 import numpy as np
 import pylab as plt
+from tests.data import voyager_fil, voyager_h5
+
 
 def test_filterbank_data_load_range_freq():
-    ff = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil', f_start=8419.24, f_stop=8419.35)
-    hf = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5', f_start=8419.24, f_stop=8419.35)
+    ff = bl.Filterbank(voyager_fil, f_start=8419.24, f_stop=8419.35)
+    hf = bl.Filterbank(voyager_h5, f_start=8419.24, f_stop=8419.35)
 
     print(ff.data.shape)
     print(hf.data.shape)
@@ -44,8 +46,8 @@ def test_filterbank_data_load_range_freq():
 
 
 def test_waterfall_data_load_range_freq():
-    fw = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.fil', f_start=8419.24, f_stop=8419.35)
-    hw = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.h5', f_start=8419.24, f_stop=8419.35)
+    fw = bl.Waterfall(voyager_fil, f_start=8419.24, f_stop=8419.35)
+    hw = bl.Waterfall(voyager_h5, f_start=8419.24, f_stop=8419.35)
 
     print(fw.data.shape)
     print(hw.data.shape)
@@ -76,10 +78,10 @@ def test_waterfall_data_load_range_freq():
 
 def test_grab_data_works_across_all_fil_h5():
 
-    ff = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil')
-    hf = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    fw = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.fil')
-    hw = bl.Waterfall('Voyager_data/Voyager1.single_coarse.fine_res.h5')
+    ff = bl.Filterbank(voyager_fil)
+    hf = bl.Filterbank(voyager_h5)
+    fw = bl.Waterfall(voyager_fil)
+    hw = bl.Waterfall(voyager_h5)
     all_readers = [ff, hf, fw, hw]
 
     for ii, rr in enumerate(all_readers):
