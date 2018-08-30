@@ -18,10 +18,12 @@ def test_fil2h5_conversion():
     # Creating a "large" test file.
     bl.fil2h5.make_h5_file(voyager_fil, new_filename='test_large.h5', max_load=0.001)
 
+    # Testing filename
+    bl.fil2h5.make_h5_file(voyager_fil, new_filename='test')
+
     # Deleting test file
     os.remove('test.h5')
     os.remove('test_large.h5')
-
 
 if __name__ == "__main__":
     test_fil2h5_conversion()
