@@ -1,26 +1,28 @@
 from blimpy import sigproc
 import blimpy as bl
-import pytest
+from tests.data import voyager_fil, voyager_h5
 import numpy as np
 import os
+
 
 def test_sigproc_is_fil():
     """ Check that the is_fil function works """
 
-    assert sigproc.is_filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5') is False
-    assert sigproc.is_filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil') is True
+    assert sigproc.is_filterbank(voyager_h5) is False
+    assert sigproc.is_filterbank(voyager_fil) is True
+
 
 def test_sigproc_generate_headers():
     """ Test if you can generate headers OK from files """
-    a = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-    b = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+    a = bl.Filterbank(voyager_h5)
+    b = bl.Filterbank(voyager_fil)
     sigproc.generate_sigproc_header(a)
     sigproc.generate_sigproc_header(b)
 
 def test_fil_write():
     try:
-        a = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.h5')
-        b = bl.Filterbank('Voyager_data/Voyager1.single_coarse.fine_res.fil')
+        a = bl.Filterbank(voyager_h5)
+        b = bl.Filterbank(voyager_fil)
 
         a.write_to_filterbank('test.fil')
         b.write_to_filterbank('test2.fil')
