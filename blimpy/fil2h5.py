@@ -66,7 +66,7 @@ def cmd_tool():
     else:
         filename = args[0]
 
-    make_h5_file(filename, out_dir = opts.out_dir, new_filename = opts.new_filename, max_load = max_load)
+    make_h5_file(filename, out_dir = opts.out_dir, new_filename = opts.new_filename, max_load = opts.max_load)
 
     if opts.delete_input:
         logger.info("'Deleting input file: %s"%(filename))
