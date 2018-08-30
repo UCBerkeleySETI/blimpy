@@ -41,6 +41,10 @@ def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
     fil_file = Waterfall(filename, max_load = max_load)
     if not new_filename:
         new_filename = out_dir+filename.replace('.h5','.fil').split('/')[-1]
+
+    if '.fil' not in new_filename:
+        new_filename = new_filename+'.fil'
+
     fil_file.write_to_fil(new_filename)
 
 def cmd_tool():
