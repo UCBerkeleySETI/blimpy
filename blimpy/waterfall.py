@@ -110,7 +110,7 @@ class Waterfall(Filterbank):
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
-            max_load (float): maximum data to load in GB. Default: 1GB. 
+            max_load (float): maximum data to load in GB. Default: 1GB.
                               e.g. 0.1 is 100 MB
             header_dict (dict): Create blimpy from header dictionary + data array
             data_array (np.array): Create blimpy from header dict + data array
@@ -576,9 +576,10 @@ def cmd_tool(args=None):
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                         help='Maximum data limit to load. Default:1GB')
 
-    if args is None:
-        args = sys.argv
-    parse_args = parser.parse_args(args)
+#     if args is None:
+#         args = sys.argv
+#     parse_args = parser.parse_args(args)
+    parse_args = parser.parse_args()
 
     # Open blimpy data
     filename = parse_args.filename
