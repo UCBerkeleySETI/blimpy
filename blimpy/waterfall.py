@@ -25,14 +25,9 @@ import os
 import sys
 import time
 
-try:
-    from .filterbank import Filterbank
-    from . import file_wrapper as fw
-    from .sigproc import *
-except:
-    from filterbank import Filterbank
-    import file_wrapper as fw
-    from sigproc import *
+from blimpy.filterbank import Filterbank
+from blimpy import file_wrapper as fw
+from blimpy.sigproc import *
 
 try:
     import h5py
@@ -464,7 +459,7 @@ class Waterfall(Filterbank):
             freq_axis_size = self.selection_shape[self.freq_axis]
             time_axis_size = np.min([chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size, self.selection_shape[self.time_axis]])
 
-        blob_dim = (time_axis_size, 1, freq_axis_size)
+        blob_dim = (int(time_axis_size), 1, freq_axis_size)
 
         return blob_dim
 
@@ -576,10 +571,10 @@ def cmd_tool(args=None):
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                         help='Maximum data limit to load. Default:1GB')
 
-#     if args is None:
-#         args = sys.argv
-#     parse_args = parser.parse_args(args)
-    parse_args = parser.parse_args()
+    if args is None:
+        args = sys.argv
+
+    parse_args = parser.parse_args(args)
 
     # Open blimpy data
     filename = parse_args.filename
