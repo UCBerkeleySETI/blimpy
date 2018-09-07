@@ -24,11 +24,10 @@ pip install https://github.com/UCBerkeleySETI/blimpy/tarball/master
 
 You will need numpy, h5py astropy, scipy, and matplotlib as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately.
 
+Note that h5py needs to be installed in this way. 
+
 ```
-Version 1.2.0
-Now more support/compatibility for Python 2 and 3.
-Version 1.1.9
-Now supporting dicing (bldice).
+$ pip install --no-binary=h5py h5py
 ```
 
 ### Command line utilities
