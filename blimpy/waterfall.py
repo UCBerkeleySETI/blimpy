@@ -572,7 +572,7 @@ def cmd_tool(args=None):
                         help='Maximum data limit to load. Default:1GB')
 
     if args is None:
-        args = sys.argv
+        args = sys.argv[1:]
 
     parse_args = parser.parse_args(args)
 
