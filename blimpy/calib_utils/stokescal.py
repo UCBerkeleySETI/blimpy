@@ -3,19 +3,32 @@ import numpy as np
 from scipy.optimize import curve_fit
 from fluxcal import foldcal
 
-def get_stokes(cross_dat, **kwargs):
+def get_stokes(cross_dat, feedtype='linear'):
     '''Output stokes parameters (I,Q,U,V) for a rawspec
     cross polarization data array'''
 
     #Compute Stokes Parameters
-    #I = XX+YY
-    I = cross_dat[:,0,:]+cross_dat[:,1,:]
-    #Q = XX-YY
-    Q = cross_dat[:,0,:]-cross_dat[:,1,:]
-    #U = 2*Re(XY)
-    U = 2*cross_dat[:,2,:]
-    #V = -2*Im(XY)
-    V = -2*cross_dat[:,3,:]
+    if feedtype=='linear':
+        #I = XX+YY
+        I = cross_dat[:,0,:]+cross_dat[:,1,:]
+        #Q = XX-YY
+        Q = cross_dat[:,0,:]-cross_dat[:,1,:]
+        #U = 2*Re(XY)
+        U = 2*cross_dat[:,2,:]
+        #V = -2*Im(XY)
+        V = -2*cross_dat[:,3,:]
+
+    else if feedtype=='circular':
+        #I = LL+RR
+        I = cross_dat[:,0,:]+cross_dat[:,1,:]
+        #Q = 2*Re(XY)
+        Q = 2*cross_dat[:,2,:]
+        #U = 2*Im(XY)
+        U = -2*cross_dat[:,3,:]
+        #V = -2*Im(XY)
+        V = cross_dat[:,1,:]-cross_dat[:,0,:]
+    else:
+        raise ValueError('feedtype must be \'linear\' or \'circular\'')
 
     #Add middle dimension to match Filterbank format
     I = np.expand_dims(I,axis=1)
@@ -124,7 +137,7 @@ def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse):
     #Return corrected data arrays
     return Icorr,Qcorr,Ucorr,Vcorr
 
-def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
+def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='linear',**kwargs):
     '''
     Write four calibrated Stokes filterbank files for a given observation
     with a calibrator noise diode measurement on the source
@@ -139,7 +152,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     dio_nchans = obs.header['nchans']
     dio_chan_per_coarse = dio_nchans/dio_ncoarse
     obs = None
-    Idat,Qdat,Udat,Vdat = get_stokes(cross_dat)
+    Idat,Qdat,Udat,Vdat = get_stokes(cross_dat,feedtype)
     cross_dat = None
     #Calculate differential gain and phase from noise diode measurements
     print 'Calculating Mueller Matrix variables'
@@ -160,7 +173,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,**kwargs):
     obs_chan_per_coarse = obs_nchans/obs_ncoarse
 
     print 'Grabbing Stokes parameters'
-    I,Q,U,V = get_stokes(cross_obs.data)
+    I,Q,U,V = get_stokes(cross_obs.data,feedtype)
 
     print 'Applying Mueller Matrix'
     I,Q,U,V = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse)
