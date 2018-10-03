@@ -15,6 +15,9 @@ from pprint import pprint
 from astropy.coordinates import Angle
 
 from .utils import unpack, rebin
+import sys
+
+PYTHON3 = sys.version_info >= (3, 0)
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if 'DISPLAY' in os.environ.keys():
@@ -56,7 +59,10 @@ class GuppiRaw(object):
     """
     def __init__(self, filename, n_blocks=None):
         self.filename = filename
-        self.file_obj = open(filename, 'r')
+        if PYTHON3:
+            self.file_obj = open(filename, 'rb')
+        else:
+            self.file_obj = open(filename, 'r')
         self.filesize = os.path.getsize(filename)
 
         if not n_blocks:
@@ -100,6 +106,8 @@ class GuppiRaw(object):
                     keep_reading = False
                     raise EndOfFileError
                 line = self.file_obj.read(80)
+                if PYTHON3:
+                    line = line.decode("utf-8")
                 #print line
                 if line.startswith('END'):
                     keep_reading = False
@@ -110,7 +118,7 @@ class GuppiRaw(object):
 
                     if "'" in val:
                         # Items in quotes are strings
-                        val = val.strip("'").strip()
+                        val = str(val.strip("'").strip())
                     elif "." in val:
                         # Items with periods are floats (if not a string)
                         val = float(val)
