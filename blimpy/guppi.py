@@ -160,7 +160,7 @@ class GuppiRaw(object):
     def read_next_data_block_shape(self):
         header, data_idx = self.read_header()
         n_chan = int(header['OBSNCHAN'])
-        n_pol  = min(2, int(header['NPOL']))  #NPOL 4 actually means 2
+        n_pol  = int(header['NPOL'])
         n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
         
         is_chanmaj = False
