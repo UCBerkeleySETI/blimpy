@@ -3,12 +3,12 @@ import numpy as np
 from scipy.optimize import curve_fit
 from fluxcal import foldcal
 
-def get_stokes(cross_dat, feedtype='linear'):
+def get_stokes(cross_dat, feedtype='l'):
     '''Output stokes parameters (I,Q,U,V) for a rawspec
     cross polarization data array'''
 
     #Compute Stokes Parameters
-    if feedtype=='linear':
+    if feedtype=='l':
         #I = XX+YY
         I = cross_dat[:,0,:]+cross_dat[:,1,:]
         #Q = XX-YY
@@ -18,7 +18,7 @@ def get_stokes(cross_dat, feedtype='linear'):
         #V = -2*Im(XY)
         V = -2*cross_dat[:,3,:]
 
-    else if feedtype=='circular':
+    elif feedtype=='c':
         #I = LL+RR
         I = cross_dat[:,0,:]+cross_dat[:,1,:]
         #Q = 2*Re(XY)
@@ -28,7 +28,7 @@ def get_stokes(cross_dat, feedtype='linear'):
         #V = -2*Im(XY)
         V = cross_dat[:,1,:]-cross_dat[:,0,:]
     else:
-        raise ValueError('feedtype must be \'linear\' or \'circular\'')
+        raise ValueError('feedtype must be \'l\' (linear) or \'c\' (circular)')
 
     #Add middle dimension to match Filterbank format
     I = np.expand_dims(I,axis=1)
@@ -53,39 +53,63 @@ def convert_to_coarse(data,chan_per_coarse):
     #Return the average over each coarse channel
     return np.mean(data_shaped[:,2:-1],axis=1)
 
-def phase_offsets(Udat,Vdat,tsamp,chan_per_coarse,fit=False,**kwargs):
+def phase_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwargs):
     '''
     Calculates phase difference between X and Y feeds given U and V
     data from a noise diode measurement on the target
     '''
     #Fold noise diode data and calculate ON OFF diferences for U and V
-    U_OFF,U_ON = foldcal(Udat,tsamp,**kwargs)
-    V_OFF,V_ON = foldcal(Vdat,tsamp,**kwargs)
-    Udiff = U_ON-U_OFF
-    Vdiff = V_ON-V_OFF
+    if feedtype=='l':
+        U_OFF,U_ON = foldcal(Udat,tsamp,**kwargs)
+        V_OFF,V_ON = foldcal(Vdat,tsamp,**kwargs)
+        Udiff = U_ON-U_OFF
+        Vdiff = V_ON-V_OFF
+        poffset = np.arctan2(Vdiff,Udiff)
 
-    return convert_to_coarse(np.arctan2(Vdiff,Udiff),chan_per_coarse)
+    if feedtype=='c':
+        U_OFF,U_ON = foldcal(Udat,tsamp,**kwargs)
+        Q_OFF,Q_ON = foldcal(Qdat,tsamp,**kwargs)
+        Udiff = U_ON-U_OFF
+        Qdiff = Q_ON-Q_OFF
+        poffset = np.arctan2(-1*Qdiff,Udiff)
 
-def gain_offsets(Idat,Qdat,tsamp,chan_per_coarse,**kwargs):
+    return convert_to_coarse(poffset,chan_per_coarse)
+
+def gain_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwargs):
     '''
     Determines relative gain error in the X and Y feeds for an
     observation given I and Q noise diode data.
     '''
-    #Fold noise diode data and calculate ON OFF differences for I and Q
-    I_OFF,I_ON = foldcal(Idat,tsamp,**kwargs)
-    Q_OFF,Q_ON = foldcal(Qdat,tsamp,**kwargs)
+    if feedtype=='l':
+        #Fold noise diode data and calculate ON OFF differences for I and Q
+        I_OFF,I_ON = foldcal(Idat,tsamp,**kwargs)
+        Q_OFF,Q_ON = foldcal(Qdat,tsamp,**kwargs)
 
-    #Calculate power in each feed for noise diode ON and OFF
-    XX_ON = (I_ON+Q_ON)/2
-    XX_OFF = (I_OFF+Q_OFF)/2
-    YY_ON = (I_ON-Q_ON)/2
-    YY_OFF = (I_OFF-Q_OFF)/2
+        #Calculate power in each feed for noise diode ON and OFF
+        XX_ON = (I_ON+Q_ON)/2
+        XX_OFF = (I_OFF+Q_OFF)/2
+        YY_ON = (I_ON-Q_ON)/2
+        YY_OFF = (I_OFF-Q_OFF)/2
 
-    #Calculate gain offset (divided by 2) as defined in Heiles (2001)
-    G = (XX_OFF-YY_OFF)/(XX_OFF+YY_OFF)
+        #Calculate gain offset (divided by 2) as defined in Heiles (2001)
+        G = (XX_OFF-YY_OFF)/(XX_OFF+YY_OFF)
+
+    if feedtype=='c':
+        #Fold noise diode data and calculate ON OFF differences for I and Q
+        I_OFF,I_ON = foldcal(Idat,tsamp,**kwargs)
+        V_OFF,V_ON = foldcal(Vdat,tsamp,**kwargs)
+
+        #Calculate power in each feed for noise diode ON and OFF
+        RR_ON = (I_ON+V_ON)/2
+        RR_OFF = (I_OFF+V_OFF)/2
+        LL_ON = (I_ON-V_ON)/2
+        LL_OFF = (I_OFF-V_OFF)/2
+
+        #Calculate gain offset (divided by 2) as defined in Heiles (2001)
+        G = (RR_OFF-LL_OFF)/(RR_OFF+LL_OFF)
 
     return convert_to_coarse(G,chan_per_coarse)
-def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse):
+def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse, feedtype='l'):
     '''
     Returns calibrated Stokes parameters for an observation given an array
     of differential gains and phase differences. Use 'hyptrig' to use the Mueller
@@ -113,20 +137,28 @@ def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse):
 
     #Apply top left corner of electronics chain inverse Mueller matrix
     a = 1/(1-gain_offsets**2)
-    Icorr = a*(I-gain_offsets*Q)
-    Qcorr = a*(-1*gain_offsets*I+Q)
-
-    #Clear uncalibrated I and Q
-    I = None
-    Q = None
+    if feedtype=='l':
+        Icorr = a*(I-gain_offsets*Q)
+        Qcorr = a*(-1*gain_offsets*I+Q)
+        I = None
+        Q = None
+    if feedtype=='c':
+        Icorr = a*(I-gain_offsets*V)
+        Vcorr = a*(-1*gain_offsets*I+V)
+        I = None
+        V = None
 
     #Apply bottom right corner of electronics chain inverse Mueller matrix
-    Ucorr = U*np.cos(phase_offsets)+V*np.sin(phase_offsets)
-    Vcorr = -1*U*np.sin(phase_offsets)+V*np.cos(phase_offsets)
-
-    #Clear uncalibrated U and V
-    U = None
-    V = None
+    if feedtype=='l':
+        Ucorr = U*np.cos(phase_offsets)+V*np.sin(phase_offsets)
+        Vcorr = -1*U*np.sin(phase_offsets)+V*np.cos(phase_offsets)
+        U = None
+        V = None
+    if feedtype=='c':
+        Qcorr = Q*np.cos(phase_offsets)+U*np.sin(phase_offsets)
+        Ucorr = -1*Q*np.sin(phase_offsets)+U*np.cos(phase_offsets)
+        Q = None
+        U = None
 
     #Reshape arrays to original shape
     Icorr = np.reshape(np.swapaxes(Icorr,2,3),shape)
@@ -137,7 +169,7 @@ def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse):
     #Return corrected data arrays
     return Icorr,Qcorr,Ucorr,Vcorr
 
-def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='linear',**kwargs):
+def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**kwargs):
     '''
     Write four calibrated Stokes filterbank files for a given observation
     with a calibrator noise diode measurement on the source
@@ -156,8 +188,8 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='linea
     cross_dat = None
     #Calculate differential gain and phase from noise diode measurements
     print 'Calculating Mueller Matrix variables'
-    gams = gain_offsets(Idat,Qdat,tsamp,dio_chan_per_coarse,**kwargs)
-    psis = phase_offsets(Udat,Vdat,tsamp,dio_chan_per_coarse,**kwargs)
+    gams = gain_offsets(Idat,Qdat,Udat,Vdat,tsamp,dio_chan_per_coarse,feedtype,**kwargs)
+    psis = phase_offsets(Idat,Qdat,Udat,Vdat,tsamp,dio_chan_per_coarse,feedtype,**kwargs)
 
     #Clear data arrays to save memory
     Idat = None
@@ -176,7 +208,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='linea
     I,Q,U,V = get_stokes(cross_obs.data,feedtype)
 
     print 'Applying Mueller Matrix'
-    I,Q,U,V = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse)
+    I,Q,U,V = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse,feedtype)
 
     #Use onefile (default) to produce one filterbank file containing all Stokes information
     if onefile==True:
