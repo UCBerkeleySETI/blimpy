@@ -21,11 +21,11 @@ def get_stokes(cross_dat, feedtype='l'):
     elif feedtype=='c':
         #I = LL+RR
         I = cross_dat[:,0,:]+cross_dat[:,1,:]
-        #Q = 2*Re(XY)
+        #Q = 2*Re(RL)
         Q = 2*cross_dat[:,2,:]
-        #U = 2*Im(XY)
+        #U = 2*Im(RL)
         U = -2*cross_dat[:,3,:]
-        #V = -2*Im(XY)
+        #V = RR-LL
         V = cross_dat[:,1,:]-cross_dat[:,0,:]
     else:
         raise ValueError('feedtype must be \'l\' (linear) or \'c\' (circular)')
@@ -64,14 +64,14 @@ def phase_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwarg
         V_OFF,V_ON = foldcal(Vdat,tsamp,**kwargs)
         Udiff = U_ON-U_OFF
         Vdiff = V_ON-V_OFF
-        poffset = np.arctan2(Vdiff,Udiff)
+        poffset = np.arctan2(-1*Vdiff,Udiff)
 
     if feedtype=='c':
         U_OFF,U_ON = foldcal(Udat,tsamp,**kwargs)
         Q_OFF,Q_ON = foldcal(Qdat,tsamp,**kwargs)
         Udiff = U_ON-U_OFF
         Qdiff = Q_ON-Q_OFF
-        poffset = np.arctan2(-1*Qdiff,Udiff)
+        poffset = np.arctan2(Udiff,Qdiff)
 
     return convert_to_coarse(poffset,chan_per_coarse)
 
@@ -150,8 +150,8 @@ def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse, feedtyp
 
     #Apply bottom right corner of electronics chain inverse Mueller matrix
     if feedtype=='l':
-        Ucorr = U*np.cos(phase_offsets)+V*np.sin(phase_offsets)
-        Vcorr = -1*U*np.sin(phase_offsets)+V*np.cos(phase_offsets)
+        Ucorr = U*np.cos(phase_offsets)-V*np.sin(phase_offsets)
+        Vcorr = U*np.sin(phase_offsets)+V*np.cos(phase_offsets)
         U = None
         V = None
     if feedtype=='c':
