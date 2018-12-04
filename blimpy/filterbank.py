@@ -23,17 +23,15 @@ TODO: check the file seek logic works correctly for multiple IFs
 
 
 import sys
-import six
 
 from astropy.time import Time
 
 import logging as logger
 
 
-from .utils import db, lin, rebin, closest, unpack_2to8
-from .sigproc import *
+from .utils import unpack_2to8
+from blimpy.io.sigproc import *
 from .plotting import *
-from .ephemeris import *
 
 try:
     import h5py
@@ -299,9 +297,6 @@ class Filterbank(object):
             print("Skipping data load...")
             self.data = np.array([0], dtype=dd_type)
 
-
-
-
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
 
@@ -313,7 +308,7 @@ class Filterbank(object):
             return None
 
         if not n_coarse_chan % int(n_coarse_chan) == 0:
-            logger.warning('Selection does not contain an interger number of coarse channels, unable to blank DC bin.')
+            logger.warning('Selection does not contain an integer number of coarse channels, unable to blank DC bin.')
             return None
 
         n_coarse_chan = int(n_coarse_chan)
@@ -418,7 +413,7 @@ class Filterbank(object):
 
         return extent
 
-    def write_to_filterbank(self, filename_out):
+    def write_to_fil(self, filename_out):
         """ Write data to blimpy file.
 
         Args:
@@ -505,7 +500,7 @@ def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on filterbank files """
 
     from argparse import ArgumentParser
-    from plotting.plot_config import plt
+    from plotting.config import plt
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 
