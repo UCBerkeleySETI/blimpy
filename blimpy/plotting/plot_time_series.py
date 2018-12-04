@@ -1,7 +1,8 @@
 from .config import *
 from ..utils import rebin, db
 
-def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation='h', MJD_time=False, **kwargs):
+
+def plot_time_series(wf, f_start=None, f_stop=None, if_id=0, logged=True, orientation='h', MJD_time=False, **kwargs):
     """ Plot the time series.
 
      Args:
@@ -12,9 +13,9 @@ def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orie
     """
 
     ax = plt.gca()
-    plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
+    plot_f, plot_data = wf.grab_data(f_start, f_stop, if_id)
 
-    if logged and self.header[b'nbits'] >= 8:
+    if logged and wf.header[b'nbits'] >= 8:
         plot_data = db(plot_data)
 
     # Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
@@ -24,8 +25,8 @@ def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orie
         plot_data = plot_data.mean()
 
     # Make proper time axis for plotting (but only for plotting!). Note that this makes the values inclusive.
-    extent = self._calc_extent(plot_f=plot_f, plot_t=self.timestamps, MJD_time=MJD_time)
-    plot_t = np.linspace(extent[2], extent[3], len(self.timestamps))
+    extent = wf._calc_extent(plot_f=plot_f, plot_t=wf.timestamps, MJD_time=MJD_time)
+    plot_t = np.linspace(extent[2], extent[3], len(wf.timestamps))
 
     if MJD_time:
         tlabel = "Time [MJD]"

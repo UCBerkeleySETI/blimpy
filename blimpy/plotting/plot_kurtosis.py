@@ -1,6 +1,7 @@
 from .config import *
 import scipy.stats
 
+
 def plot_kurtosis(wf, f_start=None, f_stop=None, if_id=0, **kwargs):
     """ Plot kurtosis
 

@@ -1,6 +1,7 @@
 from .config import *
 from ..utils import rebin, db
 
+
 def plot_waterfall(wf, f_start=None, f_stop=None, if_id=0, logged=True, cb=True, MJD_time=False, **kwargs):
     """ Plot waterfall of data
 
