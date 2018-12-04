@@ -1,5 +1,6 @@
 from .config import *
 from ..utils import rebin, db
+from .plot_utils import calc_extent
 
 
 def plot_waterfall(wf, f_start=None, f_stop=None, if_id=0, logged=True, cb=True, MJD_time=False, **kwargs):
@@ -38,7 +39,7 @@ def plot_waterfall(wf, f_start=None, f_stop=None, if_id=0, logged=True, cb=True,
     except KeyError:
         plt.title(wf.filename)
 
-    extent = wf._calc_extent(plot_f=plot_f, plot_t=wf.timestamps, MJD_time=MJD_time)
+    extent = calc_extent(wf, plot_f=plot_f, plot_t=wf.timestamps, MJD_time=MJD_time)
 
     plt.imshow(plot_data,
                aspect='auto',

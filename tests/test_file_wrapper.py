@@ -18,7 +18,7 @@ def test_read_fns():
 
 
 def test_file_wrapper_open_file():
-    from blimpy.file_wrapper import open_file
+    from blimpy.io.file_wrapper import open_file
     open_file(voyager_h5)
     open_file(voyager_fil)
 

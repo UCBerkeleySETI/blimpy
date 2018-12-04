@@ -53,14 +53,14 @@ def compare_waterfall_fil_to_h5_methods_and_attributes():
 
     print("Checking if basic methods run without raising Exceptions")
     # Check they can be run
-    a.populate_freqs()
-    a.populate_timestamps()
+    a.container.populate_freqs()
+    a.container.populate_timestamps()
     a.info()
     a.blank_dc(1)
     a.calibrate_band_pass_N1()
 
-    b.populate_freqs()
-    b.populate_timestamps()
+    b.container.populate_freqs()
+    b.container.populate_timestamps()
     b.info()
     b.blank_dc(1)
     b.calibrate_band_pass_N1()

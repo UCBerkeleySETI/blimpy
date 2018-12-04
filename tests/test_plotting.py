@@ -13,26 +13,28 @@ def test_plot_waterfall():
 
     a = bl.Waterfall(voyager_h5)
 
-    plt.figure(figsize=(10, 8))
-    plt.subplot(3,2,1)
+    plt.figure("TEST PLOTTING", figsize=(10, 8))
+    plt.subplot(3, 2, 1)
     plot_waterfall(a)
 
-    plt.subplot(3,2,2)
+    plt.subplot(3, 2, 2)
     plot_spectrum(a)
 
-    plt.subplot(3,2,3)
+    plt.subplot(3, 2, 3)
     plot_spectrum_min_max(a)
 
-    plt.subplot(3,2,4)
+    plt.subplot(3, 2, 4)
     plot_kurtosis(a)
 
-    plt.subplot(3,2,5)
+    plt.subplot(3, 2, 5)
     plot_time_series(a)
-    plt.tight_layout()
-    plt.show()
 
+    plt.tight_layout()
+    plt.savefig("test_plotting.png")
+
+    plt.figure("TEST PLOT_ALL", figsize=(10, 8))
     plot_all(a)
-    plt.show()
+    plt.savefig("test_plotting_plot_all.png")
 
 
 def test_plot_waterfall_classmethod():
@@ -40,7 +42,7 @@ def test_plot_waterfall_classmethod():
 
     a = bl.Waterfall(voyager_h5)
 
-    plt.figure(figsize=(10, 8))
+    plt.figure("TEST PLOTTING CLASS", figsize=(10, 8))
     plt.subplot(3, 2, 1)
     a.plot_waterfall()
 
@@ -56,10 +58,12 @@ def test_plot_waterfall_classmethod():
     plt.subplot(3, 2, 5)
     a.plot_time_series()
     plt.tight_layout()
-    plt.show()
 
+    plt.savefig("test_plotting_classmethod.png")
+
+    plt.figure("TEST PLOT_ALL CLASS", figsize=(10, 8))
     a.plot_all()
-    plt.show()
+    plt.savefig("test_plotting_plot_all_classmethod.png")
 
 
 if __name__ == "__main__":

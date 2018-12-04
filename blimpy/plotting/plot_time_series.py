@@ -1,6 +1,6 @@
 from .config import *
 from ..utils import rebin, db
-
+from .plot_utils import calc_extent
 
 def plot_time_series(wf, f_start=None, f_stop=None, if_id=0, logged=True, orientation='h', MJD_time=False, **kwargs):
     """ Plot the time series.
@@ -25,7 +25,7 @@ def plot_time_series(wf, f_start=None, f_stop=None, if_id=0, logged=True, orient
         plot_data = plot_data.mean()
 
     # Make proper time axis for plotting (but only for plotting!). Note that this makes the values inclusive.
-    extent = wf._calc_extent(plot_f=plot_f, plot_t=wf.timestamps, MJD_time=MJD_time)
+    extent = calc_extent(wf, plot_f=plot_f, plot_t=wf.timestamps, MJD_time=MJD_time)
     plot_t = np.linspace(extent[2], extent[3], len(wf.timestamps))
 
     if MJD_time:

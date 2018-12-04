@@ -344,29 +344,6 @@ class Filterbank(object):
         print("%16s : %32s" % ("Start freq (MHz)", self.freqs[0]))
         print("%16s : %32s" % ("Stop freq (MHz)", self.freqs[-1]))
 
-    def generate_freqs(self, f_start, f_stop):
-        """
-        returns frequency array [f_start...f_stop]
-        """
-
-        fch1 = self.header[b'fch1']
-        foff = self.header[b'foff']
-
-        #convert input frequencies into what their corresponding index would be
-        i_start = int((f_start - fch1) / foff)
-        i_stop  = int((f_stop - fch1)  / foff)
-
-        #calculate closest true index value
-        chan_start_idx = np.int(i_start)
-        chan_stop_idx  = np.int(i_stop)
-
-        #create freq array
-        i_vals = np.arange(chan_stop_idx, chan_start_idx, 1)
-
-        freqs = foff * i_vals + fch1
-
-        return freqs
-
     def grab_data(self, f_start=None, f_stop=None, t_start=None, t_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
 
@@ -395,23 +372,6 @@ class Filterbank(object):
             plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
 
         return plot_f, plot_data
-
-    def _calc_extent(self,plot_f=None,plot_t=None,MJD_time=False):
-        """ Setup ploting edges.
-        """
-
-        plot_f_begin = plot_f[0]
-        plot_f_end = plot_f[-1] + (plot_f[1]-plot_f[0])
-
-        plot_t_begin = self.timestamps[0]
-        plot_t_end  = self.timestamps[-1] + (self.timestamps[1] - self.timestamps[0])
-
-        if MJD_time:
-            extent=(plot_f_begin, plot_f_end, plot_t_begin, plot_t_end)
-        else:
-            extent=(plot_f_begin, plot_f_end, 0.0,(plot_t_end-plot_t_begin)*24.*60.*60)
-
-        return extent
 
     def write_to_fil(self, filename_out):
         """ Write data to blimpy file.
