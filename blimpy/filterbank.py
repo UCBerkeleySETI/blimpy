@@ -29,25 +29,17 @@ from astropy.time import Time
 
 import logging as logger
 
-try:
-    from .utils import db, lin, rebin, closest, unpack_2to8
-    from .sigproc import *
-    from .plotting import *
-except:
-    from utils import db, lin, rebin, closest, unpack_2to8
-    from sigproc import *
+
+from .utils import db, lin, rebin, closest, unpack_2to8
+from .sigproc import *
+from .plotting import *
+from .ephemeris import *
 
 try:
     import h5py
     HAS_HDF5 = True
 except ImportError:
     HAS_HDF5 = False
-
-try:
-    from pyslalib import slalib as s
-    HAS_SLALIB = True
-except ImportError:
-    HAS_SLALIB = False
 
 #import pdb #pdb.set_trace()
 
@@ -58,10 +50,6 @@ except ImportError:
 
 MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024 * 2 # Max size of data array to load into memory
 MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
-
-# Telescope coordinates (needed for LSR calc)
-parkes_coords = (-32.998370, 148.263659,  324.00)
-gbt_coords    = (38.4331294, 79.8398397, 824.36)
 
 
 ###
@@ -311,76 +299,8 @@ class Filterbank(object):
             print("Skipping data load...")
             self.data = np.array([0], dtype=dd_type)
 
-    def compute_lst(self):
-        """ Compute LST for observation """
-        if self.header[b'telescope_id'] == 6:
-            self.coords = gbt_coords
-        elif self.header[b'telescope_id'] == 4:
-            self.coords = parkes_coords
-        else:
-            raise RuntimeError("Currently only Parkes and GBT supported")
-        if HAS_SLALIB:
-            # dut1 = (0.2 /3600.0) * np.pi/12.0
-            dut1 = 0.0
-            mjd = self.header[b'tstart']
-            tellong = np.deg2rad(self.coords[1])
-            last = s.sla_gmst(mjd) - tellong + s.sla_eqeqx(mjd) + dut1
-            # lmst = s.sla_gmst(mjd) - tellong
-            if last < 0.0 : last = last + 2.0*np.pi
-            return last
-        else:
-            raise RuntimeError("This method requires pySLALIB")
 
-    def compute_lsrk(self):
-        """ Computes the LSR in km/s
 
-        uses the MJD, RA and DEC of observation to compute
-        along with the telescope location. Requires pyslalib
-        """
-        ra = Angle(self.header[b'src_raj'], unit='hourangle')
-        dec = Angle(self.header[b'src_dej'], unit='degree')
-        mjdd = self.header[b'tstart']
-        rarad = ra.to('radian').value
-        dcrad = dec.to('radian').value
-        last = self.compute_lst()
-        tellat  = np.deg2rad(self.coords[0])
-        tellong = np.deg2rad(self.coords[1])
-
-        # convert star position to vector
-        starvect = s.sla_dcs2c(rarad, dcrad)
-
-        # velocity component in ra,dec due to Earth rotation
-        Rgeo = s.sla_rverot( tellat, rarad, dcrad, last)
-
-        # get Barycentric and heliocentric velocity and position of the Earth.
-        evp = s.sla_evp(mjdd, 2000.0)
-        dvb = evp[0]   # barycentric velocity vector, in AU/sec
-        dpb = evp[1]   # barycentric position vector, in AU
-        dvh = evp[2]   # heliocentric velocity vector, in AU/sec
-        dph = evp[3]   # heliocentric position vector, in AU
-
-        # dot product of vector to object and heliocentric velocity
-        # convert AU/sec to km/sec
-        vcorhelio = -s.sla_dvdv( starvect, dvh) *149.597870e6
-        vcorbary  = -s.sla_dvdv( starvect, dvb) *149.597870e6
-
-        # rvlsrd is velocity component in ra,dec direction due to the Sun's
-        # motion with respect to the "dynamical" local standard of rest
-        rvlsrd = s.sla_rvlsrd( rarad,dcrad)
-
-        # rvlsrk is velocity component in ra,dec direction due to i
-        # the Sun's motion w.r.t the "kinematic" local standard of rest
-        rvlsrk = s.sla_rvlsrk( rarad,dcrad)
-
-        # rvgalc is velocity component in ra,dec direction due to
-        #the rotation of the Galaxy.
-        rvgalc = s.sla_rvgalc( rarad,dcrad)
-        totalhelio = Rgeo + vcorhelio
-        totalbary  = Rgeo + vcorbary
-        totallsrk = totalhelio + rvlsrk
-        totalgal  = totalbary  + rvlsrd + rvgalc
-
-        return totallsrk
 
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
@@ -498,8 +418,6 @@ class Filterbank(object):
 
         return extent
 
-
-
     def write_to_filterbank(self, filename_out):
         """ Write data to blimpy file.
 
@@ -563,11 +481,31 @@ class Filterbank(object):
         band_pass = np.median(self.data.squeeze(),axis=0)
         self.data = self.data/band_pass
 
+    def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
+        plot_spectrum(self, t, f_start, f_stop, logged, if_id, c, **kwargs)
+
+    def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True, cb=True, MJD_time=False, **kwargs):
+        plot_waterfall(self, f_start, f_stop, if_id, logged, cb, MJD_time, **kwargs)
+
+    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation='h', MJD_time=False,
+                         **kwargs):
+        plot_time_series(self, f_start, f_stop, if_id, logged, orientation, MJD_time, **kwargs)
+
+    def plot_spectrum_min_max(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
+        plot_spectrum_min_max(self, t, f_start, f_stop, logged, if_id, c, **kwargs)
+
+    def plot_kurtosis(self, f_start=None, f_stop=None, if_id=0, **kwargs):
+        plot_kurtosis(self, f_start, f_stop, if_id, **kwargs)
+
+    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis=True, **kwargs):
+        plot_all(self, t, f_start, f_stop, logged, if_id, kurtosis, **kwargs)
+
 
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on filterbank files """
 
     from argparse import ArgumentParser
+    from plotting.plot_config import plt
 
     parser = ArgumentParser(description="Command line utility for reading and plotting filterbank files.")
 

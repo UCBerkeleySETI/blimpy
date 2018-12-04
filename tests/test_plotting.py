@@ -11,10 +11,7 @@ from blimpy.plotting import plot_waterfall, plot_spectrum, plot_spectrum_min_max
 def test_plot_waterfall():
     """ Load Voyager dataset and test plotting """
 
-    print("Loading FIL and HDF5 data with Waterfall()..."),
     a = bl.Waterfall(voyager_h5)
-    b = bl.Waterfall(voyager_fil)
-    print("OK")
 
     plt.figure(figsize=(10, 8))
     plt.subplot(3,2,1)
@@ -38,6 +35,33 @@ def test_plot_waterfall():
     plt.show()
 
 
+def test_plot_waterfall_classmethod():
+    """ Load Voyager dataset and test plotting """
+
+    a = bl.Waterfall(voyager_h5)
+
+    plt.figure(figsize=(10, 8))
+    plt.subplot(3, 2, 1)
+    a.plot_waterfall()
+
+    plt.subplot(3, 2, 2)
+    a.plot_spectrum()
+
+    plt.subplot(3, 2, 3)
+    a.plot_spectrum_min_max()
+
+    plt.subplot(3, 2, 4)
+    a.plot_kurtosis()
+
+    plt.subplot(3, 2, 5)
+    a.plot_time_series()
+    plt.tight_layout()
+    plt.show()
+
+    a.plot_all()
+    plt.show()
+
 
 if __name__ == "__main__":
     test_plot_waterfall()
+    test_plot_waterfall_classmethod()
