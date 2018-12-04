@@ -1,5 +1,5 @@
 from .config import *
-
+from .compute_lst import compute_lst
 
 def compute_lsrk(wf):
     """ Computes the LSR in km/s
@@ -12,7 +12,7 @@ def compute_lsrk(wf):
     mjdd = wf.header[b'tstart']
     rarad = ra.to('radian').value
     dcrad = dec.to('radian').value
-    last = wf.compute_lst()
+    last = compute_lst(wf)
     tellat = np.deg2rad(wf.coords[0])
     tellong = np.deg2rad(wf.coords[1])
 

@@ -1,4 +1,4 @@
-from blimpy import sigproc
+from blimpy.io import sigproc
 import blimpy as bl
 from tests.data import voyager_fil, voyager_h5
 import numpy as np
@@ -24,8 +24,8 @@ def test_fil_write():
         a = bl.Filterbank(voyager_h5)
         b = bl.Filterbank(voyager_fil)
 
-        a.write_to_filterbank('test.fil')
-        b.write_to_filterbank('test2.fil')
+        a.write_to_fil('test.fil')
+        b.write_to_fil('test2.fil')
 
         c = bl.Filterbank('test.fil')
         d = bl.Filterbank('test2.fil')
