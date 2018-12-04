@@ -158,18 +158,6 @@ class Waterfall(Filterbank):
         #Updating time stamp for first time bin from selection
         self.header[b'tstart'] = self.container.populate_timestamps(update_header=True)
 
-    def populate_freqs(self):
-        """
-        """
-
-        return self.container.populate_freqs()
-
-    def populate_timestamps(self):
-        """
-        """
-
-        return self.container.populate_timestamps()
-
     def info(self):
         """ Print header information and other derived information. """
 
@@ -260,8 +248,8 @@ class Waterfall(Filterbank):
             (freqs, data) (np.arrays): frequency axis in MHz and data subset
         """
 
-        self.freqs = self.populate_freqs()
-        self.timestamps = self.populate_timestamps()
+        self.freqs = self.container.populate_freqs()
+        self.timestamps = self.container.populate_timestamps()
 
         if f_start is None:
             f_start = self.freqs[0]
