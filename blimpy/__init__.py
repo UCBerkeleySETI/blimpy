@@ -18,7 +18,7 @@ except:
     print("Warning: Cannot import HDF5 utilities")
 
 try:
-    from . import file_wrapper
+    from blimpy.io import file_wrapper
     from . import match_fils
 except:
     pass
