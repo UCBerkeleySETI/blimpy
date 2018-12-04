@@ -10,10 +10,7 @@ import six
 
 from astropy.coordinates import Angle
 
-try:
-    from . import sigproc
-except:
-    import sigproc
+import blimpy.io.sigproc
 
 # import pdb;# pdb.set_trace()
 
@@ -477,14 +474,14 @@ class FilReader(Reader):
         """
         super(FilReader, self).__init__()
 
-        self.header_keywords_types = sigproc.header_keyword_types
+        self.header_keywords_types = blimpy.io.sigproc.header_keyword_types
 
         if filename and os.path.isfile(filename):
             self.filename = filename
             self.load_data = load_data
             self.header = self.read_header()
             self.file_size_bytes = os.path.getsize(self.filename)
-            self.idx_data = sigproc.len_header(self.filename)
+            self.idx_data = blimpy.io.sigproc.len_header(self.filename)
             self.n_channels_in_file  = self.header[b'nchans']
             self.n_beams_in_file = self.header[b'nifs'] #Placeholder for future development.
             self.n_pols_in_file = 1 #Placeholder for future development.
@@ -553,7 +550,7 @@ class FilReader(Reader):
 
     def _setup_n_ints_in_file(self):
         """ Calculate the number of integrations in the file. """
-        self.n_ints_in_file = sigproc.calc_n_ints_in_file(self.filename)
+        self.n_ints_in_file = blimpy.io.sigproc.calc_n_ints_in_file(self.filename)
 
 
     def read_header(self, return_idxs=False):
@@ -570,7 +567,7 @@ class FilReader(Reader):
             Python dict of key:value pairs, OR returns file offset indexes for values.
 
         """
-        self.header = sigproc.read_header(self.filename, return_idxs=return_idxs)
+        self.header = blimpy.io.sigproc.read_header(self.filename, return_idxs=return_idxs)
         return self.header
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
@@ -763,7 +760,7 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
         # Open HDF5 file
         return H5Reader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
                         load_data=load_data, max_load=max_load)
-    elif sigproc.is_filterbank(filename):
+    elif blimpy.io.sigproc.is_filterbank(filename):
         # Open FIL file
         return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
     else:
