@@ -49,6 +49,8 @@ def cmd_tool(args=None):
             logger.error('Indicate file name and start and stop frequencies')
             sys.exit()
 
+    args = parser.parse_args(args)
+
     if args.in_fname is None:
             logger.error('Need to indicate input file name')
             sys.exit()
