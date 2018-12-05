@@ -120,9 +120,9 @@ class Reader(object):
         if self._n_bytes  == 4:
             return b'float32'
         elif self._n_bytes  == 2:
-            return b'int16'
+            return b'uint16'
         elif self._n_bytes  == 1:
-            return b'int8'
+            return b'uint8'
         else:
             logger.warning('Having trouble setting dtype, assuming float32.')
             return b'float32'
