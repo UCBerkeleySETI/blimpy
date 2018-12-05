@@ -2,7 +2,7 @@ import blimpy as bl
 import numpy as np
 from pprint import pprint
 from tests.data import voyager_fil, voyager_h5
-
+from blimpy.plotting.config import plt
 
 def compare_waterfall_fil_to_h5():
     """ Load Voyager dataset and test that both fil and hdf5 readers return same headers and data """
@@ -114,18 +114,30 @@ def test_plotting_doesnt_cause_exceptions():
     b = bl.Waterfall(voyager_fil)
 
     a.plot_all()
+    plt.clf()
     a.plot_kurtosis()
+    plt.clf()
     a.plot_spectrum()
+    plt.clf()
     a.plot_spectrum_min_max()
+    plt.clf()
     a.plot_waterfall()
+    plt.clf()
     a.plot_time_series()
+    plt.clf()
 
     b.plot_all()
+    plt.clf()
     b.plot_kurtosis()
+    plt.clf()
     b.plot_spectrum()
+    plt.clf()
     b.plot_spectrum_min_max()
+    plt.clf()
     b.plot_waterfall()
+    plt.clf()
     b.plot_time_series()
+    plt.clf()
 
 if __name__ == "__main__":
     compare_waterfall_fil_to_h5()

@@ -3,6 +3,7 @@ import numpy as np
 from pprint import pprint
 import pytest
 from tests.data import voyager_fil, voyager_h5
+from blimpy.plotting.config import plt
 
 
 def compare_filterbank_fil_to_h5():
@@ -34,6 +35,7 @@ def compare_filterbank_fil_to_h5():
     assert a.data.dtype == b.data.dtype
     print("OK")
 
+
 def test_plotting_doesnt_cause_exceptions():
     """ Try running the plotting routines. They should not raise expections even without X windows """
     a = bl.Filterbank(voyager_h5)
@@ -52,6 +54,7 @@ def test_plotting_doesnt_cause_exceptions():
     b.plot_spectrum_min_max()
     b.plot_waterfall()
     b.plot_time_series()
+    plt.clf()
 
 
 def test_cmdtool():
