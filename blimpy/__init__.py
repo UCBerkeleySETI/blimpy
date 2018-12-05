@@ -4,7 +4,7 @@ from __future__ import absolute_import
 try:
     from . import waterfall
     from .waterfall import Waterfall
-    from .filterbank import Filterbank, read_header, fix_header
+    from blimpy.deprecated.filterbank import Filterbank, read_header, fix_header
     from .guppi import GuppiRaw
     from . import utils
 except ImportError:

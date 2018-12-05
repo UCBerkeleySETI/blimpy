@@ -29,15 +29,17 @@ from astropy.time import Time
 import logging as logger
 
 
-from .utils import unpack_2to8
+from blimpy.utils import unpack_2to8
 from blimpy.io.sigproc import *
-from .plotting import *
+from blimpy.plotting import *
 
 try:
     import h5py
     HAS_HDF5 = True
 except ImportError:
     HAS_HDF5 = False
+
+import warnings
 
 #import pdb #pdb.set_trace()
 
@@ -82,6 +84,7 @@ class Filterbank(object):
             data_array (np.array): Create blimpy from header dict + data array
             blank_dc (bool): Blanks the DC bin or not.
         """
+        warnings.warn("Filterbank is deprecated. Please use Waterfall()")
 
         if filename:
             self.filename = filename
@@ -103,15 +106,6 @@ class Filterbank(object):
 
         else:
             pass
-
-        if blank_dc:
-            print("Blanking DC bin")
-            n_coarse_chan = self.calc_n_coarse_chan()
-            self.blank_dc(n_coarse_chan)
-
-        if cal_band_pass:
-            print("Calibrating the band pass.")
-            self.calibrate_band_pass_N1()
 
     def read_hdf5(self, filename, f_start=None, f_stop=None,
                         t_start=None, t_stop=None, load_data=True):
@@ -297,31 +291,6 @@ class Filterbank(object):
             print("Skipping data load...")
             self.data = np.array([0], dtype=dd_type)
 
-    def blank_dc(self, n_coarse_chan):
-        """ Blank DC bins in coarse channels.
-
-        Note: currently only works if entire file is read
-        """
-
-        if n_coarse_chan < 1:
-            logger.warning('Coarse channel number < 1, unable to blank DC bin.')
-            return None
-
-        if not n_coarse_chan % int(n_coarse_chan) == 0:
-            logger.warning('Selection does not contain an integer number of coarse channels, unable to blank DC bin.')
-            return None
-
-        n_coarse_chan = int(n_coarse_chan)
-
-        n_chan = self.data.shape[-1]
-        n_chan_per_coarse = int(n_chan / n_coarse_chan)
-
-        mid_chan = int(n_chan_per_coarse / 2)
-
-        for ii in range(n_coarse_chan):
-            ss = ii*n_chan_per_coarse
-            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
-
     def info(self):
         """ Print header information """
 
@@ -427,14 +396,6 @@ class Filterbank(object):
             # Copy over header information as attributes
             for key, value in self.header.items():
                 dset.attrs[key] = value
-
-    def calibrate_band_pass_N1(self):
-        """ One way to calibrate the band pass is to take the median value
-            for every frequency fine channel, and divide by it.
-        """
-
-        band_pass = np.median(self.data.squeeze(),axis=0)
-        self.data = self.data/band_pass
 
     def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
         plot_spectrum(self, t, f_start, f_stop, logged, if_id, c, **kwargs)
