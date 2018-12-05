@@ -30,7 +30,7 @@ else:
 logging.basicConfig(format=format,stream=stream,level = level_log)
 #------
 
-def cmd_tool():
+def cmd_tool(args=None):
     '''Read input and output frequency, and output file name
     '''
 
@@ -42,18 +42,19 @@ def cmd_tool():
     parser.add_argument('-o', '--output_filename', action='store', default=None, dest='out_fname', type=str, help='Ouput file name to write (to HDF5 or FIL).')
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1GB')
 
-    args = parser.parse_args()
+    if args is None:
+        args = sys.argv[1:]
 
-    if len(sys.argv) == 1:
+        if len(sys.argv) == 1:
             logger.error('Indicate file name and start and stop frequencies')
             sys.exit()
 
-    if args.in_fname == None:
+    if args.in_fname is None:
             logger.error('Need to indicate input file name')
             sys.exit()
 
-    if args.out_fname == None:
-        if (args.out_format == None) or (args.out_format == 'h5'):
+    if args.out_fname is None:
+        if (args.out_format is None) or (args.out_format == 'h5'):
             if args.in_fname[len(args.in_fname)-4:] == '.fil':
                 args.out_fname = args.in_fname
                 args.out_fname = args.out_fname.replace('.fil','_diced.h5')
