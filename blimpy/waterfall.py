@@ -25,11 +25,13 @@ import sys
 import time
 import os
 import numpy as np
+import types
 
-from blimpy.filterbank import Filterbank
 from blimpy.io import file_wrapper as fw
+from .plotting import *
 
-#from blimpy.io.sigproc import *
+from astropy.time import Time
+from astropy import units as u
 
 try:
     import h5py
@@ -69,8 +71,11 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 # Main blimpy class
 ###
 
-class Waterfall(Filterbank):
+class Waterfall(object):
     """ Class for loading and writing blimpy data (.fil, .h5) """
+
+    def __repr__(self):
+        return "Waterfall data: %s" % self.filename
 
     def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=1., header_dict=None, data_array=None):
         """ Class for loading and plotting blimpy data.
@@ -128,6 +133,14 @@ class Waterfall(Filterbank):
 
         else:
             self.filename = b''
+
+        # Attach methods
+        self.plot_spectrum         = types.MethodType(plot_spectrum, self, Waterfall)
+        self.plot_waterfall        = types.MethodType(plot_waterfall, self, Waterfall)
+        self.plot_kurtosis         = types.MethodType(plot_kurtosis, self, Waterfall)
+        self.plot_time_series      = types.MethodType(plot_time_series, self, Waterfall)
+        self.plot_all              = types.MethodType(plot_all, self, Waterfall)
+        self.plot_spectrum_min_max = types.MethodType(plot_spectrum_min_max, self, Waterfall)
 
     def __load_data(self):
         """ Helper for loading data form a container. Should not be called manually. """
@@ -276,11 +289,45 @@ class Waterfall(Filterbank):
         from blimpy.io import write_to_hdf5
         write_to_hdf5(self, filename_out, *args, **kwargs)
 
+    def blank_dc(self, n_coarse_chan):
+        """ Blank DC bins in coarse channels.
+
+        Note: currently only works if entire file is read
+        """
+
+        if n_coarse_chan < 1:
+            logger.warning('Coarse channel number < 1, unable to blank DC bin.')
+            return None
+
+        if not n_coarse_chan % int(n_coarse_chan) == 0:
+            logger.warning('Selection does not contain an integer number of coarse channels, unable to blank DC bin.')
+            return None
+
+        n_coarse_chan = int(n_coarse_chan)
+
+        n_chan = self.data.shape[-1]
+        n_chan_per_coarse = int(n_chan / n_coarse_chan)
+
+        mid_chan = int(n_chan_per_coarse / 2)
+
+        for ii in range(n_coarse_chan):
+            ss = ii*n_chan_per_coarse
+            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
+
+    def calibrate_band_pass_N1(self):
+        """ One way to calibrate the band pass is to take the median value
+            for every frequency fine channel, and divide by it.
+        """
+
+        band_pass = np.median(self.data.squeeze(),axis=0)
+        self.data = self.data/band_pass
+
+
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on blimpy files """
 
+
     from argparse import ArgumentParser
-    from plotting.config import plt
 
     parser = ArgumentParser(description="Command line utility for reading and plotting blimpy files.")
 
@@ -313,7 +360,7 @@ def cmd_tool(args=None):
     parser.add_argument('-F', action='store_true', default=False, dest='to_fil',
                        help='Write file to .fil format.')
     parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
-                        help='Filename output (if not probided, the name will be the same but with apropiate extension).')
+                        help='Filename output (if not provided, the name will be the same but with appropriate extension).')
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                         help='Maximum data limit to load. Default:1GB')
 
@@ -336,8 +383,9 @@ def cmd_tool(args=None):
         info_only = True
 
     # And if we want to plot data, then plot data.
-
     if not info_only:
+        from plotting.config import plt
+
         print('')
 
         if parse_args.blank_dc:
@@ -378,24 +426,22 @@ def cmd_tool(args=None):
 
     else:
 
+        fileroot = os.path.splitext(filename)[0]
+
         if parse_args.to_hdf5 and parse_args.to_fil:
             raise Warning('Either provide to_hdf5 or to_fil, but not both.')
 
-        if parse_args.to_hdf5:
+        elif parse_args.to_hdf5:
             if not filename_out:
-                filename_out = filename.replace('.fil','.h5')
-            elif '.h5' not in filename_out:
-                filename_out = filename_out.replace('.fil','')+'.h5'
+                filename_out = fileroot + '.h5'
 
             logger.info('Writing file : %s'% filename_out)
             fil.write_to_hdf5(filename_out)
             logger.info('File written.')
 
-        if parse_args.to_fil:
+        elif parse_args.to_fil:
             if not filename_out:
-                filename_out = filename.replace('.h5','.fil')
-            elif '.fil' not in filename_out:
-                filename_out = filename_out.replace('.h5','')+'.fil'
+                filename_out = fileroot + '.fil'
 
             logger.info('Writing file : %s'% filename_out)
             fil.write_to_fil(filename_out)
