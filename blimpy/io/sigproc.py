@@ -128,7 +128,7 @@ def read_next_header_keyword(fh):
         if dtype == b'<d':
             val = struct.unpack(dtype, fh.read(8))[0]
         if dtype == b'str':
-            str_len = np.fromstring(fh.read(4), dtype='int32')[0]
+            str_len = np.fromstring(fh.read(4), dtype='uint32')[0]
             val = fh.read(str_len)
         if dtype == b'angle':
             val = struct.unpack('<d', fh.read(8))[0]
