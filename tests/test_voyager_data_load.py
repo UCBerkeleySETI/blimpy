@@ -68,13 +68,15 @@ def test_waterfall_data_load_range_freq():
     assert hw.data[0].argmax() == fw.data[0].argmax() == 18959
     assert hw.data[-1].argmax() == fw.data[-1].argmax() == 18996
 
-    # And plot(
+    # And plot
+    plt.figure("VOYAGER DATA LOAD")
     plt.subplot(2,1,1)
     fw.plot_spectrum()
 
     plt.subplot(2,1,2)
     hw.plot_spectrum()
     plt.tight_layout()
+    #plt.clf()
 
 def test_grab_data_works_across_all_fil_h5():
 
