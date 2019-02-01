@@ -73,7 +73,15 @@ def phase_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwarg
         Qdiff = Q_ON-Q_OFF
         poffset = np.arctan2(Udiff,Qdiff)
 
-    return convert_to_coarse(poffset,chan_per_coarse)
+    coarse_p =  convert_to_coarse(poffset,chan_per_coarse)
+    #print(coarse_p)
+
+    #Correct for problems created by discontinuity in arctan
+    for i in range(coarse_p.size-2):
+        if coarse_p[i] < coarse_p[i+1]:
+            coarse_p[i+1] = coarse_p[i+2]
+
+    return coarse_p
 
 def gain_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwargs):
     '''
