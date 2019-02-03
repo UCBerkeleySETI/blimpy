@@ -60,6 +60,7 @@ else:
     matplotlib.use('Agg')
     import pylab as plt
 
+from matplotlib import gridspec
 plt.rcParams['axes.formatter.useoffset'] = False
 
 
@@ -772,7 +773,7 @@ class Filterbank(object):
 
         plt.xlim(plot_f[0], plot_f[-1])
 
-    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis=True, **kwargs):
+    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis=True, spaced=False, hspace=0.6, wspace=0.25, **kwargs):
         """ Plot waterfall of data as well as spectrum; also, placeholder to make even more complicated plots in the future.
 
         Args:
@@ -782,6 +783,10 @@ class Filterbank(object):
             t (int): integration number to plot (0 -> len(data))
             logged (bool): Plot in linear (False) or dB units (True)
             if_id (int): IF identification (if multiple IF signals in file)
+            spaced (bool): If True, renders plot components based on matplotlib's plt.tight_layout().
+                If False, allows customization of horizontal and vertical spacing via wspace and hspace.
+            hspace (float): Controls vertical (height) spacing between plot components in plt.GridSpec.
+            wspace (float): Controls horizontal (width) spacing between plot components in plt.GridSpec.
             kwargs: keyword args to be passed to matplotlib plot() and imshow()
         """
         if self.header[b'nbits'] <=2:
@@ -790,19 +795,19 @@ class Filterbank(object):
         nullfmt = NullFormatter()  # no labels
 
         # definitions for the axes
-        left, width = 0.35, 0.5
-        bottom, height = 0.45, 0.5
-        width2, height2 = 0.1125, 0.15
-        bottom2, left2 = bottom - height2 - .025, left - width2 - .02
-        bottom3, left3 = bottom2 - height2 - .025, 0.075
+#         left, width = 0.35, 0.5
+#         bottom, height = 0.45, 0.5
+#         width2, height2 = 0.1125, 0.15
+#         bottom2, left2 = bottom - height2 - .025, left - width2 - .02
+#         bottom3, left3 = bottom2 - height2 - .025, 0.075
 
-        rect_waterfall = [left, bottom, width, height]
-        rect_colorbar = [left + width, bottom, .025, height]
-        rect_spectrum = [left, bottom2, width, height2]
-        rect_min_max = [left, bottom3, width, height2]
-        rect_timeseries = [left + width, bottom, width2, height]
-        rect_kurtosis = [left3, bottom3, 0.25, height2]
-        rect_header = [left3 - .05, bottom, 0.2, height]
+#         rect_waterfall = [left, bottom, width, height]
+#         rect_colorbar = [left + width, bottom, .025, height]
+#         rect_spectrum = [left, bottom2, width, height2]
+#         rect_min_max = [left, bottom3, width, height2]
+#         rect_timeseries = [left + width, bottom, width2, height]
+#         rect_kurtosis = [left3, bottom3, 0.25, height2]
+#         rect_header = [left3 - .05, bottom, 0.2, height]
 
         # --------
         #         axColorbar = plt.axes(rect_colorbar)
@@ -821,28 +826,36 @@ class Filterbank(object):
         #         heatmap = axColorbar.pcolor(plot_data, edgecolors = 'none', picker=True)
         #         plt.colorbar(heatmap, cax = axColorbar)
 
-
+#         fig = plt.figure(figsize=dims)
+        gs = gridspec.GridSpec(10, 16)
+    
+        if not spaced:
+            gs.update(hspace=hspace, wspace=wspace)
+        
         # --------
-        axMinMax = plt.axes(rect_min_max)
+        axMinMax = plt.subplot(gs[8:, 6:-2])
+#         axMinMax = plt.axes(rect_min_max)
         print('Plotting Min Max')
         self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
-        axMinMax.yaxis.tick_right()
-        axMinMax.yaxis.set_label_position("right")
+        axMinMax.yaxis.tick_left()
+        axMinMax.yaxis.set_label_position("left")
 
         # --------
-        axSpectrum = plt.axes(rect_spectrum,sharex=axMinMax)
+        axSpectrum = plt.subplot(gs[6:8, 6:-2], sharex=axMinMax)
+#         axSpectrum = plt.axes(rect_spectrum,sharex=axMinMax)
         print('Plotting Spectrum')
         self.plot_spectrum(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
-        axSpectrum.yaxis.tick_right()
-        axSpectrum.yaxis.set_label_position("right")
+        axSpectrum.yaxis.tick_left()
+        axSpectrum.yaxis.set_label_position("left")
         plt.xlabel('')
 #        axSpectrum.xaxis.set_major_formatter(nullfmt)
         plt.setp(axSpectrum.get_xticklabels(), visible=False)
 
         # --------
-        axWaterfall = plt.axes(rect_waterfall,sharex=axMinMax)
+        axWaterfall = plt.subplot(gs[0:6, 6:-2], sharex=axMinMax)
+#         axWaterfall = plt.axes(rect_waterfall,sharex=axMinMax)
         print('Plotting Waterfall')
         self.plot_waterfall(f_start=f_start, f_stop=f_stop, logged=logged, cb=False)
         plt.xlabel('')
@@ -852,7 +865,8 @@ class Filterbank(object):
         plt.setp(axWaterfall.get_xticklabels(), visible=False)
 
         # --------
-        axTimeseries = plt.axes(rect_timeseries)
+        axTimeseries = plt.subplot(gs[:6, -2:], sharey=axWaterfall)
+#         axTimeseries = plt.axes(rect_timeseries)
         print('Plotting Timeseries')
         self.plot_time_series(f_start=f_start, f_stop=f_stop, orientation='v')
         axTimeseries.yaxis.set_major_formatter(nullfmt)
@@ -861,13 +875,15 @@ class Filterbank(object):
         # --------
         # Could exclude since it takes much longer to run than the other plots.
         if kurtosis:
-            axKurtosis = plt.axes(rect_kurtosis)
+            axKurtosis = plt.subplot(gs[6:8, :5])
+#             axKurtosis = plt.axes(rect_kurtosis)
             print('Plotting Kurtosis')
             self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
 
 
         # --------
-        axHeader = plt.axes(rect_header)
+        axHeader = plt.subplot(gs[:6, :4])
+#         axHeader = plt.axes(rect_header)
         print('Plotting Header')
         # Generate nicer header
         telescopes = {0: 'Fake data',
@@ -897,6 +913,7 @@ class Filterbank(object):
         if np.abs(foff) > 1e6 * u.Hz:
             foff = str(foff.to('MHz'))
         elif np.abs(foff) > 1e3 * u.Hz:
+#             foff = "%.3f kHz" % (foff.to('kHz').value)
             foff = str(foff.to('kHz'))
         else:
             foff = str(foff.to('Hz'))
@@ -909,6 +926,9 @@ class Filterbank(object):
         axHeader.set_facecolor('white')
         axHeader.xaxis.set_major_formatter(nullfmt)
         axHeader.yaxis.set_major_formatter(nullfmt)
+        axHeader.axis('off')
+        
+        plt.tight_layout()
 
     def write_to_filterbank(self, filename_out):
         """ Write data to blimpy file.
