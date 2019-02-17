@@ -48,12 +48,6 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 
 
 try:
-    import h5py
-    HAS_HDF5 = True
-except ImportError:
-    HAS_HDF5 = False
-
-try:
     HAS_BITSHUFFLE = True
     import bitshuffle.h5
 except ImportError:
@@ -64,6 +58,12 @@ except ImportError:
         pass
     HAS_BITSHUFFLE = False
     pass
+
+try:
+    import h5py
+    HAS_HDF5 = True
+except ImportError:
+    HAS_HDF5 = False
 
 #import pdb #pdb.set_trace()
 
