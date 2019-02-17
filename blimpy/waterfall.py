@@ -29,29 +29,6 @@ from blimpy.filterbank import Filterbank
 from blimpy import file_wrapper as fw
 from blimpy.sigproc import *
 
-try:
-    import h5py
-    HAS_HDF5 = True
-except ImportError:
-    HAS_HDF5 = False
-
-try:
-    HAS_BITSHUFFLE = True
-    import bitshuffle.h5
-except ImportError:
-    HAS_BITSHUFFLE = False
-    pass
-
-#import pdb #pdb.set_trace()
-
-# Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
-if 'DISPLAY' in os.environ.keys():
-    import pylab as plt
-else:
-    import matplotlib
-    matplotlib.use('Agg')
-    import pylab as plt
-
 
 #------
 # Logging set up
@@ -68,6 +45,36 @@ else:
     format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
 
 logging.basicConfig(format=format,stream=stream,level = level_log)
+
+
+try:
+    import h5py
+    HAS_HDF5 = True
+except ImportError:
+    HAS_HDF5 = False
+
+try:
+    HAS_BITSHUFFLE = True
+    import bitshuffle.h5
+except ImportError:
+    try:
+        import hdf5plugin
+        logger.warning('Could not import bitshuffle, using hdf5plugin failover. Write access disabled.')
+    except ImportError:
+        pass
+    HAS_BITSHUFFLE = False
+    pass
+
+#import pdb #pdb.set_trace()
+
+# Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
+if 'DISPLAY' in os.environ.keys():
+    import pylab as plt
+else:
+    import matplotlib
+    matplotlib.use('Agg')
+    import pylab as plt
+
 
 
 ###
