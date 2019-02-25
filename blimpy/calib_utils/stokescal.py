@@ -5,7 +5,7 @@ from fluxcal import foldcal
 
 def get_stokes(cross_dat, feedtype='l'):
     '''Output stokes parameters (I,Q,U,V) for a rawspec
-    cross polarization data array'''
+    cross polarization filterbank file'''
 
     #Compute Stokes Parameters
     if feedtype=='l':
@@ -55,7 +55,7 @@ def convert_to_coarse(data,chan_per_coarse):
 
 def phase_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwargs):
     '''
-    Calculates phase difference between X and Y feeds given U and V
+    Calculates phase difference between X and Y feeds given U and V (U and Q for circular basis)
     data from a noise diode measurement on the target
     '''
     #Fold noise diode data and calculate ON OFF diferences for U and V
@@ -74,19 +74,23 @@ def phase_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwarg
         poffset = np.arctan2(Udiff,Qdiff)
 
     coarse_p =  convert_to_coarse(poffset,chan_per_coarse)
-    #print(coarse_p)
 
     #Correct for problems created by discontinuity in arctan
-    for i in range(coarse_p.size-2):
-        if coarse_p[i] < coarse_p[i+1]:
-            coarse_p[i+1] = coarse_p[i+2]
+    #Find whether phase offsets have increasing or decreasing slope
+    y = coarse_p[:6]
+    x = np.arange(y.size)
+    m = np.polyfit(x,y,1)[0]
+
+    for i in range(coarse_p.size-3):
+        if (m>0 and coarse_p[i+1]<coarse_p[i]) or (m<0 and coarse_p[i+1]>coarse_p[i]):
+            coarse_p[i+1] = 2*coarse_p[i+2]-coarse_p[i+3]    #Move problem point near the next
 
     return coarse_p
 
 def gain_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwargs):
     '''
     Determines relative gain error in the X and Y feeds for an
-    observation given I and Q noise diode data.
+    observation given I and Q (I and V for circular basis) noise diode data.
     '''
     if feedtype=='l':
         #Fold noise diode data and calculate ON OFF differences for I and Q
@@ -179,7 +183,7 @@ def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse, feedtyp
 
 def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**kwargs):
     '''
-    Write four calibrated Stokes filterbank files for a given observation
+    Write Stokes-calibrated filterbank file for a given observation
     with a calibrator noise diode measurement on the source
     '''
     #Obtain time sample length, frequencies, and noise diode data
@@ -249,7 +253,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**
 
 def fracpols(str, **kwargs):
     '''Output fractional linear and circular polarizations for a
-    rawspec cross polarization .fil file'''
+    rawspec cross polarization .fil file. NOT STANDARD USE'''
 
     I,Q,U,V,L=get_stokes(str, **kwargs)
     return L/I,V/I

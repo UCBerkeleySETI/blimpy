@@ -120,7 +120,7 @@ def plot_calibrated_diode(dio_cross,chan_per_coarse=8,feedtype='l',**kwargs):
 def plot_phase_offsets(dio_cross,chan_per_coarse=8,feedtype='l',ax1=None,ax2=None,legend=True,**kwargs):
     '''
     Plots the calculated phase offsets of each coarse channel along with
-    the UV noise diode spectrum for comparison
+    the UV (or QU) noise diode spectrum for comparison
     '''
     #Get ON-OFF ND spectra
     Idiff,Qdiff,Udiff,Vdiff,freqs = get_diff(dio_cross,feedtype,**kwargs)
@@ -214,7 +214,7 @@ def plot_gain_offsets(dio_cross,dio_chan_per_coarse=8,feedtype='l',ax1=None,ax2=
     if legend==True:
         plt.legend()
 
-def plot_diode_fold(dio_cross,feedtype='l',min_samp=-500,max_samp=7000,**kwargs):
+def plot_diode_fold(dio_cross,bothfeeds=True,feedtype='l',min_samp=-500,max_samp=7000,legend=True,**kwargs):
     '''
     Plots the calculated average power and time sampling of ON (red) and
     OFF (blue) for a noise diode measurement over the observation time series
@@ -227,32 +227,56 @@ def plot_diode_fold(dio_cross,feedtype='l',min_samp=-500,max_samp=7000,**kwargs)
     I,Q,U,V = get_stokes(data,feedtype)
 
     #Calculate time series, OFF and ON averages, and time samples for each
-    tseries = np.squeeze(np.mean(I,axis=2))
+    tseriesI = np.squeeze(np.mean(I,axis=2))
     I_OFF,I_ON,OFFints,ONints = foldcal(I,tsamp,inds=True,**kwargs)
+    if bothfeeds==True:
+        if feedtype=='l':
+            tseriesQ = np.squeeze(np.mean(Q,axis=2))
+            tseriesX = (tseriesI+tseriesQ)/2
+            tseriesY = (tseriesI-tseriesQ)/2
+        if feedtype=='c':
+            tseriesV = np.squeeze(np.mean(V,axis=2))
+            tseriesR = (tseriesI+tseriesV)/2
+            tseriesL = (tseriesI-tseriesV)/2
+
     stop = ONints[-1,1]
 
     #Plot time series and calculated average for ON and OFF
-    plt.plot(tseries[0:stop],'k-',label='Total Power')
-    for i in ONints:
-        plt.plot(np.arange(i[0],i[1]),np.full((i[1]-i[0]),np.mean(I_ON)),'r-')
-    for i in OFFints:
-        plt.plot(np.arange(i[0],i[1]),np.full((i[1]-i[0]),np.mean(I_OFF)),'b-')
+    if bothfeeds==False:
+        plt.plot(tseriesI[0:stop],'k-',label='Total Power')
+        for i in ONints:
+            plt.plot(np.arange(i[0],i[1]),np.full((i[1]-i[0]),np.mean(I_ON)),'r-')
+        for i in OFFints:
+            plt.plot(np.arange(i[0],i[1]),np.full((i[1]-i[0]),np.mean(I_OFF)),'b-')
+    else:
+        if feedtype=='l':
+            diff = np.mean(tseriesX)-np.mean(tseriesY)
+            plt.plot(tseriesX[0:stop],'b-',label='XX')
+            plt.plot(tseriesY[0:stop]+diff,'r-',label='YY (shifted)')
+        if feedtype=='c':
+            diff = np.mean(tseriesL)-np.mean(tseriesR)
+            plt.plot(tseriesL[0:stop],'b-',label='LL')
+            plt.plot(tseriesR[0:stop]+diff,'r-',label='RR (shifted)')
 
     #Calculate plotting limits
-    lowlim = np.mean(I_OFF)-(np.mean(I_ON)-np.mean(I_OFF))/2
-    hilim = np.mean(I_ON)+(np.mean(I_ON)-np.mean(I_OFF))/2
+    if bothfeeds==False:
+        lowlim = np.mean(I_OFF)-(np.mean(I_ON)-np.mean(I_OFF))/2
+        hilim = np.mean(I_ON)+(np.mean(I_ON)-np.mean(I_OFF))/2
+        plt.ylim((lowlim,hilim))
 
     plt.xlim((min_samp,max_samp))
-    plt.ylim((lowlim,hilim))
     plt.xlabel('Time Sample Number')
     plt.ylabel('Power (Counts)')
     plt.title('Noise Diode Fold')
+    if legend==True:
+        plt.legend()
 
 
 def plot_fullcalib(dio_cross,feedtype='l',**kwargs):
     '''
     Generates and shows five plots: Uncalibrated diode, calibrated diode, fold information,
-    phase offsets, and gain offsets for a noise diode measurement.
+    phase offsets, and gain offsets for a noise diode measurement. Most useful diagnostic plot to
+    make sure calibration proceeds correctly.
     '''
 
     plt.figure("Multiple Calibration Plots", figsize=(12,9))
@@ -272,7 +296,7 @@ def plot_fullcalib(dio_cross,feedtype='l',**kwargs):
     #--------
     axFold = plt.axes(rect_fold)
     print('Plotting Diode Fold')
-    plot_diode_fold(dio_cross,feedtype=feedtype,min_samp=2000,max_samp=5500,**kwargs)
+    plot_diode_fold(dio_cross,bothfeeds=False,feedtype=feedtype,min_samp=2000,max_samp=5500,legend=False,**kwargs)
 
     #--------
     print('Plotting Gain Offsets')
@@ -299,7 +323,9 @@ def plot_fullcalib(dio_cross,feedtype='l',**kwargs):
     plt.show()
 
 def plot_diodespec(ON_obs,OFF_obs,calflux,calfreq,spec_in,units='mJy',**kwargs):
-
+    '''
+    Plots the full-band Stokes I spectrum of the noise diode (ON-OFF)
+    '''
 
     dspec = diode_spec(ON_obs,OFF_obs,calflux,calfreq,spec_in,**kwargs)
     obs = Waterfall(ON_obs,max_load=150)
