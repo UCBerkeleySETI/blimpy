@@ -103,6 +103,7 @@ def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
     Use oneflux to choose between calculating the flux for each core channel (False)
     or using one value for the entire frequency range (True)
     '''
+
     const = calflux/np.power(calfreq,spec_in)
     if oneflux==False:
         return const*np.power(centerfreqs,spec_in)
