@@ -124,8 +124,7 @@ def gain_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwargs
 def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse, feedtype='l'):
     '''
     Returns calibrated Stokes parameters for an observation given an array
-    of differential gains and phase differences. Use 'hyptrig' to use the Mueller
-    matrix in Liao et al. (2018)
+    of differential gains and phase differences.
     '''
 
     #Find shape of data arrays and calculate number of coarse channels
@@ -185,6 +184,20 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**
     '''
     Write Stokes-calibrated filterbank file for a given observation
     with a calibrator noise diode measurement on the source
+
+    Parameters
+    ----------
+    cross_pols : string
+        Path to cross polarization filterbank file (rawspec output) for observation to be calibrated
+    diode_cross : string
+        Path to cross polarization filterbank file of noise diode measurement ON the target
+    obsI : string
+        Path to Stokes I filterbank file of main observation (only needed if onefile=False)
+    onefile : boolean
+        True writes all calibrated Stokes parameters to a single filterbank file,
+        False writes four separate files
+    feedtype : 'l' or 'c'
+        Basis of antenna dipoles. 'c' for circular, 'l' for linear
     '''
     #Obtain time sample length, frequencies, and noise diode data
     obs = Waterfall(diode_cross,max_load=150)
