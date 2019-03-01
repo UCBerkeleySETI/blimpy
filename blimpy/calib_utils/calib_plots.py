@@ -33,7 +33,7 @@ def get_diff(dio_cross,feedtype,**kwargs):
 
 def plot_Stokes_diode(dio_cross,diff=True,feedtype='l',**kwargs):
     '''
-    Plots the uncalibrate full stokes spectrum of the noise diode.
+    Plots the uncalibrated full stokes spectrum of the noise diode.
     Use diff=False to plot both ON and OFF, or diff=True for ON-OFF
     '''
 
