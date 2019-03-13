@@ -162,7 +162,8 @@ class GuppiRaw(object):
         header, data_idx = self.read_header()
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
-        n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
+        n_bit = int(header['NBITS'])
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
 
         is_chanmaj = False
         if 'CHANMAJ' in header.keys():
@@ -190,17 +191,14 @@ class GuppiRaw(object):
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
         n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
-        print((n_chan, n_samples, n_pol))
 
         d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
-        print(len(d))
 
         # Handle 2-bit and 4-bit data
         if n_bit != 8:
             d = unpack(d, n_bit)
 
         d = d.reshape((n_chan, n_samples, n_pol))  # Real, imag
-        print(d.shape)
 
         if self._d_x.shape != d[..., 0:2].shape:
             self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
@@ -224,8 +222,8 @@ class GuppiRaw(object):
 
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
-        n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
         n_bit = int(header['NBITS'])
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
 
         d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
 
@@ -264,8 +262,8 @@ class GuppiRaw(object):
 
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
-        n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
         n_bit = int(header['NBITS'])
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
 
         d = np.ascontiguousarray(np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8'))
 
