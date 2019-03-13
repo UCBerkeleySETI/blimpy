@@ -24,12 +24,13 @@ if 'DISPLAY' in os.environ.keys():
 
     try:
         import matplotlib
-        #matplotlib.use('Qt5Agg')
+        # matplotlib.use('Qt5Agg')
     except ImportError:
         pass
     import pylab as plt
 else:
     import matplotlib
+
     matplotlib.use('Agg')
     import pylab as plt
 
@@ -37,14 +38,14 @@ else:
 # Config values
 ###
 
-MAX_PLT_POINTS      = 65536 * 4              # Max number of points in matplotlib plot
-MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
-
+MAX_PLT_POINTS = 65536 * 4  # Max number of points in matplotlib plot
+MAX_IMSHOW_POINTS = (8192, 4096)  # Max number of points in imshow plot
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024  # Max size of data array to load into memory
 
 
 class EndOfFileError(Exception):
     pass
+
 
 class GuppiRaw(object):
     """ Python class for reading Guppi raw files
@@ -57,6 +58,7 @@ class GuppiRaw(object):
                         This saves seeking through the file to check how many
                         integrations there are in the file.
     """
+
     def __init__(self, filename, n_blocks=None):
         self.filename = filename
         if PYTHON3:
@@ -76,7 +78,7 @@ class GuppiRaw(object):
         self._d_y = np.zeros(1, dtype='int8')
 
     def __enter__(self):
-         return self
+        return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.file_obj.close()
@@ -99,7 +101,6 @@ class GuppiRaw(object):
 
         first_line = self.file_obj
 
-
         try:
             while keep_reading:
                 if start_idx + 80 > self.filesize:
@@ -108,7 +109,7 @@ class GuppiRaw(object):
                 line = self.file_obj.read(80)
                 if PYTHON3:
                     line = line.decode("utf-8")
-                #print line
+                # print line
                 if line.startswith('END'):
                     keep_reading = False
                     break
@@ -129,8 +130,8 @@ class GuppiRaw(object):
                 header_dict[key] = val
         except ValueError:
             print("CURRENT LINE: ", line)
-            print("BLOCK START IDX: ",  start_idx)
-            print("FILE SIZE: ",  self.filesize)
+            print("BLOCK START IDX: ", start_idx)
+            print("FILE SIZE: ", self.filesize)
             print("NEXT 512 BYTES: \n")
             print(self.file_obj.read(512))
             raise
@@ -160,9 +161,9 @@ class GuppiRaw(object):
     def read_next_data_block_shape(self):
         header, data_idx = self.read_header()
         n_chan = int(header['OBSNCHAN'])
-        n_pol  = int(header['NPOL'])
+        n_pol = int(header['NPOL'])
         n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
-        
+
         is_chanmaj = False
         if 'CHANMAJ' in header.keys():
             if int(header['CHANMAJ']) == 1:
@@ -186,27 +187,28 @@ class GuppiRaw(object):
         # Read data and reshape
 
         n_chan = int(header['OBSNCHAN'])
-        n_pol  = int(header['NPOL'])
-        n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
+        n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
-
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
+        print((n_chan, n_samples, n_pol))
 
         d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
+        print(len(d))
 
         # Handle 2-bit and 4-bit data
         if n_bit != 8:
             d = unpack(d, n_bit)
 
-        d = d.reshape((n_chan, n_samples, n_pol))    # Real, imag
+        d = d.reshape((n_chan, n_samples, n_pol))  # Real, imag
+        print(d.shape)
 
         if self._d_x.shape != d[..., 0:2].shape:
-                self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
-                self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
+            self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
+            self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
 
         self._d_x[:] = d[..., 0:2]
         self._d_y[:] = d[..., 2:4]
         return header, self._d_x, self._d_y
-    
 
     def read_next_data_block_int8_2x(self):
         """ Read the next block of data and its header
@@ -221,7 +223,7 @@ class GuppiRaw(object):
         # Read data and reshape
 
         n_chan = int(header['OBSNCHAN'])
-        n_pol  = int(header['NPOL'])
+        n_pol = int(header['NPOL'])
         n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
         n_bit = int(header['NBITS'])
 
@@ -235,19 +237,19 @@ class GuppiRaw(object):
         if n_bit != 8:
             d = unpack(d, n_bit)
 
-        d = d.reshape((n_chan, n_samples, n_pol))    # Real, imag
+        d = d.reshape((n_chan, n_samples, n_pol))  # Real, imag
         d2 = d2.reshape((n_chan, n_samples, n_pol))
-        d = np.concatenate((d, d2), axis=1)        
+        d = np.concatenate((d, d2), axis=1)
         print(d.shape)
 
-        if self._d_x.shape != (n_chan, n_samples*2, n_pol):
-                self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
-                self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
+        if self._d_x.shape != (n_chan, n_samples * 2, n_pol):
+            self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
+            self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
 
         self._d_x[:] = d[..., 0:2]
         self._d_y[:] = d[..., 2:4]
         return header, self._d_x, self._d_y
-    
+
     def read_next_data_block(self):
         """ Read the next block of data and its header
 
@@ -261,20 +263,19 @@ class GuppiRaw(object):
         # Read data and reshape
 
         n_chan = int(header['OBSNCHAN'])
-        n_pol  = int(header['NPOL'])
+        n_pol = int(header['NPOL'])
         n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
         n_bit = int(header['NBITS'])
-
 
         d = np.ascontiguousarray(np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8'))
 
         # Handle 2-bit and 4-bit data
         if n_bit != 8:
             d = unpack(d, n_bit)
-        
+
         dshape = self.read_next_data_block_shape()
-        
-        d = d.reshape(dshape)    # Real, imag
+
+        d = d.reshape(dshape)  # Real, imag
 
         if self._d.shape != d.shape:
             self._d = np.zeros(d.shape, dtype='float32')
@@ -282,9 +283,6 @@ class GuppiRaw(object):
         self._d[:] = d
 
         return header, self._d[:].view('complex64')
-    
-
-        
 
     def find_n_data_blocks(self):
         """ Seek through the file to find how many data blocks there are in the file
@@ -297,7 +295,7 @@ class GuppiRaw(object):
 
         self.file_obj.seek(data_idx0)
         block_size = int(header0['BLOCSIZE'])
-        n_bits     = int(header0['NBITS'])
+        n_bits = int(header0['NBITS'])
         self.file_obj.seek(int(header0['BLOCSIZE']), 1)
         n_blocks = 1
         end_found = False
@@ -310,7 +308,6 @@ class GuppiRaw(object):
             except EndOfFileError:
                 end_found = True
                 break
-
 
         self.file_obj.seek(0)
         return n_blocks
@@ -356,7 +353,7 @@ class GuppiRaw(object):
         if d_xx_fft.shape[0] > MAX_PLT_POINTS:
             dec_fac_x = d_xx_fft.shape[0] / MAX_PLT_POINTS
 
-        d_xx_fft  = rebin(d_xx_fft, dec_fac_x)
+        d_xx_fft = rebin(d_xx_fft, dec_fac_x)
 
         print("Plotting...")
         if plot_db:
@@ -386,37 +383,37 @@ class GuppiRaw(object):
 
         # Using .get() method allows us to fill in default values if not present
         fb_head["source_name"] = gp_head.get("SRC_NAME", "unknown")
-        fb_head["az_start"]    = gp_head.get("AZ", 0)
-        fb_head["za_start"]    = gp_head.get("ZA", 0)
+        fb_head["az_start"] = gp_head.get("AZ", 0)
+        fb_head["za_start"] = gp_head.get("ZA", 0)
 
-        fb_head["src_raj"]     = Angle(str(gp_head.get("RA", 0.0)) + "hr")
-        fb_head["src_dej"]     = Angle(str(gp_head.get("DEC", 0.0)) + "deg")
+        fb_head["src_raj"] = Angle(str(gp_head.get("RA", 0.0)) + "hr")
+        fb_head["src_dej"] = Angle(str(gp_head.get("DEC", 0.0)) + "deg")
         fb_head["rawdatafile"] = self.filename
 
         # hardcoded
-        fb_head["machine_id"]    = 20
-        fb_head["data_type"]     = 1      # blio datatype
-        fb_head["barycentric"]      = 0
+        fb_head["machine_id"] = 20
+        fb_head["data_type"] = 1  # blio datatype
+        fb_head["barycentric"] = 0
         fb_head["pulsarcentric"] = 0
-        fb_head["nbits"]         = 32
+        fb_head["nbits"] = 32
 
         # TODO - compute these values. Need to figure out the correct calcs
-        fb_head["tstart"]        = 0.0
-        fb_head["tsamp"]         = 1.0
-        fb_head["fch1"]          = 0.0
-        fb_head["foff"]          = 187.5 / nchans
+        fb_head["tstart"] = 0.0
+        fb_head["tsamp"] = 1.0
+        fb_head["fch1"] = 0.0
+        fb_head["foff"] = 187.5 / nchans
 
         # Need to be updated based on output specs
-        fb_head["nchans"]        = nchans
-        fb_head["nifs"]          = 1
-        fb_head["nbeams"]        = 1
+        fb_head["nchans"] = nchans
+        fb_head["nifs"] = 1
+        fb_head["nbeams"] = 1
 
         return fb_head
 
 
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on guppi raw files """
-    
+
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description="Command line utility for creating spectra from GuppiRaw files.")
