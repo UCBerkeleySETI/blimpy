@@ -33,22 +33,6 @@ from .plotting import *
 from astropy.time import Time
 from astropy import units as u
 
-try:
-    import h5py
-    HAS_HDF5 = True
-except ImportError:
-    HAS_HDF5 = False
-
-try:
-    HAS_BITSHUFFLE = True
-    import bitshuffle.h5
-except ImportError:
-    HAS_BITSHUFFLE = False
-    pass
-
-#import pdb #pdb.set_trace()
-
-MAX_BLOB_MB = 1024
 
 #------
 # Logging set up
@@ -65,6 +49,29 @@ else:
     format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
 
 logging.basicConfig(format=format,stream=stream,level = level_log)
+
+
+try:
+    HAS_BITSHUFFLE = True
+    import bitshuffle.h5
+except ImportError:
+    try:
+        import hdf5plugin
+        logger.warning('Could not import bitshuffle, using hdf5plugin failover. Write access disabled.')
+    except ImportError:
+        pass
+    HAS_BITSHUFFLE = False
+    pass
+
+try:
+    import h5py
+    HAS_HDF5 = True
+except ImportError:
+    HAS_HDF5 = False
+
+#import pdb #pdb.set_trace()
+
+MAX_BLOB_MB = 1024
 
 
 ###
