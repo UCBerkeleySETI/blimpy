@@ -109,12 +109,25 @@ def unpack_2to8(data):
         Then we change the view of the data to interpret it as 4x8 bit:
         [000000AB, 000000CD, 000000EF, 000000GH]  (change view from 32-bit to 4x8-bit)
 
+        The converted bits are then mapped to values in the range [-40, 40] according to a lookup chart.
+        The mapping is based on specifications in the breakthough docs:
+        https://github.com/UCBerkeleySETI/breakthrough/blob/master/doc/RAW-File-Format.md
+
     """
+    two_eight_lookup = {0: 40,
+                        1: 12,
+                        2: -12,
+                        3: -40}
+
     tmp = data.astype(np.uint32)
     tmp = (tmp | (tmp << 12)) & 0xF000F
     tmp = (tmp | (tmp << 6)) & 0x3030303
     tmp = tmp.byteswap()
-    return tmp.view('uint8')
+    tmp = tmp.view('uint8')
+    mapped = np.array(tmp, dtype=np.int8)
+    for k, v in two_eight_lookup.items():
+        mapped[tmp == k] = v
+    return mapped
 
 
 def unpack_4to8(data):
