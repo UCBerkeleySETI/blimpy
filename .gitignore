@@ -1,3 +1,4 @@
+guppi_tests*
 .idea
 .ipynb_checkpoints
 *.pyc
