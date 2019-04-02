@@ -16,7 +16,7 @@ def test_2to8():
     # Convert to 8-bit, this is [0b00011011, 0b11100100]
 
     a = np.array([0b00011011, 0b11100100], dtype=np.uint8)
-    b = np.array([0, 1, 2, 3, 3, 2, 1, 0], dtype=np.uint8)
+    b = np.array([40, 12, -12, -40, -40, -12, 12, 40], dtype=np.int8)
 
     c = unpack_2to8(a)
 
@@ -37,7 +37,7 @@ def test_unpack():
 
     # Test 2-bit unpack
     a = np.array([0b00011011, 0b11100100], dtype=np.uint8)
-    b = np.array([0, 1, 2, 3, 3, 2, 1, 0], dtype=np.uint8)
+    b = np.array([40, 12, -12, -40, -40, -12, 12, 40], dtype=np.int8)
     c = unpack(a, 2)
     assert np.allclose(b, c)
 
