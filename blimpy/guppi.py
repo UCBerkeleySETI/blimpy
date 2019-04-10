@@ -78,9 +78,25 @@ class GuppiRaw(object):
         self._d_y = np.zeros(1, dtype='int8')
 
     def __enter__(self):
+        """
+        reopen the file each time a `with` block is entered
+        :return:
+        """
+        if PYTHON3:
+            self.file_obj = open(self.filename, 'rb')
+        else:
+            self.file_obj = open(self.filename, 'r')
+        self.filesize = os.path.getsize(self.filename)
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        """
+        closes the file after `with` block has exited
+        :param exception_type:
+        :param exception_value:
+        :param traceback:
+        :return:
+        """
         self.file_obj.close()
 
     def __repr__(self):
@@ -105,7 +121,7 @@ class GuppiRaw(object):
             while keep_reading:
                 if start_idx + 80 > self.filesize:
                     keep_reading = False
-                    raise EndOfFileError
+                    raise EndOfFileError("End Of Data File")
                 line = self.file_obj.read(80)
                 if PYTHON3:
                     line = line.decode("utf-8")
@@ -174,6 +190,20 @@ class GuppiRaw(object):
         else:
             dshape = (n_chan, int(n_samples), n_pol)
         return dshape
+
+    def get_data(self):
+        """
+        returns a generator object that reads data a block at a time;
+        the generator prints "File depleted" and returns nothing when all data in the file has been read.
+        :return:
+        """
+        with self as gr:
+            while True:
+                try:
+                    yield gr.read_next_data_block_int8()
+                except Exception as e:
+                    print("File depleted")
+                    yield None, None, None
 
     def read_next_data_block_int8(self):
         """ Read the next block of data and its header
