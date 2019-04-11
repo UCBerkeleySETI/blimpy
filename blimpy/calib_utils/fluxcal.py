@@ -232,6 +232,7 @@ def diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=True,oneflux
     centerfreqs = get_centerfreqs(freqs,chan_per_coarse)
     calfluxes = get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux)
 
+    #C_o and Tsys as defined in van Straten et al. 2012
     C_o = calfluxes/(1/f_ON-1/f_OFF)
     Tsys = C_o/f_OFF
 
