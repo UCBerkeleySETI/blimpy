@@ -7,6 +7,21 @@ def foldcal(data,tsamp, diode_p=0.04,numsamps=1000,switch=False,inds=False):
     '''
     Returns time-averaged spectra of the ON and OFF measurements in a
     calibrator measurement with flickering noise diode
+
+    Parameters
+    ----------
+    data : 2D Array object (float)
+        2D dynamic spectrum for data (any Stokes parameter) with flickering noise diode.
+    tsamp : float
+        Sampling time of data in seconds
+    diode_p : float
+        Period of the flickering noise diode in seconds
+    numsamps : int
+        Number of samples over which to average noise diode ON and OFF
+    switch : boolean
+        Use switch=True if the noise diode "skips" turning from OFF to ON once or vice versa
+    inds : boolean
+        Use inds=True to also return the indexes of the time series where the ND is ON and OFF
     '''
 
     halfper = diode_p/2.0
@@ -38,6 +53,7 @@ def foldcal(data,tsamp, diode_p=0.04,numsamps=1000,switch=False,inds=False):
         if i[1]!=i[0]:
             av_OFF.append(np.sum(data[i[0]:i[1],:,:],axis=0)/(i[1]-i[0]))
 
+    #If switch=True, flip the return statement since ON is actually OFF
     if switch==False:
         if inds==False:
             return np.squeeze(np.mean(av_ON,axis=0)), np.squeeze(np.mean(av_OFF,axis=0))
@@ -50,18 +66,43 @@ def foldcal(data,tsamp, diode_p=0.04,numsamps=1000,switch=False,inds=False):
             return np.squeeze(np.mean(av_OFF,axis=0)), np.squeeze(np.mean(av_ON,axis=0)),OFFints,ONints
 
 def integrate_chans(spec,freqs,chan_per_coarse):
-    '''Integrates each core channel of a given spectrum'''
+    '''
+    Integrates over each core channel of a given spectrum.
+    Important for calibrating data with frequency/time resolution different from noise diode data
 
-    num_coarse = spec.size/chan_per_coarse     #Calculate number of coarse channels
+    Parameters
+    ----------
+    spec : 1D Array (float)
+        Spectrum (any Stokes parameter) to be integrated
+    freqs : 1D Array (float)
+        Frequency values for each bin of the spectrum
+    chan_per_coarse: int
+        Number of frequency bins per coarse channel
+    '''
 
+    num_coarse = spec.size/chan_per_coarse     #Calculate total number of coarse channels
+
+    #Rearrange spectrum by coarse channel
     spec_shaped = np.array(np.reshape(spec,(num_coarse,chan_per_coarse)))
     freqs_shaped = np.array(np.reshape(freqs,(num_coarse,chan_per_coarse)))
 
-    #return -1*trapz(spec_shaped,freqs_shaped,axis=1)   #Integrate along core channel axis
+    #Average over coarse channels
     return np.mean(spec_shaped[:,1:-1],axis=1)
 
 def integrate_calib(name,chan_per_coarse,fullstokes=False,**kwargs):
-    '''Folds noise diode data and integrates along coarse channels'''
+    '''
+    Folds Stokes I noise diode data and integrates along coarse channels
+
+    Parameters
+    ----------
+    name : str
+        Path to noise diode filterbank file
+    chan_per_coarse : int
+        Number of frequency bins per coarse channel
+    fullstokes : boolean
+        Use fullstokes=True if data is in IQUV format or just Stokes I, use fullstokes=False if
+        it is in cross_pols format
+    '''
     #Load data
     obs = Waterfall(name,max_load=150)
     data = obs.data
@@ -82,7 +123,7 @@ def integrate_calib(name,chan_per_coarse,fullstokes=False,**kwargs):
 
     freqs = obs.populate_freqs()
 
-    #Find ON and OFF average spectra
+    #Find ON and OFF spectra by coarse channel
     ON_int = integrate_chans(ON,freqs,chan_per_coarse)
     OFF_int = integrate_chans(OFF,freqs,chan_per_coarse)
 
@@ -100,8 +141,19 @@ def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
     Given properties of the calibrator source, calculate fluxes of the source
     in a particular frequency range
 
-    Use oneflux to choose between calculating the flux for each core channel (False)
-    or using one value for the entire frequency range (True)
+    Parameters
+    ----------
+    calflux : float
+        Known flux of calibrator source at a particular frequency
+    calfreq : float
+        Frequency where calibrator source has flux calflux (see above)
+    spec_in : float
+        Known power-law spectral index of calibrator source. Use convention flux(frequency) = constant * frequency^(spec_in)
+    centerfreqs : 1D Array (float)
+        Central frequency values of each coarse channel
+    oneflux : boolean
+        Use oneflux to choose between calculating the flux for each core channel (False)
+        or using one value for the entire frequency range (True)
     '''
 
     const = calflux/np.power(calfreq,spec_in)
@@ -111,104 +163,148 @@ def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
         return const*np.power(np.mean(centerfreqs),spec_in)
 
 def get_centerfreqs(freqs,chan_per_coarse):
-    '''Returns central frequency of each coarse channel'''
+    '''
+    Returns central frequency of each coarse channel
+
+    Parameters
+    ----------
+    freqs : 1D Array (float)
+        Frequency values for each bin of the spectrum
+    chan_per_coarse: int
+        Number of frequency bins per coarse channel
+    '''
 
     num_coarse = freqs.size/chan_per_coarse
     freqs = np.reshape(freqs,(num_coarse,chan_per_coarse))
     return np.mean(freqs,axis=1)
 
-def diode_spec(ON_obs,OFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs):
+def f_ratios(calON_obs,calOFF_obs,chan_per_coarse,**kwargs):
     '''
-    Calculate the coarse channel spectrum of the noise diode in Jy given two noise diode
+    Calculate f_ON, and f_OFF as defined in van Straten et al. 2012 equations 2 and 3
+
+    Parameters
+    ----------
+    calON_obs : str
+        Path to filterbank file (any format) for observation ON the calibrator source
+    calOFF_obs : str
+        Path to filterbank file (any format) for observation OFF the calibrator source
+    '''
+    #Calculate noise diode ON and noise diode OFF spectra (H and L) for both observations
+    L_ON,H_ON = integrate_calib(calON_obs,chan_per_coarse,**kwargs)
+    L_OFF,H_OFF = integrate_calib(calOFF_obs,chan_per_coarse,**kwargs)
+
+    f_ON = H_ON/L_ON-1
+    f_OFF = H_OFF/L_OFF-1
+
+    return f_ON, f_OFF
+
+
+def diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=True,oneflux=False,**kwargs):
+    '''
+    Calculate the coarse channel spectrum and system temperature of the noise diode in Jy given two noise diode
     measurements ON and OFF the calibrator source with the same frequency and time resolution
+
+    Parameters
+    ----------
+    calON_obs : str
+        (see f_ratios() above)
+    calOFF_obs : str
+        (see f_ratios() above)
+    calflux : float
+        Known flux of calibrator source at a particular frequency
+    calfreq : float
+        Frequency where calibrator source has flux calflux (see above)
+    spec_in : float
+        Known power-law spectral index of calibrator source. Use convention flux(frequency) = constant * frequency^(spec_in)
+    average : boolean
+        Use average=True to return noise diode and Tsys spectra averaged over frequencies
     '''
     #Load frequencies and calculate number of channels per coarse channel
-    obs = Waterfall(ON_obs,max_load=150)
+    obs = Waterfall(calON_obs,max_load=150)
     freqs = obs.populate_freqs()
     ncoarse = obs.calc_n_coarse_chan()
     nchans = obs.header['nchans']
     chan_per_coarse = nchans/ncoarse
 
-    #Calculate noise diode ON and noise diode OFF spectra for both observations
-    #ON_OFF -- Noise diode ON, Calibrator OFF etc.
-    ON_OFF,ON_ON = integrate_calib(ON_obs,chan_per_coarse,**kwargs)
-    OFF_OFF,OFF_ON = integrate_calib(OFF_obs,chan_per_coarse,**kwargs)
-
-    #Find difference in counts between observations on the calibrator and off the calibrator
-    caldiff1 = ON_ON-OFF_ON
-    caldiff2 = ON_OFF-OFF_OFF
-    caldiff = (caldiff1+caldiff2)/2
-
-    f_on = ON_ON/ON_OFF-1
-    f_off = OFF_ON/OFF_OFF-1
+    f_ON, f_OFF = f_ratios(calON_obs,calOFF_obs,chan_per_coarse,**kwargs)
 
     #Obtain spectrum of the calibrator source for the given frequency range
     centerfreqs = get_centerfreqs(freqs,chan_per_coarse)
     calfluxes = get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux)
 
-    #Calculate Jy/count factors for each coarse channel
-    scalefacs = calfluxes/caldiff
-
-    dio = calfluxes/(1/f_on-1/f_off)
-    Tsys = dio/f_off
-
-    g_off = OFF_OFF/Tsys
-    g_on = ON_OFF/(Tsys+calfluxes)
-    print(g_off)
-    print(g_on)
-    #Convert all observations to Jy
-    #ON_ON_scaled = ON_ON*scalefacs
-    #ON_OFF_scaled = ON_OFF*scalefacs
-    #OFF_ON_scaled = OFF_ON*scalefacs
-    #OFF_OFF_scaled = OFF_OFF*scalefacs
-
-    #Find diode spectrum in Jy
-    #diodiff1 = ON_ON_scaled-ON_OFF_scaled
-    #diodiff2 = OFF_ON_scaled-OFF_OFF_scaled
-    #diodiff = (diodiff1+diodiff2)/2
+    #C_o and Tsys as defined in van Straten et al. 2012
+    C_o = calfluxes/(1/f_ON-1/f_OFF)
+    Tsys = C_o/f_OFF
 
     #return coarse channel diode spectrum
-    return np.mean(dio),np.mean(Tsys)
+    if average==True:
+        return np.mean(C_o),np.mean(Tsys)
+    else:
+        return C_o,Tsys
 
-def calibrate_fluxes(name,dio_name,dspec,Tsys,fullstokes=False,**kwargs):
+def get_Tsys(calON_obs,calOFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs):
+    '''
+    Returns frequency dependent system temperature given observations on and off a calibrator source
+
+    Parameters
+    ----------
+    (See diode_spec())
+    '''
+    return diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=False,oneflux=False,**kwargs)[1]
+
+def calibrate_fluxes(main_obs_name,dio_name,dspec,Tsys,fullstokes=False,**kwargs):
     '''
     Produce calibrated Stokes I for an observation given a noise diode
     measurement on the source and a diode spectrum with the same number of
     coarse channels
+
+    Parameters
+    ----------
+    main_obs_name : str
+        Path to filterbank file containing final data to be calibrated
+    dio_name : str
+        Path to filterbank file for observation on the target source with flickering noise diode
+    dspec : 1D Array (float) or float
+        Coarse channel spectrum (or average) of the noise diode in Jy (obtained from diode_spec())
+    Tsys : 1D Array (float) or float
+        Coarse channel spectrum (or average) of the system temperature in Jy
+    fullstokes: boolean
+        Use fullstokes=True if data is in IQUV format or just Stokes I, use fullstokes=False if
+        it is in cross_pols format
     '''
 
     #Find folded spectra of the target source with the noise diode ON and OFF
-    obs = Waterfall(name,max_load=150)
-    ncoarse = obs.calc_n_coarse_chan()
+    main_obs = Waterfall(main_obs_name,max_load=150)
+    ncoarse = main_obs.calc_n_coarse_chan()
     dio_obs = Waterfall(dio_name,max_load=150)
     dio_chan_per_coarse = dio_obs.header['nchans']/ncoarse
     dOFF,dON = integrate_calib(dio_name,dio_chan_per_coarse,fullstokes,**kwargs)
 
     #Find Jy/count for each coarse channel using the diode spectrum
-    data = obs.data
+    main_dat = main_obs.data
     scale_facs = dspec/(dON-dOFF)
     print(scale_facs)
 
-    nchans = obs.header['nchans']
+    nchans = main_obs.header['nchans']
     obs_chan_per_coarse = nchans/ncoarse
 
-    ax0_size = np.size(data,0)
-    ax1_size = np.size(data,1)
+    ax0_size = np.size(main_dat,0)
+    ax1_size = np.size(main_dat,1)
 
     #Reshape data array of target observation and multiply coarse channels by the scale factors
-    data = np.reshape(data,(ax0_size,ax1_size,ncoarse,obs_chan_per_coarse))
-    data = np.swapaxes(data,2,3)
+    main_dat = np.reshape(main_dat,(ax0_size,ax1_size,ncoarse,obs_chan_per_coarse))
+    main_dat = np.swapaxes(main_dat,2,3)
 
-    data = data*scale_facs
-    data = data-Tsys
-    data = np.swapaxes(data,2,3)
-    data = np.reshape(data,(ax0_size,ax1_size,nchans))
+    main_dat = main_dat*scale_facs
+    main_dat = main_dat-Tsys
+    main_dat = np.swapaxes(main_dat,2,3)
+    main_dat = np.reshape(main_dat,(ax0_size,ax1_size,nchans))
 
     #Write calibrated data to a new filterbank file with ".fluxcal" extension
-    obs.data = data
-    obs.write_to_filterbank(name[:-4]+'.fluxcal.fil')
-    print('Finished: calibrated product written to ' + name[:-4]+'.fluxcal.fil')
+
+    main_obs.data = main_dat
+    main_obs.write_to_filterbank(main_obs_name[:-4]+'.fluxcal.fil')
+    print('Finished: calibrated product written to ' + main_obs_name[:-4]+'.fluxcal.fil')
 
 
 #end module
-
