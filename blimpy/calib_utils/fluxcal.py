@@ -207,7 +207,7 @@ def calibrate_fluxes(name,dio_name,dspec,Tsys,fullstokes=False,**kwargs):
     #Write calibrated data to a new filterbank file with ".fluxcal" extension
     obs.data = data
     obs.write_to_filterbank(name[:-4]+'.fluxcal.fil')
-    print 'Finished: calibrated product written to ' + name[:-4]+'.fluxcal.fil'
+    print('Finished: calibrated product written to ' + name[:-4]+'.fluxcal.fil')
 
 
 #end module
