@@ -6,16 +6,16 @@ Python class and command line utility for reading and plotting waterfall files.
 
 This provides a class, Waterfall(), which can be used to read a blimpy file (.fil or .h5):
 
-    ````
-    fil = Waterfall('test_psr.fil')
-    print fil.header
-    print fil.data.shape
-    print fil.freqs
+
+    fil = Waterfall("test_psr.fil")
+    print(fil.header)
+    print(fil.data.shape)
+    print(fil.freqs)
 
     plt.figure()
     fil.plot_spectrum(t=0)
     plt.show()
-    ````
+
 
 TODO: check the file seek logic works correctly for multiple IFs
 
