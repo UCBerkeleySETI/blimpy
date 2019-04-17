@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/UCBerkeleySETI/blimpy.svg?branch=master)](https://travis-ci.org/UCBerkeleySETI/blimpy)
 [![Coverage Status](https://coveralls.io/repos/github/telegraphic/blimpy/badge.svg?branch=master)](https://coveralls.io/github/telegraphic/blimpy?branch=master)
 
-## Breakthrough Listen I/O Methods for Python.
+## Breakthrough Listen I/O Methods for Python
 
 ### Filterbank + Raw file readers
 
@@ -24,7 +24,7 @@ pip install https://github.com/UCBerkeleySETI/blimpy/tarball/master
 
 You will need numpy, h5py astropy, scipy, and matplotlib as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately.
 
-Note that h5py needs to be installed in this way. 
+Note that h5py needs to be installed in this way.
 
 ```
 $ pip install --no-binary=h5py h5py
@@ -70,4 +70,4 @@ header, data = r.read_next_data_block()
 Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.
 
 
-### This readme is far from complete. If you have any request/questions please lets us know!
+**This readme is far from complete. If you have any request/questions please lets us know!**

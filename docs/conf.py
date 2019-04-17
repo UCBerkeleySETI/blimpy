@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'blimpy'
-copyright = '2019, Breakthrough Listen'
+copyright = 'Berkeley SETI Research Center'
 author = 'Breakthrough Listen'
 
 
