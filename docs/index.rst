@@ -6,4 +6,5 @@ Welcome to blimpy's documentation!
   :caption: Contents:
 
   license.rst
-  README.md
+  contents
+  overview.md
