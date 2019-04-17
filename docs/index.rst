@@ -1,10 +1,12 @@
 Welcome to blimpy's documentation!
 ==================================
 
+Table of Contents
+=================
+
 .. toctree::
   :maxdepth: 2
-  :caption: Contents:
 
+  index.rst
   license.rst
-  contents
   overview.md
