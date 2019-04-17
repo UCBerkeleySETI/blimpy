@@ -8,7 +8,7 @@ Welcome to blimpy's documentation!
   license.rst
   overview.md
   writing_docs.rst
-  ../_modules/modules.rst
+  modules.rst
 
 
 .. Remember to add the name of your file here!
