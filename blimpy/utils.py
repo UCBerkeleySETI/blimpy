@@ -95,16 +95,16 @@ def unpack_2to8(data):
 
         This works with some clever shifting and AND / OR operations.
         Data is LOADED as 8-bit, then promoted to 32-bits:
-        丨ABCD EFGH丨 (8 bits of data)
-        丨0000 0000丨0000 0000丨0000 0000丨ABCD EFGH丨 (8 bits of data as a 32-bit word)
+        /ABCD EFGH/ (8 bits of data)
+        /0000 0000/0000 0000/0000 0000/ABCD EFGH/ (8 bits of data as a 32-bit word)
 
         Once promoted, we can do some shifting, AND and OR operations:
-        丨0000 0000丨0000 ABCD丨EFGH 0000丨0000 0000丨 (shifted << 12)
-        丨0000 0000丨0000 ABCD丨EFGH 0000丨ABCD EFGH丨 (bitwise OR of previous two lines)
-        丨0000 0000丨0000 ABCD丨0000 0000丨0000 EFGH丨 (bitwise AND with mask 0xF000F)
-        丨0000 00AB丨CD00 0000丨0000 00EF丨GH00 0000丨 (prev. line shifted << 6)
-        丨0000 00AB丨CD00 ABCD丨0000 00EF丨GH00 EFGH丨 (bitwise OR of previous two lines)
-        丨0000 00AB丨0000 00CD丨0000 00EF丨0000 00GH丨 (bitwise AND with 0x3030303)
+        /0000 0000/0000 ABCD/EFGH 0000/0000 0000/ (shifted << 12)
+        /0000 0000/0000 ABCD/EFGH 0000/ABCD EFGH/ (bitwise OR of previous two lines)
+        /0000 0000/0000 ABCD/0000 0000/0000 EFGH/ (bitwise AND with mask 0xF000F)
+        /0000 00AB/CD00 0000/0000 00EF/GH00 0000/ (prev. line shifted << 6)
+        /0000 00AB/CD00 ABCD/0000 00EF/GH00 EFGH/ (bitwise OR of previous two lines)
+        /0000 00AB/0000 00CD/0000 00EF/0000 00GH/ (bitwise AND with 0x3030303)
 
         Then we change the view of the data to interpret it as 4x8 bit:
         [000000AB, 000000CD, 000000EF, 000000GH]  (change view from 32-bit to 4x8-bit)
