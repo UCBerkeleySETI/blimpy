@@ -301,9 +301,10 @@ def calibrate_fluxes(main_obs_name,dio_name,dspec,Tsys,fullstokes=False,**kwargs
     main_dat = np.reshape(main_dat,(ax0_size,ax1_size,nchans))
 
     #Write calibrated data to a new filterbank file with ".fluxcal" extension
+
     main_obs.data = main_dat
     main_obs.write_to_filterbank(main_obs_name[:-4]+'.fluxcal.fil')
-    print 'Finished: calibrated product written to ' + main_obs_name[:-4]+'.fluxcal.fil'
+    print('Finished: calibrated product written to ' + main_obs_name[:-4]+'.fluxcal.fil')
 
 
 #end module
