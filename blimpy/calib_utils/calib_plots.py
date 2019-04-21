@@ -1,6 +1,6 @@
 import pylab as plt
-from fluxcal import *
-from stokescal import *
+from .fluxcal import *
+from .stokescal import *
 from blimpy import Waterfall
 import numpy as np
 

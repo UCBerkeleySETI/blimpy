@@ -1,7 +1,7 @@
 from blimpy import Waterfall
 import numpy as np
 from scipy.optimize import curve_fit
-from fluxcal import foldcal
+from .fluxcal import foldcal
 
 def get_stokes(cross_dat, feedtype='l'):
     '''Output stokes parameters (I,Q,U,V) for a rawspec
@@ -212,7 +212,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**
     Idat,Qdat,Udat,Vdat = get_stokes(cross_dat,feedtype)
     cross_dat = None
     #Calculate differential gain and phase from noise diode measurements
-    print 'Calculating Mueller Matrix variables'
+    print('Calculating Mueller Matrix variables')
     gams = gain_offsets(Idat,Qdat,Udat,Vdat,tsamp,dio_chan_per_coarse,feedtype,**kwargs)
     psis = phase_offsets(Idat,Qdat,Udat,Vdat,tsamp,dio_chan_per_coarse,feedtype,**kwargs)
 
@@ -223,16 +223,16 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**
     Vdat = None
 
     #Get corrected Stokes parameters
-    print 'Opening '+cross_pols
+    print('Opening '+cross_pols)
     cross_obs = Waterfall(cross_pols,max_load=150)
     obs_ncoarse = cross_obs.calc_n_coarse_chan()
     obs_nchans = cross_obs.header['nchans']
     obs_chan_per_coarse = obs_nchans/obs_ncoarse
 
-    print 'Grabbing Stokes parameters'
+    print('Grabbing Stokes parameters')
     I,Q,U,V = get_stokes(cross_obs.data,feedtype)
 
-    print 'Applying Mueller Matrix'
+    print('Applying Mueller Matrix')
     I,Q,U,V = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse,feedtype)
 
     #Use onefile (default) to produce one filterbank file containing all Stokes information
@@ -242,26 +242,26 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**
         cross_obs.data[:,2,:] = np.squeeze(U)
         cross_obs.data[:,3,:] = np.squeeze(V)
         cross_obs.write_to_fil(cross_pols[:-15]+'.SIQUV.polcal.fil')
-        print 'Calibrated Stokes parameters written to '+cross_pols[:-15]+'.SIQUV.polcal.fil'
+        print('Calibrated Stokes parameters written to '+cross_pols[:-15]+'.SIQUV.polcal.fil')
         return
 
     #Write corrected Stokes parameters to four filterbank files if onefile==False
     obs = Waterfall(obs_I,max_load=150)
     obs.data = I
     obs.write_to_fil(cross_pols[:-15]+'.SI.polcal.fil')   #assuming file is named *.cross_pols.fil
-    print 'Calibrated Stokes I written to '+cross_pols[:-15]+'.SI.polcal.fil'
+    print('Calibrated Stokes I written to '+cross_pols[:-15]+'.SI.polcal.fil')
 
     obs.data = Q
     obs.write_to_fil(cross_pols[:-15]+'.Q.polcal.fil')   #assuming file is named *.cross_pols.fil
-    print 'Calibrated Stokes Q written to '+cross_pols[:-15]+'.Q.polcal.fil'
+    print('Calibrated Stokes Q written to '+cross_pols[:-15]+'.Q.polcal.fil')
 
     obs.data = U
     obs.write_to_fil(cross_pols[:-15]+'.U.polcal.fil')   #assuming file is named *.cross_pols.fil
-    print 'Calibrated Stokes U written to '+cross_pols[:-15]+'.U.polcal.fil'
+    print('Calibrated Stokes U written to '+cross_pols[:-15]+'.U.polcal.fil')
 
     obs.data = V
     obs.write_to_fil(cross_pols[:-15]+'.V.polcal.fil')   #assuming file is named *.cross_pols.fil
-    print 'Calibrated Stokes V written to '+cross_pols[:-15]+'.V.polcal.fil'
+    print('Calibrated Stokes V written to '+cross_pols[:-15]+'.V.polcal.fil')
 
 
 def fracpols(str, **kwargs):
