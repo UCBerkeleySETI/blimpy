@@ -6,16 +6,16 @@ Python class and command line utility for reading and plotting filterbank files.
 
 This provides a class, Filterbank(), which can be used to read a .fil file:
 
-    ````
+
     fil = Filterbank('test_psr.fil')
-    print fil.header
-    print fil.data.shape
-    print fil.freqs
+    print(fil.header)
+    print(fil.data.shape)
+    print(fil.freqs)
 
     plt.figure()
     fil.plot_spectrum(t=0)
     plt.show()
-    ````
+
 
 TODO: check the file seek logic works correctly for multiple IFs
 
