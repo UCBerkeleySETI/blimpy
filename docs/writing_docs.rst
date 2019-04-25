@@ -30,6 +30,11 @@ After ``sphinx`` is installed, you can preview your changes by running ``make ht
 The rendered html files will be stored in ``docs/_build/html``. The actual site will look exactly like the rendered
 files when built.
 
+Automatic Documentation
+-----------------------
+You can run ``sphinx-apidoc -o . ../blimpy/ -f`` in ``blimpy/docs`` to generate autodoc pages from all the python modules in blimpy.
+Make sure to run this command every time a new file is added to blimpy.
+
 Updating the Site
 -----------------
 The blimpy Github repo is connected to `readthedocs.org` with a webhook. `readthedocs` will automatically update the site
