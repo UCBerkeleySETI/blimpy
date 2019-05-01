@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/UCBerkeleySETI/blimpy.svg?branch=master)](https://travis-ci.org/UCBerkeleySETI/blimpy)
-[![Coverage Status](https://coveralls.io/repos/github/telegraphic/blimpy/badge.svg?branch=master)](https://coveralls.io/github/telegraphic/blimpy?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/blimpy/badge/?version=latest)](https://blimpy.readthedocs.io/en/latest/?badge=latest) [![Coverage Status](https://coveralls.io/repos/github/telegraphic/blimpy/badge.svg?branch=master)](https://coveralls.io/github/telegraphic/blimpy?branch=master)
 
 ## Breakthrough Listen I/O Methods for Python.
 
