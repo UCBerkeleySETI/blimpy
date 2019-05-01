@@ -679,14 +679,19 @@ class Filterbank(object):
 
         extent = self._calc_extent(plot_f=plot_f,plot_t=self.timestamps,MJD_time=MJD_time)
 
+        plt_args = {
+            'aspect':'auto',
+            'origin':'lower',
+            'rasterized':True,
+            'interpolation':'nearest',
+            'extent':extent,
+            'cmap':'viridis'
+        }
+        for k, v in kwargs.items():
+            plt_args[k] = v
+
         plt.imshow(plot_data,
-            aspect='auto',
-            origin='lower',
-            rasterized=True,
-            interpolation='nearest',
-            extent=extent,
-            cmap='viridis',
-            **kwargs
+            **plt_args
         )
         if cb:
             plt.colorbar()
