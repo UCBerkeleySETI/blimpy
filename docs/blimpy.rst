@@ -1,11 +1,6 @@
 blimpy package
 ==============
 
-.. automodule:: blimpy
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Subpackages
 -----------
 
@@ -105,3 +100,10 @@ blimpy.waterfall module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: blimpy
+    :members:
+    :undoc-members:
+    :show-inheritance:
