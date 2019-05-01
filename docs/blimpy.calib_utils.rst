@@ -1,11 +1,6 @@
 blimpy.calib\_utils package
 ===========================
 
-.. automodule:: blimpy.calib_utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -34,3 +29,10 @@ blimpy.calib\_utils.stokescal module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: blimpy.calib_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
