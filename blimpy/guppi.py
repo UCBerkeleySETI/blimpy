@@ -76,6 +76,7 @@ class GuppiRaw(object):
         self._d = np.zeros(1, dtype='complex64')
         self._d_x = np.zeros(1, dtype='int8')
         self._d_y = np.zeros(1, dtype='int8')
+        self.data_gen = None
 
     def __enter__(self):
         """
@@ -200,12 +201,28 @@ class GuppiRaw(object):
         with self as gr:
             while True:
                 try:
-                    yield gr.read_next_data_block_int8()
-                except Exception as e:
-                    print("File depleted")
+                    yield gr.generator_read_next_data_block_int8()
+                except EndOfFileError as e:
+                    print("\nFile depleted")
                     yield None, None, None
 
     def read_next_data_block_int8(self):
+        """
+        Instantiates a new generator as self.data_gen if there wasn't one already
+        Calls next() on the generator once and returns the value
+        Handles generator depletion
+        :return: header, data_x, data_y
+        """
+        if not self.data_gen:
+            self.data_gen = self.get_data()
+        header, data_x, data_y = next(self.data_gen)
+        if not header:
+            self.data_gen = None
+            return None, None, None
+        self._d_x, self._d_y = data_x, data_y
+        return header, self._d_x, self._d_y
+
+    def generator_read_next_data_block_int8(self):
         """ Read the next block of data and its header
 
         Returns: (header, data)
