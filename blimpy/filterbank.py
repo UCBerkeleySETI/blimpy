@@ -495,8 +495,8 @@ class Filterbank(object):
 
         return plot_f, plot_data
 
-    def _calc_extent(self,plot_f=None,plot_t=None,MJD_time=False):
-        """ Setup ploting edges.
+    def _calc_extent(self,plot_f=None,plot_t=None,MJD_time=False,inv_t=False):
+        """ Setup waterfall plotting edges.
         """
 
         plot_f_begin = plot_f[0]
@@ -505,10 +505,15 @@ class Filterbank(object):
         plot_t_begin = self.timestamps[0]
         plot_t_end  = self.timestamps[-1] + (self.timestamps[1] - self.timestamps[0])
 
-        if MJD_time:
-            extent=(plot_f_begin, plot_f_begin_end, plot_t_begin, plot_t_end)
+        #Returns time in seconds from start of scan.
+        if MJD_time == False:
+            plot_t_end = (plot_t_end-plot_t_begin)*24.*60.*60
+            plot_t_begin = 0.0
+
+        if inv_t == True:
+            extent=(plot_f_begin, plot_f_end, plot_t_end, plot_t_begin)
         else:
-            extent=(plot_f_begin, plot_f_end, 0.0,(plot_t_end-plot_t_begin)*24.*60.*60)
+            extent=(plot_f_begin, plot_f_end, plot_t_begin, plot_t_end)
 
         return extent
 
@@ -659,7 +664,7 @@ class Filterbank(object):
             plot_data = plot_data[..., ::-1] # Reverse data
             plot_f = plot_f[::-1]
 
-        if logged:
+        if logged == True:
             plot_data = db(plot_data)
 
         # Make sure waterfall plot is under 4k*4k
@@ -677,22 +682,28 @@ class Filterbank(object):
         except KeyError:
             plt.title(self.filename)
 
-        extent = self._calc_extent(plot_f=plot_f,plot_t=self.timestamps,MJD_time=MJD_time)
-
         plt_args = {
             'aspect':'auto',
             'origin':'lower',
             'rasterized':True,
             'interpolation':'nearest',
-            'extent':extent,
             'cmap':'viridis'
-        }
+            }
+
         for k, v in kwargs.items():
             plt_args[k] = v
 
-        plt.imshow(plot_data,
-            **plt_args
-        )
+        if plt_args['origin'] == 'upper':
+            extent = self._calc_extent(plot_f=plot_f,plot_t=self.timestamps,MJD_time=MJD_time,inv_t=True)
+        elif plt_args['origin'] == 'lower':
+            extent = self._calc_extent(plot_f=plot_f,plot_t=self.timestamps,MJD_time=MJD_time)
+        else:
+            raise ValueError('The origin parameter not well set:',plt_args['origin'] )
+
+        plt_args['extent'] = extent
+
+        plt.imshow(plot_data, **plt_args)
+
         if cb:
             plt.colorbar()
         plt.xlabel("Frequency [MHz]")
