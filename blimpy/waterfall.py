@@ -497,7 +497,11 @@ class Waterfall(Filterbank):
 
     def calc_n_coarse_chan(self, chan_bw=None):
         """ This makes an attempt to calculate the number of coarse channels in a given freq selection.
-            It assumes for now that a single coarse channel is 2.9296875 MHz
+
+            Note:
+                This is unlikely to work on non-Breakthrough Listen data, as a-priori knowledge of
+                the digitizer system is required.
+
         """
 
         n_coarse_chan = self.container.calc_n_coarse_chan(chan_bw)
