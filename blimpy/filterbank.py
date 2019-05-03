@@ -399,23 +399,28 @@ class Filterbank(object):
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
 
-        Note: currently only works if entire file is read
+        Note: currently only works if entire file is read, and in GBT data.
+
         """
 
+        if self.header[b'telescope_id'] != 6:
+            logger.info('Data in not from GBT, ignoring blanking of DC channel.')
+            return None
+
         if n_coarse_chan < 1:
-            logger.warning('Coarse channel number < 1, unable to blank DC bin.')
+            logger.warning('Coarse channel number < 1, unable to blank DC channel.')
             return None
 
         if not n_coarse_chan % int(n_coarse_chan) == 0:
-            logger.warning('Selection does not contain an interger number of coarse channels, unable to blank DC bin.')
+            logger.warning('Selection does not contain an integer number of coarse channels, unable to blank DC channel.')
             return None
 
+        # n_coarse_chan is already integer, but now using it with integer format.
         n_coarse_chan = int(n_coarse_chan)
 
         n_chan = self.data.shape[-1]
-        n_chan_per_coarse = int(n_chan / n_coarse_chan)
-
-        mid_chan = int(n_chan_per_coarse / 2)
+        n_chan_per_coarse = n_chan // n_coarse_chan
+        mid_chan = n_chan_per_coarse // 2
 
         for ii in range(n_coarse_chan):
             ss = ii*n_chan_per_coarse
