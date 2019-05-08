@@ -27,6 +27,8 @@ import six
 
 from astropy.time import Time
 import scipy.stats
+import numpy as np
+import matplotlib.ticker as ticker
 from matplotlib.ticker import NullFormatter
 
 import logging as logger
@@ -513,12 +515,13 @@ class Filterbank(object):
 
         return extent
 
-    def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
+    def plot_spectrum(self, t=0, f_start=None, f_stop=None, logged=False, tight=False, if_id=0, c=None, **kwargs):
         """ Plot frequency spectrum of a given file
 
         Args:
             t (int): integration number to plot (0 -> len(data))
             logged (bool): Plot in linear (False) or dB units (True)
+            tight (bool): If True, restrict intensity labels to fit within bounds of plot. Otherwise, use matplotlib default labels.
             if_id (int): IF identification (if multiple IF signals in file)
             c: color for line
             kwargs: keyword args to be passed to matplotlib plot()
@@ -559,11 +562,33 @@ class Filterbank(object):
         if not c:
             kwargs['c'] = '#333333'
 
+
+        db_y_min = db(min(plot_data))
+        db_y_max = db(max(plot_data))
+        if not logged and not tight:
+            pass
+        else:
+            if logged:
+                y_min = db_y_min
+                y_max = db_y_max
+            else:
+                y_min = min(plot_data)
+                y_max = max(plot_data)
+
+                order_of_mag = int(np.floor(np.log10(y_max)))
+
+                y_min /= 10**order_of_mag
+                y_max /= 10**order_of_mag
+            spread = y_max - y_min
+            plt.ylim(y_min - spread / 4, y_max + spread / 4)
+
         if logged:
             plt.plot(plot_f, db(plot_data),label='Stokes I', **kwargs)
             plt.ylabel("Power [dB]")
+        elif tight:
+            plt.plot(plot_f, plot_data / 10**order_of_mag,label='Stokes I', **kwargs)
+            plt.ylabel(r"Power [cts / $10^{%d}$]" % (order_of_mag))
         else:
-
             plt.plot(plot_f, plot_data,label='Stokes I', **kwargs)
             plt.ylabel("Power [counts]")
         plt.xlabel("Frequency [MHz]")
@@ -576,11 +601,12 @@ class Filterbank(object):
 
         plt.xlim(plot_f[0], plot_f[-1])
 
-    def plot_spectrum_min_max(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=None, **kwargs):
+    def plot_spectrum_min_max(self, t=0, f_start=None, f_stop=None, logged=False, tight=False, if_id=0, c=None, **kwargs):
         """ Plot frequency spectrum of a given file
 
         Args:
             logged (bool): Plot in linear (False) or dB units (True)
+            tight (bool): If True, restrict intensity labels to fit within bounds of plot. Otherwise, use matplotlib default labels.
             if_id (int): IF identification (if multiple IF signals in file)
             c: color for line
             kwargs: keyword args to be passed to matplotlib plot()
@@ -594,8 +620,11 @@ class Filterbank(object):
             plot_data = plot_data[..., ::-1] # Reverse data
             plot_f = plot_f[::-1]
 
+        ########
+        # Why do this?
         fig_max = plot_data[0].max()
         fig_min = plot_data[0].min()
+        ########
 
         print("averaging along time axis...")
 
@@ -620,11 +649,37 @@ class Filterbank(object):
         plot_max = rebin(plot_max, dec_fac_x, 1)
         plot_f    = rebin(plot_f, dec_fac_x, 1)
 
+
+
+        db_y_min = db(min(plot_data))
+        db_y_max = db(max(plot_data))
+        if not logged and not tight:
+            pass
+        else:
+            if logged:
+                y_min = db_y_min
+                y_max = db_y_max
+            elif tight:
+                y_min = min(plot_data)
+                y_max = max(plot_data)
+
+                order_of_mag = int(np.floor(np.log10(y_max)))
+
+                y_min /= 10**order_of_mag
+                y_max /= 10**order_of_mag
+            spread = y_max - y_min
+            plt.ylim(y_min - spread / 4, y_max + spread / 4)
+
         if logged:
             plt.plot(plot_f, db(plot_data), "#333333", label='mean', **kwargs)
             plt.plot(plot_f, db(plot_max),  "#e74c3c", label='max', **kwargs)
             plt.plot(plot_f, db(plot_min),  '#3b5b92', label='min', **kwargs)
             plt.ylabel("Power [dB]")
+        elif tight:
+            plt.plot(plot_f, plot_data / 10**order_of_mag,  "#333333", label='mean', **kwargs)
+            plt.plot(plot_f, plot_max / 10**order_of_mag,   "#e74c3c", label='max', **kwargs)
+            plt.plot(plot_f, plot_min / 10**order_of_mag,   '#3b5b92', label='min', **kwargs)
+            plt.ylabel(r"Power [cts / $10^{%d}$]" % (order_of_mag))
         else:
             plt.plot(plot_f, plot_data,  "#333333", label='mean', **kwargs)
             plt.plot(plot_f, plot_max,   "#e74c3c", label='max', **kwargs)
@@ -639,8 +694,6 @@ class Filterbank(object):
             plt.title(self.filename)
 
         plt.xlim(plot_f[0], plot_f[-1])
-        if logged:
-            plt.ylim(db(fig_min),db(fig_max))
 
     def plot_waterfall(self, f_start=None, f_stop=None, if_id=0, logged=True, cb=True, MJD_time=False, **kwargs):
         """ Plot waterfall of data
@@ -697,27 +750,50 @@ class Filterbank(object):
         else:
             plt.ylabel("Time [s]")
 
-    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, orientation='h', MJD_time=False, **kwargs):
+    def plot_time_series(self, f_start=None, f_stop=None, if_id=0, logged=True, tight=False, orientation='h', MJD_time=False, **kwargs):
         """ Plot the time series.
 
          Args:
             f_start (float): start frequency, in MHz
             f_stop (float): stop frequency, in MHz
-            logged (bool): Plot in linear (False) or dB units (True),
+            logged (bool): Plot in linear (False) or dB units (True)
+            tight (bool): If True, restrict intensity labels to fit within bounds of plot. Otherwise, use matplotlib default labels.
             kwargs: keyword args to be passed to matplotlib imshow()
         """
 
         ax = plt.gca()
         plot_f, plot_data = self.grab_data(f_start, f_stop, if_id)
 
-        if logged and self.header[b'nbits'] >= 8:
-            plot_data = db(plot_data)
 
         #Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
         if len(plot_data.shape) > 1:
             plot_data = plot_data.mean(axis=1)
         else:
             plot_data = plot_data.mean()
+
+        db_y_min = db(min(plot_data))
+        db_y_max = db(max(plot_data))
+        if not logged and not tight:
+            pass
+        else:
+            if logged:
+                y_min = db_y_min
+                y_max = db_y_max
+            else:
+                y_min = min(plot_data)
+                y_max = max(plot_data)
+
+                order_of_mag = int(np.floor(np.log10(y_max)))
+
+                y_min /= 10**order_of_mag
+                y_max /= 10**order_of_mag
+
+                plot_data /= 10**order_of_mag 
+            spread = y_max - y_min
+
+        if logged and self.header[b'nbits'] >= 8:
+            plot_data = db(plot_data)
+
 
         #Make proper time axis for plotting (but only for plotting!). Note that this makes the values inclusive.
         extent = self._calc_extent(plot_f=plot_f,plot_t=self.timestamps,MJD_time=MJD_time)
@@ -730,6 +806,8 @@ class Filterbank(object):
 
         if logged:
             plabel = "Power [dB]"
+        elif tight: 
+            plabel = r"Power [cts / $10^{%d}$]" % (order_of_mag)
         else:
             plabel = "Power [counts]"
 
@@ -737,17 +815,26 @@ class Filterbank(object):
         if 'v' in orientation:
             plt.plot(plot_data, plot_t, **kwargs)
             plt.xlabel(plabel)
+            if tight:
+                plt.xlim(y_min - spread / 4, y_max + spread / 4)
+                plt.xticks([y_min + spread / 4, y_max - spread / 4, y_max + spread / 4])
+                ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.2f'))
+
+                plt.ylim(plot_t[0], plot_t[-1])
 
         else:
             plt.plot(plot_t, plot_data, **kwargs)
             plt.xlabel(tlabel)
             plt.ylabel(plabel)
-
-        ax.autoscale(axis='both',tight=True)
-
+            if tight:
+                plt.xlim(plot_t[0], plot_t[-1])
+                plt.yticks([y_min + spread / 4, y_max - spread / 4, y_max + spread / 4])
+                ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%0.2f'))
+        if not tight:
+            ax.autoscale(axis='both',tight=True)
+            
     def plot_kurtosis(self, f_start=None, f_stop=None, if_id=0, **kwargs):
         """ Plot kurtosis
-
          Args:
             f_start (float): start frequency, in MHz
             f_stop (float): stop frequency, in MHz
@@ -773,7 +860,7 @@ class Filterbank(object):
 
         plt.xlim(plot_f[0], plot_f[-1])
 
-    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis=True, spaced=False, hspace=0.6, wspace=0.25, **kwargs):
+    def plot_all(self, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis=True, custom_spacing=False, hspace=0., wspace=0., **kwargs):
         """ Plot waterfall of data as well as spectrum; also, placeholder to make even more complicated plots in the future.
 
         Args:
@@ -783,107 +870,99 @@ class Filterbank(object):
             t (int): integration number to plot (0 -> len(data))
             logged (bool): Plot in linear (False) or dB units (True)
             if_id (int): IF identification (if multiple IF signals in file)
-            spaced (bool): If True, renders plot components based on matplotlib's plt.tight_layout().
-                If False, allows customization of horizontal and vertical spacing via wspace and hspace.
+            custom_spacing (bool): If True, allows customization of horizontal and vertical spacing via wspace and hspace.
             hspace (float): Controls vertical (height) spacing between plot components in plt.GridSpec.
             wspace (float): Controls horizontal (width) spacing between plot components in plt.GridSpec.
             kwargs: keyword args to be passed to matplotlib plot() and imshow()
         """
-        if self.header[b'nbits'] <=2:
+        try:
+            nbits = self.header[b'nbits']
+        except KeyError:
+            nbits = self.header['nbits']
+        if nbits <=2:
             logged = False
 
         nullfmt = NullFormatter()  # no labels
 
-        # definitions for the axes
-#         left, width = 0.35, 0.5
-#         bottom, height = 0.45, 0.5
-#         width2, height2 = 0.1125, 0.15
-#         bottom2, left2 = bottom - height2 - .025, left - width2 - .02
-#         bottom3, left3 = bottom2 - height2 - .025, 0.075
+        gs = gridspec.GridSpec(24, 32)
 
-#         rect_waterfall = [left, bottom, width, height]
-#         rect_colorbar = [left + width, bottom, .025, height]
-#         rect_spectrum = [left, bottom2, width, height2]
-#         rect_min_max = [left, bottom3, width, height2]
-#         rect_timeseries = [left + width, bottom, width2, height]
-#         rect_kurtosis = [left3, bottom3, 0.25, height2]
-#         rect_header = [left3 - .05, bottom, 0.2, height]
-
-        # --------
-        #         axColorbar = plt.axes(rect_colorbar)
-        #         print 'Ploting Colorbar'
-        #         print plot_data.max()
-        #         print plot_data.min()
-        #
-        #         plot_colorbar = range(plot_data.min(),plot_data.max(),int((plot_data.max()-plot_data.min())/plot_data.shape[0]))
-        #         plot_colorbar = np.array([[plot_colorbar],[plot_colorbar]])
-        #
-        #         plt.imshow(plot_colorbar,aspect='auto', rasterized=True, interpolation='nearest',)
-
-        #         axColorbar.xaxis.set_major_formatter(nullfmt)
-        #         axColorbar.yaxis.set_major_formatter(nullfmt)
-
-        #         heatmap = axColorbar.pcolor(plot_data, edgecolors = 'none', picker=True)
-        #         plt.colorbar(heatmap, cax = axColorbar)
-
-#         fig = plt.figure(figsize=dims)
-        gs = gridspec.GridSpec(10, 16)
-    
-        if not spaced:
+        if custom_spacing:
             gs.update(hspace=hspace, wspace=wspace)
-        
+        else:
+            gs.update(hspace=0, wspace=0)
+
         # --------
-        axMinMax = plt.subplot(gs[8:, 6:-2])
-#         axMinMax = plt.axes(rect_min_max)
+        axMinMax = plt.subplot(gs[20:24, 12:-4])
+    #         axMinMax = plt.axes(rect_min_max)
         print('Plotting Min Max')
-        self.plot_spectrum_min_max(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
+        self.plot_spectrum_min_max(logged=logged, tight=True, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
         axMinMax.yaxis.tick_left()
         axMinMax.yaxis.set_label_position("left")
 
+
+        axMinMax.xaxis.grid(True, linestyle='--')
+
         # --------
-        axSpectrum = plt.subplot(gs[6:8, 6:-2], sharex=axMinMax)
-#         axSpectrum = plt.axes(rect_spectrum,sharex=axMinMax)
+        axSpectrum = plt.subplot(gs[16:20, 12:-4], sharex=axMinMax)
+    #         axSpectrum = plt.axes(rect_spectrum,sharex=axMinMax)
         print('Plotting Spectrum')
-        self.plot_spectrum(logged=logged, f_start=f_start, f_stop=f_stop, t=t)
+        self.plot_spectrum(logged=logged, tight=True, f_start=f_start, f_stop=f_stop, t=t)
         plt.title('')
         axSpectrum.yaxis.tick_left()
         axSpectrum.yaxis.set_label_position("left")
-        plt.xlabel('')
-#        axSpectrum.xaxis.set_major_formatter(nullfmt)
+        axSpectrum.set_xlabel('')
+    #        axSpectrum.xaxis.set_major_formatter(nullfmt)
         plt.setp(axSpectrum.get_xticklabels(), visible=False)
 
+        axSpectrum.xaxis.grid(True, linestyle='--')
+
         # --------
-        axWaterfall = plt.subplot(gs[0:6, 6:-2], sharex=axMinMax)
-#         axWaterfall = plt.axes(rect_waterfall,sharex=axMinMax)
+        axWaterfall = plt.subplot(gs[4:16, 12:-4], sharex=axMinMax)
+    #         axWaterfall = plt.axes(rect_waterfall,sharex=axMinMax)
         print('Plotting Waterfall')
         self.plot_waterfall(f_start=f_start, f_stop=f_stop, logged=logged, cb=False)
         plt.xlabel('')
 
         # no labels
-#        axWaterfall.xaxis.set_major_formatter(nullfmt)
+    #        axWaterfall.xaxis.set_major_formatter(nullfmt)
         plt.setp(axWaterfall.get_xticklabels(), visible=False)
 
+        cax = plt.subplot(gs[3:4, 12:-4])
+        plt.colorbar(orientation='horizontal', cax=cax)
+        cax.xaxis.set_ticks_position('top') 
+        cax.xaxis.set_label_position('top') 
+        if logged:
+            cax.set_xlabel('Power [dB]')
+        else:
+            cax.xaxis.offsetText.set_visible(False)
+            offset = cax.xaxis.get_major_formatter()
+            # This is a string
+    #         order_of_mag = str(offset.get_offset()).split('e')[-1]
+            order_of_mag = int(np.log10(float(offset.get_offset())))
+            cax.set_xlabel(r'Power [cts / $10^{%d}$]' % order_of_mag)
+
+
         # --------
-        axTimeseries = plt.subplot(gs[:6, -2:], sharey=axWaterfall)
-#         axTimeseries = plt.axes(rect_timeseries)
+        axTimeseries = plt.subplot(gs[4:16, -4:])
+    #         axTimeseries = plt.axes(rect_timeseries)
         print('Plotting Timeseries')
-        self.plot_time_series(f_start=f_start, f_stop=f_stop, orientation='v')
+        self.plot_time_series(tight=True, f_start=f_start, f_stop=f_stop, orientation='v')
         axTimeseries.yaxis.set_major_formatter(nullfmt)
-#        axTimeseries.xaxis.set_major_formatter(nullfmt)
+    #        axTimeseries.xaxis.set_major_formatter(nullfmt)
 
         # --------
         # Could exclude since it takes much longer to run than the other plots.
         if kurtosis:
-            axKurtosis = plt.subplot(gs[6:8, :5])
-#             axKurtosis = plt.axes(rect_kurtosis)
+            axKurtosis = plt.subplot(gs[16:20, :10])
+    #             axKurtosis = plt.axes(rect_kurtosis)
             print('Plotting Kurtosis')
             self.plot_kurtosis(f_start=f_start, f_stop=f_stop)
 
 
         # --------
-        axHeader = plt.subplot(gs[:6, :4])
-#         axHeader = plt.axes(rect_header)
+        axHeader = plt.subplot(gs[4:16, :8])
+    #         axHeader = plt.axes(rect_header)
         print('Plotting Header')
         # Generate nicer header
         telescopes = {0: 'Fake data',
@@ -899,35 +978,73 @@ class Filterbank(object):
                       65: 'KAT7'
                       }
 
-        telescope = telescopes.get(self.header[b"telescope_id"], self.header[b"telescope_id"])
 
-        plot_header = "%14s: %s\n" % ("TELESCOPE_ID", telescope)
-        for key in (b'SRC_RAJ', b'SRC_DEJ', b'TSTART', b'NCHANS', b'NBEAMS', b'NIFS', b'NBITS'):
+    #     plot_header = "{:10} {:>20}\n".format("Telescope:", telescope)
+        plot_header = ''
+        for key in ['SOURCE_NAME',
+                    'TELESCOPE_ID',
+                    'SRC_RAJ', 
+                    'SRC_DEJ',
+                    'TSTART', 
+                    'NCHANS',
+                    'NBEAMS', 
+                    'NIFS', 
+                    'NBITS',
+                    'FOFF',
+                    'FCH1']:
             try:
-                plot_header += "%14s: %s\n" % (key, self.header[key.lower()])
+                if key.lower() in self.header.keys():
+                    value = self.header[key.lower()]
+                else:
+                    value = self.header[key.lower().encode()]
+
+                if key == 'SRC_RAJ':
+                    h, m, s = self.header[b'src_raj'].hms
+                    value = '%02dh %02dm %02.3fs' % (h, m, s)
+                elif key == 'SRC_DEJ':
+                    d, m, s = self.header[b'src_dej'].dms
+                    if d < 0:
+                        str_d = '-%02d' % (-d)
+                    else:
+                        str_d = '%02d' % d
+                    value = '%sd %02dm %02.3fs' % (str_d, -m, -s)
+                elif key == 'FOFF':
+                    value = (value * 1e6 * u.Hz)
+                    if np.abs(value) > 1e6 * u.Hz:
+                        value = '%.06f MHz' % (value.to('MHz').value)
+                    elif np.abs(value) > 1e3 * u.Hz:
+                #             foff = "%.3f kHz" % (foff.to('kHz').value)
+                        value = '%.03f kHz' % (value.to('kHz').value)
+                    else:
+                        value = '%d Hz'% (value.to('Hz').value)
+                elif key == 'TSTART':
+                    value = '%.02f' % value
+                    key = 'TSTART (MJD)'
+                elif key == 'FCH1':
+                    value = "%6.6f MHz" % value
+                elif key == 'TELESCOPE_ID':
+                    value = telescopes[value]
+                elif key == 'SOURCE_NAME':
+                    try:
+                        value = value.decode()
+                    except AttributeError:
+                        pass
+
+                if key in ['SRC_DEJ', 'FOFF']:
+                    plot_header += "{:<14} {:<18}\n".format('%s:' % key, str(value))
+                else:
+                    plot_header += "{:<15} {:<17}\n".format('%s:' % key, str(value))
             except KeyError:
                 pass
-        fch1 = "%6.6f MHz" % self.header[b'fch1']
 
-        foff = (self.header[b'foff'] * 1e6 * u.Hz)
-        if np.abs(foff) > 1e6 * u.Hz:
-            foff = str(foff.to('MHz'))
-        elif np.abs(foff) > 1e3 * u.Hz:
-#             foff = "%.3f kHz" % (foff.to('kHz').value)
-            foff = str(foff.to('kHz'))
-        else:
-            foff = str(foff.to('Hz'))
+        fig = plt.gcf()
+        size = fig.get_size_inches()
 
-        plot_header += "%14s: %s\n" % ("FCH1", fch1)
-        plot_header += "%14s: %s\n" % ("FOFF", foff)
-
-        plt.text(0.05, .95, plot_header, ha='left', va='top', wrap=True)
-
-        axHeader.set_facecolor('white')
-        axHeader.xaxis.set_major_formatter(nullfmt)
-        axHeader.yaxis.set_major_formatter(nullfmt)
-        axHeader.axis('off')
+        fontsize = int(size[0])
+        plt.text(-0.1, 1, plot_header, fontname='monospace', fontsize=fontsize, ha='left', va='top', wrap=True)
         
+        axHeader.axis('off')
+
         plt.tight_layout()
 
     def write_to_filterbank(self, filename_out):
