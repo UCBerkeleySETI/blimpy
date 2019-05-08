@@ -935,12 +935,15 @@ class Filterbank(object):
         if logged:
             cax.set_xlabel('Power [dB]')
         else:
-            cax.xaxis.offsetText.set_visible(False)
-            offset = cax.xaxis.get_major_formatter()
-            # This is a string
-    #         order_of_mag = str(offset.get_offset()).split('e')[-1]
-            order_of_mag = int(np.log10(float(offset.get_offset())))
-            cax.set_xlabel(r'Power [cts / $10^{%d}$]' % order_of_mag)
+            try:
+                cax.xaxis.offsetText.set_visible(False)
+                offset = cax.xaxis.get_major_formatter()
+                # order_of_mag = str(offset.get_offset()).split('e')[-1]
+                # This will fail if offset is empty
+                order_of_mag = int(np.log10(float(offset.get_offset())))
+                cax.set_xlabel(r'Power [cts / $10^{%d}$]' % order_of_mag)
+            except ValueError:
+                cax.set_xlabel('Power [counts]')
 
 
         # --------
