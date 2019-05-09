@@ -154,7 +154,7 @@ def unpack_4to8(data):
         # Note: This technique assumes LSB-first ordering
     """
 
-    tmpdata = data.view(uint8).astype(np.int16)  # np.empty(upshape, dtype=np.int16)
+    tmpdata = data.view(np.uint8).astype(np.int16)  # np.empty(upshape, dtype=np.int16)
     tmpdata = (tmpdata | (tmpdata << 4)) & 0x0F0F
     # tmpdata = tmpdata << 4 # Shift into high bits to avoid needing to sign extend
     updata = tmpdata.byteswap()
