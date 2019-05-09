@@ -14,7 +14,7 @@ import time
 from pprint import pprint
 from astropy.coordinates import Angle
 
-from .utils import unpack, rebin
+from .utils import unpack, unpack_complex64, rebin
 import sys
 
 PYTHON3 = sys.version_info >= (3, 0)
@@ -120,7 +120,7 @@ class GuppiRaw(object):
 
         try:
             while keep_reading:
-                if start_idx + 80 > self.filesize:
+                if self.file_obj.tell() + 80 > self.filesize:
                     keep_reading = False
                     raise EndOfFileError("End Of Data File")
                 line = self.file_obj.read(80)
@@ -144,6 +144,10 @@ class GuppiRaw(object):
                         # Otherwise it's an integer
                         val = int(val)
 
+                if(key == "NPOL"):
+                    # handle known issue with NPOL:
+                    # https://github.com/UCBerkeleySETI/breakthrough/blob/master/doc/RAW-File-Format.md#well-known-keywords
+                    val = min(val,2)
                 header_dict[key] = val
         except ValueError:
             print("CURRENT LINE: ", line)
@@ -160,8 +164,8 @@ class GuppiRaw(object):
             if int(header_dict["DIRECTIO"]) == 1:
                 if data_idx % 512:
                     data_idx += (512 - data_idx % 512)
+        self.file_obj.seek(data_idx)
 
-        self.file_obj.seek(start_idx)
         return header_dict, data_idx
 
     def read_first_header(self):
@@ -175,12 +179,12 @@ class GuppiRaw(object):
         self.file_obj.seek(0)
         return header_dict
 
-    def read_next_data_block_shape(self):
-        header, data_idx = self.read_header()
+    def get_data_block_shape(self,header):
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
-        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
+        # number of complex samples
+        n_samples = int(int(header['BLOCSIZE'] * 8) / (2 * n_chan * n_pol * n_bit ))
 
         is_chanmaj = False
         if 'CHANMAJ' in header.keys():
@@ -230,20 +234,19 @@ class GuppiRaw(object):
             data (np.array): Numpy array of data, converted into to complex64.
         """
         header, data_idx = self.read_header()
-        self.file_obj.seek(data_idx)
 
         # Read data and reshape
 
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
-        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
+        # number of complex samples
+        n_samples = int(int(header['BLOCSIZE'] * 8) / (2 * n_chan * n_pol * n_bit ))
 
         d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
 
         # Handle 2-bit and 4-bit data
-        if n_bit != 8:
-            d = unpack(d, n_bit)
+        d = unpack(d, n_bit)
 
         d = d.reshape((n_chan, n_samples, n_pol))  # Real, imag
 
@@ -263,19 +266,18 @@ class GuppiRaw(object):
             data (np.array): Numpy array of data, converted into to complex64.
         """
         header, data_idx = self.read_header()
-        self.file_obj.seek(data_idx)
 
         # Read data and reshape
 
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
-        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
+        # number of complex samples
+        n_samples = int(int(header['BLOCSIZE'] * 8) / (2 * n_chan * n_pol * n_bit ))
 
         d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
 
         header, data_idx = self.read_header()
-        self.file_obj.seek(data_idx)
         d2 = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
 
         # Handle 2-bit and 4-bit data
@@ -303,31 +305,23 @@ class GuppiRaw(object):
             data (np.array): Numpy array of data, converted into to complex64.
         """
         header, data_idx = self.read_header()
-        self.file_obj.seek(data_idx)
 
         # Read data and reshape
 
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
-        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
 
         d = np.ascontiguousarray(np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8'))
 
-        # Handle 2-bit and 4-bit data
-        if n_bit != 8:
-            d = unpack(d, n_bit)
+        # Handle n-bit to np.complex64
+        d_complex64 = unpack_complex64(d, n_bit)
 
-        dshape = self.read_next_data_block_shape()
+        dshape = self.get_data_block_shape(header)
 
-        d = d.reshape(dshape)  # Real, imag
+        self._d = d_complex64.reshape(dshape)
 
-        if self._d.shape != d.shape:
-            self._d = np.zeros(d.shape, dtype='float32')
-
-        self._d[:] = d
-
-        return header, self._d[:].view('complex64')
+        return header, self._d
 
     def find_n_data_blocks(self):
         """ Seek through the file to find how many data blocks there are in the file
@@ -338,7 +332,6 @@ class GuppiRaw(object):
         self.file_obj.seek(0)
         header0, data_idx0 = self.read_header()
 
-        self.file_obj.seek(data_idx0)
         block_size = int(header0['BLOCSIZE'])
         n_bits = int(header0['NBITS'])
         self.file_obj.seek(int(header0['BLOCSIZE']), 1)
@@ -347,7 +340,6 @@ class GuppiRaw(object):
         while not end_found:
             try:
                 header, data_idx = self.read_header()
-                self.file_obj.seek(data_idx)
                 self.file_obj.seek(header['BLOCSIZE'], 1)
                 n_blocks += 1
             except EndOfFileError:

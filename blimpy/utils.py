@@ -52,18 +52,14 @@ def rebin(d, n_x, n_y=None):
 
 
 def unpack(data, nbit):
-    """upgrade data from nbits to 8bits
+    """upgrade data from nbits to np.int8
 
-    Notes: Pretty sure this function is a little broken!
+    Notes: nbit=4 and nbit=1 are untested!
     """
-    if nbit > 8:
-        raise ValueError("unpack: nbit must be <= 8")
-    if 8 % nbit != 0:
-        raise ValueError("unpack: nbit must divide into 8")
     if data.dtype not in (np.uint8, np.int8):
         raise TypeError("unpack: dtype must be 8-bit")
     if nbit == 8:
-        return data
+        return data.view(np.int8)
     elif nbit == 4:
         data = unpack_4to8(data)
         return data
@@ -73,19 +69,28 @@ def unpack(data, nbit):
     elif nbit == 1:
         data = unpack_1to8(data)
         return data
+    else:
+        raise ValueError("unpack: nbit must be 1, 2, 4 or 8")
 
+def unpack_complex64(data, nbit):
+    """upgrade data from nbits to np.complex64
 
-def unpack_1to8(data):
-    """ Promote 1-bit unisgned data into 8-bit unsigned data.
+    Notes: nbit=4 and nbit=1 are untested!
+    """
+    data = unpack(data,nbit)
+    return data.astype(np.float32).view(np.complex64)
+
+def unpack_1(data):
+    """ Promote 1-bit unisgned data into np.complex64 data.
 
     Args:
         data: Numpy array with dtype == uint8
     """
-    return np.unpackbits(data)
+    return np.unpackbits(data.view(np.uint8)).astype(np.int8)
 
 
 def unpack_2to8(data):
-    """ Promote 2-bit unisgned data into 8-bit unsigned data.
+    """ Promote 2-bit unsigned data into np.int8
 
     Args:
         data: Numpy array with dtype == uint8
@@ -119,7 +124,7 @@ def unpack_2to8(data):
                         2: -12,
                         3: -40}
 
-    tmp = data.astype(np.uint32)
+    tmp = data.view(np.uint8).astype(np.uint32)
     tmp = (tmp | (tmp << 12)) & 0xF000F
     tmp = (tmp | (tmp << 6)) & 0x3030303
     tmp = tmp.byteswap()
@@ -131,7 +136,7 @@ def unpack_2to8(data):
 
 
 def unpack_4to8(data):
-    """ Promote 2-bit unisgned data into 8-bit unsigned data.
+    """ Promote 4-bit unsigned data into np.int8
 
     Args:
         data: Numpy array with dtype == uint8
@@ -149,8 +154,8 @@ def unpack_4to8(data):
         # Note: This technique assumes LSB-first ordering
     """
 
-    tmpdata = data.astype(np.int16)  # np.empty(upshape, dtype=np.int16)
+    tmpdata = data.view(uint8).astype(np.int16)  # np.empty(upshape, dtype=np.int16)
     tmpdata = (tmpdata | (tmpdata << 4)) & 0x0F0F
     # tmpdata = tmpdata << 4 # Shift into high bits to avoid needing to sign extend
     updata = tmpdata.byteswap()
-    return updata.view(data.dtype)
+    return updata.view(np.int8)
