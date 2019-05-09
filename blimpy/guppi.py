@@ -204,7 +204,7 @@ class GuppiRaw(object):
                     yield gr.generator_read_next_data_block_int8()
                 except EndOfFileError as e:
                     print("\nFile depleted")
-                    yield None, None, None
+                    raise StopIteration
 
     def read_next_data_block_int8(self):
         """
@@ -215,8 +215,9 @@ class GuppiRaw(object):
         """
         if not self.data_gen:
             self.data_gen = self.get_data()
-        header, data_x, data_y = next(self.data_gen)
-        if not header:
+        try:
+            header, data_x, data_y = next(self.data_gen)
+        except StopIteration:
             self.data_gen = None
             return None, None, None
         self._d_x, self._d_y = data_x, data_y
