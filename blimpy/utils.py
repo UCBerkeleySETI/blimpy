@@ -80,8 +80,8 @@ def unpack_complex64(data, nbit):
     data = unpack(data,nbit)
     return data.astype(np.float32).view(np.complex64)
 
-def unpack_1(data):
-    """ Promote 1-bit unisgned data into np.complex64 data.
+def unpack_1to8(data):
+    """ Promote 1-bit unsigned data into np.int8
 
     Args:
         data: Numpy array with dtype == uint8
