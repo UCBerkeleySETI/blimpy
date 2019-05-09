@@ -1,0 +1,6 @@
+build/
+dist/
+.eggs/
+blimpy.egg-info/
+*.pyc
+*.swp
