@@ -175,8 +175,20 @@ class GuppiRaw(object):
         self.file_obj.seek(0)
         return header_dict
 
-    def read_next_data_block_shape(self):
-        header, data_idx = self.read_header()
+    def read_next_data_block_shape(self, header=None):
+        """
+        Calculate the shape of the next data block.  Use provided header
+        instead of reading header if provided.
+
+        Args:
+            header (dict) - keyword:value pairs of header metadata read from
+            current block
+
+        Returns:
+            dshape (tuple) - shape of the corresponding data block
+        """
+        if(header is None):
+            header, data_idx = self.read_header()
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
@@ -319,7 +331,7 @@ class GuppiRaw(object):
         if n_bit != 8:
             d = unpack(d, n_bit)
 
-        dshape = self.read_next_data_block_shape()
+        dshape = self.read_next_data_block_shape(header)
 
         d = d.reshape(dshape)  # Real, imag
 
