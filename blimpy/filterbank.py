@@ -1024,14 +1024,16 @@ class Filterbank(object):
 
                 if key == 'SRC_RAJ':
                     h, m, s = self.header[b'src_raj'].hms
-                    value = '%02dh %02dm %02.3fs' % (h, m, s)
+                    value = '%02dh %02dm %06.3fs' % (h, m, s)
                 elif key == 'SRC_DEJ':
                     d, m, s = self.header[b'src_dej'].dms
+                    m = abs(m)
+                    s = abs(s)
                     if d < 0:
                         str_d = '-%02d' % (-d)
                     else:
-                        str_d = '%02d' % d
-                    value = '%sd %02dm %02.3fs' % (str_d, -m, -s)
+                        str_d = '+%02d' % d
+                    value = '%sd %02dm %06.3fs' % (str_d, m, s)
                 elif key == 'FOFF':
                     value = (value * 1e6 * u.Hz)
                     if np.abs(value) > 1e6 * u.Hz:
