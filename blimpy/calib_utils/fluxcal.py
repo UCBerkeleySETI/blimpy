@@ -2,6 +2,8 @@ from blimpy import Waterfall
 import numpy as np
 import pylab as plt
 from scipy.integrate import trapz
+from astropy import units as u
+import matplotlib.pyplot as plt
 
 def foldcal(data,tsamp, diode_p=0.04,numsamps=1000,switch=False,inds=False):
     '''
@@ -146,7 +148,7 @@ def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
     calflux : float
         Known flux of calibrator source at a particular frequency
     calfreq : float
-        Frequency where calibrator source has flux calflux (see above)
+        Frequency where calibrator source has flux calflux (MHz) (see above)
     spec_in : float
         Known power-law spectral index of calibrator source. Use convention flux(frequency) = constant * frequency^(spec_in)
     centerfreqs : 1D Array (float)
@@ -251,6 +253,32 @@ def get_Tsys(calON_obs,calOFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs
     (See diode_spec())
     '''
     return diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=False,oneflux=False,**kwargs)[1]
+
+def get_Tsys_nodiode(calON_obs_name,calOFF_obs_name,calflux,calfreq,spec_in,plot=False,**kwargs):
+    calON_obs = Waterfall(calON_obs_name,max_load=150)
+    calOFF_obs = Waterfall(calOFF_obs_name,max_load=150)
+    ncoarse = calON_obs.calc_n_coarse_chan()
+    chan_per_coarse = calON_obs.header['nchans']/ncoarse
+
+    ONobs_spec = np.squeeze(np.mean(calON_obs.data,axis=0))
+    OFFobs_spec = np.squeeze(np.mean(calOFF_obs.data,axis=0))
+    freqs = calON_obs.populate_freqs()
+
+    ON_coarse_spec = integrate_chans(ONobs_spec,freqs,chan_per_coarse)
+    OFF_coarse_spec = integrate_chans(OFFobs_spec,freqs,chan_per_coarse)
+    cfreqs = get_centerfreqs(freqs,chan_per_coarse)
+    cal_fluxes = get_calfluxes(calflux,calfreq,spec_in,cfreqs,oneflux=False)
+
+    S_sys = (OFF_coarse_spec)/(ON_coarse_spec-OFF_coarse_spec)*cal_fluxes
+
+    #Convert to Kelvins
+    beam_sig = np.mean(755.0/(cfreqs*10**(-3)))*u.arcsec
+    beam_area = 2*np.pi*(beam_sig)**2
+    freq = np.mean(cfreqs)*u.MHz
+    equiv = u.brightness_temperature(beam_area,freq)
+    T_sys = (S_sys*u.Jy).to(u.K,equivalencies=equiv)
+
+    return T_sys,cfreqs
 
 def calibrate_fluxes(main_obs_name,dio_name,dspec,Tsys,fullstokes=False,**kwargs):
     '''
