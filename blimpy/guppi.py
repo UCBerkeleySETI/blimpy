@@ -308,7 +308,7 @@ class GuppiRaw(object):
         self._d_y[:] = d[..., 2:4]
         return header, self._d_x, self._d_y
 
-    def read_next_data_block(self):
+    def read_next_data_block(self,blocknumber):
         """ Read the next block of data and its header
 
         Returns: (header, data)
@@ -325,8 +325,10 @@ class GuppiRaw(object):
         n_bit = int(header['NBITS'])
         n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
 
+        self.file_obj.seek(blockNumber*header['BLOCSIZE'])
         d = np.ascontiguousarray(np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8'))
-
+        self.file_obj.seek(0)
+        
         # Handle 2-bit and 4-bit data
         if n_bit != 8:
             d = unpack(d, n_bit)
