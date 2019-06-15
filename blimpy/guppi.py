@@ -8,13 +8,14 @@ The guppi raw format consists of a FITS-like header, followed by a block of data
 and repeated over and over until the end of the file.
 """
 
-import os
-import sys
-
 import numpy as np
+import os
+import time
+from pprint import pprint
 from astropy.coordinates import Angle
 
 from .utils import unpack, rebin
+import sys
 
 PYTHON3 = sys.version_info >= (3, 0)
 
@@ -186,7 +187,7 @@ class GuppiRaw(object):
         Returns:
             dshape (tuple) - shape of the corresponding data block
         """
-        if (header is None):
+        if(header is None):
             header, data_idx = self.read_header()
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
@@ -368,6 +369,8 @@ class GuppiRaw(object):
         print("STD: %2.3f" % data.std())
         print("MAX: %2.3f" % data.max())
         print("MIN: %2.3f" % data.min())
+
+        import pylab as plt
 
     def plot_histogram(self, filename=None):
         """ Plot a histogram of data values """
