@@ -233,7 +233,7 @@ class GuppiRaw(object):
             self.data_gen = None
             return None, None, None
         self._d_x, self._d_y = data_x, data_y
-        return header, self._d_x, self._d_y
+        return header, np.copy(self._d_x), np.copy(self._d_y)
 
     def generator_read_next_data_block_int8(self):
         """ Read the next block of data and its header
@@ -241,6 +241,7 @@ class GuppiRaw(object):
         Returns: (header, data)
             header (dict): dictionary of header metadata
             data (np.array): Numpy array of data, converted into to complex64.
+
         """
         header, data_idx = self.read_header()
         self.file_obj.seek(data_idx)
@@ -274,6 +275,7 @@ class GuppiRaw(object):
         Returns: (header, data)
             header (dict): dictionary of header metadata
             data (np.array): Numpy array of data, converted into to complex64.
+        TODO: Deprecate?
         """
         header, data_idx = self.read_header()
         self.file_obj.seek(data_idx)
@@ -315,25 +317,8 @@ class GuppiRaw(object):
             header (dict): dictionary of header metadata
             data (np.array): Numpy array of data, converted into to complex64.
         """
-        header, data_idx = self.read_header()
-        self.file_obj.seek(data_idx)
-
-        # Read data and reshape
-
-        n_chan = int(header['OBSNCHAN'])
-        n_pol = int(header['NPOL'])
-        n_bit = int(header['NBITS'])
-        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
-
-        d = np.ascontiguousarray(np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8'))
-
-        # Handle 2-bit and 4-bit data
-        if n_bit != 8:
-            d = unpack(d, n_bit)
-
-        dshape = self.read_next_data_block_shape(header)
-
-        d = d.reshape(dshape)  # Real, imag
+        header, dx, dy = self.read_next_data_block_int8()
+        d = np.append(dx, dy, axis=2)
 
         if self._d.shape != d.shape:
             self._d = np.zeros(d.shape, dtype='float32')
