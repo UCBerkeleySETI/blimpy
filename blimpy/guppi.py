@@ -233,7 +233,7 @@ class GuppiRaw(object):
             self.data_gen = None
             return None, None, None
         self._d_x, self._d_y = data_x, data_y
-        return header, self._d_x, self._d_y
+        return header, np.copy(self._d_x), np.copy(self._d_y)
 
     def generator_read_next_data_block_int8(self):
         """ Read the next block of data and its header
@@ -242,7 +242,6 @@ class GuppiRaw(object):
             header (dict): dictionary of header metadata
             data (np.array): Numpy array of data, converted into to complex64.
 
-        TODO: deprecate?
         """
         header, data_idx = self.read_header()
         self.file_obj.seek(data_idx)
@@ -276,6 +275,7 @@ class GuppiRaw(object):
         Returns: (header, data)
             header (dict): dictionary of header metadata
             data (np.array): Numpy array of data, converted into to complex64.
+        TODO: Deprecate?
         """
         header, data_idx = self.read_header()
         self.file_obj.seek(data_idx)
