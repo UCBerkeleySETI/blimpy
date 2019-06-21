@@ -7,6 +7,7 @@ A python file handler for guppi RAW files from the GBT.
 The guppi raw format consists of a FITS-like header, followed by a block of data,
 and repeated over and over until the end of the file.
 """
+from __future__ import division
 
 import numpy as np
 import os
@@ -285,7 +286,7 @@ class GuppiRaw(object):
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
-        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (float(n_bit) / 8)))
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
 
         d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
 
