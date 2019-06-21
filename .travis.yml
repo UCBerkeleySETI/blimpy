@@ -15,3 +15,5 @@ before_script:
 - true
 script:
 - true
+after_success:
+- coveralls
