@@ -285,7 +285,7 @@ class GuppiRaw(object):
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
-        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (float(n_bit) / 8)))
 
         d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
 
