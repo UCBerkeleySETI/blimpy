@@ -14,6 +14,6 @@ install:
 before_script:
 - true
 script:
-- coverage run --source=blimpy -m py.test; coverage report
+- true
 after_success:
 - coveralls
