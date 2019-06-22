@@ -9,7 +9,8 @@ RUN docker-apt-install \
      python3-slalib \
      python3-pytest-runner \
      python3-pytest \
-     python3-pip
+     python3-pip \
+     python3-coverage
 COPY . /code
 WORKDIR /code
 RUN find blimpy tests -name "*.pyc" -delete
