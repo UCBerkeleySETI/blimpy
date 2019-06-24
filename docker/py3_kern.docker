@@ -15,6 +15,4 @@ WORKDIR /code
 RUN find blimpy tests -name "*.pyc" -delete
 RUN pip3 install ".[full]"
 RUN python3 setup.py test
-RUN pip3 install coverage python-coveralls
-RUN coverage run --source=blimpy -m py.test
 RUN COVERALLS_REPO_TOKEN=ADd0In4xljJZSZC2rZGEFycizAH03tQ7N coveralls
