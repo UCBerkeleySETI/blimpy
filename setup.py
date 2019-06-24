@@ -62,6 +62,6 @@ setup(name='blimpy',
           'Topic :: Scientific/Engineering :: Astronomy',
       ],
       setup_requires=['pytest-runner'],
-      tests_require=['pytest'],
+      tests_require=['pytest', 'python-coveralls'],
       test_suite="tests",
 )
