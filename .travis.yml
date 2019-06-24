@@ -15,6 +15,7 @@ install:
 before_script:
 - true
 script:
-- true
+- pwd
+- ls
 after_success:
 - coveralls
