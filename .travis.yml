@@ -17,5 +17,6 @@ before_script:
 script:
 - pwd
 - ls
+- bash tests/run_tests.sh
 after_success:
 - coveralls
