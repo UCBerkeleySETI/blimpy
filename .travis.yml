@@ -11,12 +11,11 @@ before_install:
 - true
 install:
 - docker build . -t ${DIST} -f docker/${DIST}
-- pip install coveralls
+- pip install coveralls pyyaml
 before_script:
 - true
 script:
 - pwd
-- ls
 - bash tests/run_tests.sh
 after_success:
 - coveralls
