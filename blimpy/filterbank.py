@@ -501,6 +501,9 @@ class Filterbank(object):
             plot_f    = self.freqs[i1:i0 + 1]
             plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
 
+        if plot_data.dtype == 'uint8':
+            plot_data = plot_data.astype('uint16')
+
         return plot_f, plot_data
 
     def _calc_extent(self,plot_f=None,plot_t=None,MJD_time=False,inv_t=False):
