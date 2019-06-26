@@ -62,9 +62,19 @@ The [Guppi Raw format](https://github.com/UCBerkeleySETI/breakthrough/blob/maste
 
 ```python
 from blimpy import GuppiRaw
-r = GuppiRaw('/path/to/guppirawfile.raw')
+gr = GuppiRaw('/path/to/guppirawfile.raw')
 
-header, data = r.read_next_data_block()
+header, data = gr.read_next_data_block()
+```
+
+or
+
+```python
+from blimpy import GuppiRaw
+gr = GuppiRaw('/path/to/guppirawfile.raw')
+
+for header, data_x, data_y in gr.get_data():
+    # process data
 ```
 
 Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.
