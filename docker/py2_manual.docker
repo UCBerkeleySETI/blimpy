@@ -2,7 +2,7 @@ FROM kernsuite/base:3
 RUN docker-apt-install libhdf5-serial-dev gfortran python-pip git pkg-config
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install --only-binary=numpy,scipy numpy scipy
-RUN pip install matplotlib
+RUN pip install matplotlib pytest
 ENV CFLAGS="-I/usr/include/hdf5/serial -L/usr/lib/x86_64-linux-gnu/hdf5/serial"
 RUN ln -s /usr/lib/x86_64-linux-gnu/libhdf5_serial.so /usr/lib/x86_64-linux-gnu/libhdf5.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libhdf5_serial_hl.so /usr/lib/x86_64-linux-gnu/libhdf5_hl.so
