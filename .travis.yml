@@ -19,3 +19,5 @@ script:
 - docker container ls -a
 - docker image ls -a
 - docker run -it ${DIST}:latest "tests/run_tests.sh"
+after_success:
+- coveralls
