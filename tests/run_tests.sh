@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+echo "------ Running Coverage Tests! ------"
 if [[ $DIST == *"py3"* ]]; then
     python3 setup.py install; cd tests
     pip3 install coverage python-coveralls pyyaml
