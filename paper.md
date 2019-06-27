@@ -31,20 +31,13 @@ This includes Sigproc filterbank (.fil) and HDF5 (.h5) files that contain dynami
 and guppi raw (.raw) files that contain voltage-level data. Python methods for data extraction, 
 calibration, and visualization are provided. A suite of command-line utilities are also available.
 
+
+
+List of papers which have used blimpy: 
+`[@Croft:2016]`,  `[@Enriquez:2017]`, `[@Enriquez2018]`, `[@Enriquez:2019]`, `[@Gajjar:2018]`, `[@Price:2019]`
+
+
 # References
-
-`@Croft:2016tm`
-
-`@Enriquez2017`
-
-`@Enriquez2018`
-
-`@Enriquez2019`
-
-`@Gajjar:2018`
-
-`@Price2019`
-
 
 
 
