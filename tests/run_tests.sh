@@ -6,6 +6,8 @@ else
     python setup.py install; cd tests
     pip install coverage coveralls
 fi
+cd ..
 coverage run --source=blimpy -m py.test
 coverage report
+coveralls
 ls -a
