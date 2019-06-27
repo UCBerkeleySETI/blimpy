@@ -16,6 +16,6 @@ before_script:
 - true
 script:
 - pwd
-- docker ps -a
+- docker container ls -a
 after_success:
 - coveralls
