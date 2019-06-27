@@ -18,6 +18,6 @@ script:
 - pwd
 - docker container ls -a
 - docker image ls -a
-- docker run -it py3_kern.docker:latest
+- docker run -it py3_kern.docker:latest "tests/run_tests.sh"
 after_success:
 - coveralls
