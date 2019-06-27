@@ -14,4 +14,5 @@ install:
 before_script:
 - true
 script:
-- true
+- pwd
+- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -it ${DIST}:latest "tests/run_tests.sh"
