@@ -12,10 +12,10 @@ before_install:
 install:
 - docker build . -t ${DIST} -f docker/${DIST}
 - pip install coveralls pyyaml
-- pip install ".[full]"
 before_script:
 - true
 script:
 - pwd
+- docker ps -a
 after_success:
 - coveralls
