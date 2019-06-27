@@ -4,3 +4,4 @@ pip install coverage coveralls
 coverage run --source=blimpy -m py.test
 coverage report
 ls -a
+echo $DIST
