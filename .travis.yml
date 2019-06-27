@@ -18,5 +18,6 @@ script:
 - pwd
 - docker container ls -a
 - docker image ls -a
+- docker run -it ${DIST}:latest "python setup.py install;"
 after_success:
 - coveralls
