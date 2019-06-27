@@ -16,8 +16,6 @@ before_script:
 - true
 script:
 - pwd
-- docker container ls -a
-- docker image ls -a
-- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -it ${DIST}:latest "tests/run_tests.sh"
+- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -it ${DIST}:latest "tests/run_tests.sh"
 after_success:
 - coveralls
