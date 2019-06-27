@@ -10,6 +10,5 @@ apt-get install git
 cd ..
 coverage run --source=blimpy -m py.test
 coverage report
-coveralls
-echo $TRAVIS_JOB_ID
-echo $TRAVIS_BRANCH
+coveralls --nogit
+ls -a
