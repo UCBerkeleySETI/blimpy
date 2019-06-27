@@ -8,6 +8,6 @@ else
 fi
 apt-get install git
 cd ..
-coverage run --source=blimpy -m py.test
+coverage run --source=blimpy -m pytest
 coverage report
 coveralls --nogit
