@@ -11,4 +11,3 @@ cd ..
 coverage run --source=blimpy -m py.test
 coverage report
 coveralls --nogit
-ls -a
