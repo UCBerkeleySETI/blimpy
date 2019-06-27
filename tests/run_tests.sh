@@ -10,4 +10,4 @@ apt-get install git
 cd ..
 coverage run --source=blimpy -m pytest
 coverage report
-coveralls --nogit
+coveralls
