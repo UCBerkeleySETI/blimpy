@@ -6,6 +6,7 @@ else
     python setup.py install; cd tests
     pip install coverage coveralls pyyaml
 fi
+apt-get install git
 cd ..
 coverage run --source=blimpy -m py.test
 coverage report
