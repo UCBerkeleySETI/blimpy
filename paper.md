@@ -3,6 +3,9 @@ title: 'blimpy: Breakthrough Listen I/O Methods for Python'
 tags:
   - Python
   - astronomy
+  - radioastronomy
+  - technosignatures
+  - SETI
 authors:
   - name: Danny C. Price
     orcid: 0000-0003-2783-1608
@@ -29,3 +32,17 @@ and guppi raw (.raw) files that contain voltage-level data. Python methods for d
 calibration, and visualization are provided. A suite of command-line utilities are also available.
 
 # References
+
+@Croft:2016tm
+@Enriquez2017
+@Enriquez2018
+@Enriquez2019
+@Gajjar:2018
+@Price2019
+
+
+
+
+
+
+
