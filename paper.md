@@ -33,6 +33,8 @@ calibration, and visualization are provided. A suite of command-line utilities a
 
 
 
+# Citations
+
 List of papers which have used blimpy: 
 `[@Croft:2016]`,  `[@Enriquez:2017]`, `[@Enriquez2018]`, `[@Enriquez:2019]`, `[@Gajjar:2018]`, `[@Price:2019]`
 
