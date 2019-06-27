@@ -33,12 +33,17 @@ calibration, and visualization are provided. A suite of command-line utilities a
 
 # References
 
-@Croft:2016tm
-@Enriquez2017
-@Enriquez2018
-@Enriquez2019
-@Gajjar:2018
-@Price2019
+`@Croft:2016tm`
+
+`@Enriquez2017`
+
+`@Enriquez2018`
+
+`@Enriquez2019`
+
+`@Gajjar:2018`
+
+`@Price2019`
 
 
 
