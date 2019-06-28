@@ -3,7 +3,7 @@ title: 'blimpy: Breakthrough Listen I/O Methods for Python'
 tags:
   - Python
   - astronomy
-  - radioastronomy
+  - radio astronomy
   - technosignatures
   - SETI
 authors:
@@ -11,7 +11,7 @@ authors:
     orcid: 0000-0003-2783-1608
     affiliation: "1, 2" # (Multiple affiliations must be quoted)
   - name: J. Emilio Enriquez
-    orcid: 0000-0003-2516-3546 
+    orcid: 0000-0003-2516-3546
     affiliation: "1, 3"
 affiliations:
   - name: Department of Astronomy,  University of California Berkeley, Berkeley CA 94720
@@ -25,18 +25,23 @@ bibliography: paper.bib
 ---
 
 # Summary
-The Blimpy--Breakthrough Listen I/O Methods for Python--package provides Python 2.7+/3.6+ utilities 
-for viewing and interacting with the data formats used within the Breakthrough Listen program. 
-This includes Sigproc filterbank (.fil) and HDF5 (.h5) files that contain dynamic spectra (aka 'waterfalls'), 
-and guppi raw (.raw) files that contain voltage-level data. Python methods for data extraction, 
+
+The search for extraterrestrial intelligence (SETI) has historically used radio astronony data as
+the main venue to search for artificial signals of extraterrestrial origin. The Breakthrough Listen program
+is the latest large scale project for the search of Technosignatures,  and thanks to modern telescopes,
+and instrumentation, as well as very significant amounts of dedicated observing time, this program
+has become the largest SETI endeavor in history. This has also resulted in an unprecedented amount of data which is
+becoming available to the public `[@Leboufsky:2019]`.
+
+The ``Blimpy``--Breakthrough Listen I/O Methods for Python--package provides Python 2.7+/3.6+ utilities
+for viewing and interacting with the data formats used within the Breakthrough Listen program.
+This includes Sigproc filterbank (.fil) and HDF5 (.h5) files that contain dynamic spectra (aka 'waterfalls'),
+and guppi raw (.raw) files that contain voltage-level data. Python methods for data extraction,
 calibration, and visualization are provided. A suite of command-line utilities are also available.
 
-
-
-# Citations
-
-List of papers which have used blimpy: 
-`[@Croft:2016]`,  `[@Enriquez:2017]`, `[@Enriquez2018]`, `[@Enriquez:2019]`, `[@Gajjar:2018]`, `[@Price:2019]`
+``Blimpy`` was designed to be used by both radio astromers, students and anyone interested in accessing
+ Breakthrough Listen data. It has already been used in a number of scientific publications
+`[@Croft:2016; @Enriquez:2017; @Enriquez2018; @Enriquez:2019; @Gajjar:2018; @Price:2019]`.
 
 
 # References
