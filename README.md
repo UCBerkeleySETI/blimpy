@@ -11,7 +11,7 @@ by the Breakthrough Listen instruments.
 
 ### Installation
 
-The latest release (1.3.5) can be installed via pip:
+The latest release (1.3.6) can be installed via pip:
 
 ```
 pip install blimpy
