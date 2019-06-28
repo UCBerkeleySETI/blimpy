@@ -15,4 +15,3 @@ COPY . /code
 WORKDIR /code
 RUN find blimpy tests -name "*.pyc" -delete
 RUN pip install ".[full]"
-RUN python setup.py test
