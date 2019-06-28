@@ -26,12 +26,12 @@ bibliography: paper.bib
 
 # Summary
 
-The search for extraterrestrial intelligence (SETI) has historically used radio astronony data as
+The search for extraterrestrial intelligence (SETI) has historically used radio astronomy data as
 the main venue to search for artificial signals of extraterrestrial origin. The Breakthrough Listen program
-is the latest large scale project for the search of Technosignatures,  and thanks to modern telescopes,
-and instrumentation, as well as very significant amounts of dedicated observing time, this program
-has become the largest SETI endeavor in history. This has also resulted in an unprecedented amount of data which is
-becoming available to the public `[@Lebofsky:2019]`.
+is the latest large scale project for the search of technosignatures,  and thanks to modern telescopes
+and instrumentation, as well as significant amounts of dedicated observing time, the program
+has become the largest SETI endeavour in history. This has also resulted in an unprecedented amount of 
+publicly-avaiable data`[@Lebofsky:2019]`.
 
 The ``Blimpy``--Breakthrough Listen I/O Methods for Python--package provides Python 2.7+/3.6+ utilities
 for viewing and interacting with the data formats used within the Breakthrough Listen program.
