@@ -11,3 +11,4 @@ RUN pip install git+https://github.com/kiyo-masui/bitshuffle
 ADD . /code
 WORKDIR /code
 RUN pip install ".[full]"
+RUN python setup.py test
