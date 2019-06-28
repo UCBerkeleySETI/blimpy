@@ -31,7 +31,7 @@ the main venue to search for artificial signals of extraterrestrial origin. The 
 is the latest large scale project for the search of Technosignatures,  and thanks to modern telescopes,
 and instrumentation, as well as very significant amounts of dedicated observing time, this program
 has become the largest SETI endeavor in history. This has also resulted in an unprecedented amount of data which is
-becoming available to the public `[@Leboufsky:2019]`.
+becoming available to the public `[@Lebofsky:2019]`.
 
 The ``Blimpy``--Breakthrough Listen I/O Methods for Python--package provides Python 2.7+/3.6+ utilities
 for viewing and interacting with the data formats used within the Breakthrough Listen program.
@@ -41,7 +41,7 @@ calibration, and visualization are provided. A suite of command-line utilities a
 
 ``Blimpy`` was designed to be used by both radio astromers, students and anyone interested in accessing
  Breakthrough Listen data. It has already been used in a number of scientific publications
-`[@Croft:2016; @Enriquez:2017; @Enriquez2018; @Enriquez:2019; @Gajjar:2018; @Price:2019]`.
+`[@Croft:2016; @Enriquez:2017; @Enriquez2018; @Enriquez:2019; @Gajjar:2018; @Price:2019a;  @Price:2019b]`.
 
 
 # References
