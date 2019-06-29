@@ -10,7 +10,6 @@ fi
 apt-get install git
 ls
 pwd
-sh ./download_data.sh
 cd ..
 coverage run --source=blimpy -m pytest
 coverage report
