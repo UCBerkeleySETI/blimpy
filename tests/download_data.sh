@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+apt-get install curl
 mkdir data
 curl --url "http://blpd0.ssl.berkeley.edu/Voyager_data/Voyager1_block1.npy" -o ./data/Voyager1_block1.npy
 curl --url "http://blpd0.ssl.berkeley.edu/Voyager_data/blc3_2bit_guppi_57396_VOYAGER1_0006.0013.raw" -o ./data/blc3_2bit_guppi_57396_VOYAGER1_0006.0013.raw
