@@ -8,8 +8,6 @@ else
     pip install coverage python-coveralls pyyaml
 fi
 apt-get install git
-ls
-pwd
 cd ..
 coverage run --source=blimpy -m pytest
 coverage report
