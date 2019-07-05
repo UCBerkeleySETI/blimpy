@@ -10,6 +10,7 @@ RUN pip3 install git+https://github.com/h5py/h5py
 RUN pip3 install git+https://github.com/kiyo-masui/bitshuffle
 ADD . /code
 WORKDIR /code
+RUN ls -a
 
 RUN pip3 install ".[full]"
 RUN python3 setup.py test
