@@ -10,9 +10,11 @@ RUN docker-apt-install \
      python3-pytest-runner \
      python3-pytest \
      python3-pip \
-     git
+     git \
+     curl
 COPY . /code
 WORKDIR /code
+RUN cd tests && bash download_data.sh && cd ..
 RUN find blimpy tests -name "*.pyc" -delete
 RUN pip3 install ".[full]"
 RUN python3 setup.py test
