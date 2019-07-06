@@ -1,5 +1,5 @@
 FROM kernsuite/base:3
-RUN docker-apt-install libhdf5-serial-dev gfortran python-pip git pkg-config
+RUN docker-apt-install libhdf5-serial-dev gfortran python-pip git pkg-config curl
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install --only-binary=numpy,scipy numpy scipy
 RUN pip install matplotlib pytest

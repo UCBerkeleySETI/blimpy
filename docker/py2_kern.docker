@@ -10,7 +10,8 @@ RUN docker-apt-install \
      python-pytest-runner \
      python-pytest \
      python-pip \
-     git
+     git \
+     curl
 COPY . /code
 WORKDIR /code
 RUN cd tests && bash download_data.sh && cd ..
