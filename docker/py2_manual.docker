@@ -6,7 +6,7 @@ RUN pip install matplotlib pytest
 ENV CFLAGS="-I/usr/include/hdf5/serial -L/usr/lib/x86_64-linux-gnu/hdf5/serial"
 RUN ln -s /usr/lib/x86_64-linux-gnu/libhdf5_serial.so /usr/lib/x86_64-linux-gnu/libhdf5.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libhdf5_serial_hl.so /usr/lib/x86_64-linux-gnu/libhdf5_hl.so
-RUN pip install git+https://github.com/h5py/h5py
+RUN pip install h5py
 RUN pip install git+https://github.com/kiyo-masui/bitshuffle
 ADD . /code
 WORKDIR /code
