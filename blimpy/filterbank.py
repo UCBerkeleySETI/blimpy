@@ -727,7 +727,7 @@ class Filterbank(object):
             plot_f = plot_f[::-1]
 
         if logged == True:
-            plot_data = db(plot_data)
+            plot_data = db(plot_data, offset=1)
 
         # Make sure waterfall plot is under 4k*4k
         dec_fac_x, dec_fac_y = 1, 1
