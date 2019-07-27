@@ -20,6 +20,7 @@ after_success:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - export REPO=fx196/blimpy
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
-  - docker tag ${DIST}:latest ${DIST}:$TAG
+  - docker tag ${DIST}:latest blimpy_${DIST}:$TAG
+  - docker push $REPO
 notifications:
   webhooks: https://coveralls.io/webhook
