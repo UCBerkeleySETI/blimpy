@@ -17,7 +17,7 @@ script:
 - pwd
 - docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -it ${DIST}:latest "tests/run_tests.sh"
 after_success:
-  - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - export REPO=fx196/blimpy
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
   - docker tag ${DIST}:latest ${DIST}:$TAG
