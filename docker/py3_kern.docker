@@ -18,3 +18,4 @@ RUN cd tests && bash download_data.sh && cd ..
 RUN find blimpy tests -name "*.pyc" -delete
 RUN pip3 install ".[full]"
 RUN python3 setup.py test
+WORKDIR /home
