@@ -1,4 +1,4 @@
-## Using `blimpy` with `docker`
+Â## Using `blimpy` with `docker`
 
 Docker is a "containerized" service that is similar to a virtual machine. It's lighter than a virtual machine since the docker containers run directly on the host OS instead of on a guest OS.
 
@@ -27,6 +27,8 @@ For python3, use:
 For python2, use:
 
 `docker pull fx196/blimpy:py2_kern_stable`
+
+![Command Line After Pull](./demo_pictures/pull_image.png)
 
 ### Run container from image
 
