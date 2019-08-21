@@ -19,7 +19,7 @@ script:
 after_success:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - export REPO=fx196/blimpy
-  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo "latest" ; fi`
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo "stable" ; fi`
   - docker tag ${DIST}:latest $REPO:${DIST%.docker}_$TAG
   - docker push $REPO
 notifications:
