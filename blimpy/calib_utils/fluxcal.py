@@ -312,11 +312,11 @@ def Jy_to_Kelvin(flux,freqs):
     freqs : 1D Array (float)
         Frequencies (in MHz)
     '''
-    beam_FWHM = 755.0/(np.mean(freqs)*10**(-3))*u.arcsec
+    beam_FWHM = 755.0/(np.mean(freqs*10**(-3)))*u.arcsec
     fwhm_to_sig = 1./(8*np.log(2))**0.5
     beam_area = 2*np.pi*(beam_FWHM*fwhm_to_sig)**2
-    freq = np.mean(freqs)*u.MHz
-    equiv = u.brightness_temperature(beam_area,freq)
+    freq_MHz = np.mean(freqs)*u.MHz
+    equiv = u.brightness_temperature(beam_area,freq_MHz)
     T = (flux*u.Jy).to(u.K,equivalencies=equiv)
 
     return T,freqs
