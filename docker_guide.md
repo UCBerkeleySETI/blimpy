@@ -88,3 +88,13 @@ This will create a path `/mounted_data` inside the container, allowing the conta
 Changing the contents of `/mounted_data` in the containter will also change the contents of `/root/data` on the host. If we use `h52fil` inside the mounted directory, we can access the result directly on the host machine without needing to use `docker cp`. This is illustrated below:
 
 ![Calling h52fil inside mounted_data](./demo_pictures/changing_bind_mount_contents.png)
+
+### Running commands outside the container
+
+You can run commands in the container while on the host machine using `docker exec`.
+
+For example, after starting `dratini` and bind mounting `/root/data` to `/mounted_data`, we can look at the files in `/mounted_data` and use `h52fil` on the `.h5` file inside:
+
+![Docker Exec](./demo_pictures/docker_exec.png)
+
+Note that `blimpy` writes the resulting `.fil` file to the working directory, which happens to be `/home` inside the container. We can set the working directory for our command to `/mounted_data` by adding `-w /mounted_data` to our command. The `-w` flag lets us select the working directory.
