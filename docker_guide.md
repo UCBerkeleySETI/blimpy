@@ -87,6 +87,7 @@ This will create a path `/mounted_data` inside the container, allowing the conta
 
 Changing the contents of `/mounted_data` in the containter will also change the contents of `/root/data` on the host. If we use `h52fil` inside the mounted directory, we can access the result directly on the host machine without needing to use `docker cp`. This is illustrated below:
 
+
 ![Calling h52fil inside mounted_data](./demo_pictures/changing_bind_mount_contents.png)
 
 ### Running commands outside the container
