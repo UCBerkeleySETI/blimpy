@@ -48,6 +48,7 @@ Will build a container with the python3 version of blimpy that's named `dratini`
 
 After the above command, your command line should look like this:
 ![Command Line After Run](./demo_pictures/run_container.png)
+
 Starting from the second line in the picture, we are inside the container.
 
 Exit the container after running it with ctrl+P then ctrl+Q.
