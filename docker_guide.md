@@ -1,4 +1,6 @@
-Â## Using `blimpy` with `docker`
+# Using `blimpy` with `docker`
+
+## Quick Start
 
 Docker is a "containerized" service that is similar to a virtual machine. It's lighter than a virtual machine since the docker containers run directly on the host OS instead of on a guest OS.
 
@@ -44,6 +46,10 @@ For example:
 
 Will build a container with the python3 version of blimpy that's named `dratini` and connect to it. Think of this as starting up your remote machine and then `ssh`-ing to it.
 
+After the above command, your command line should look like this:
+![Command Line After Run](./demo_pictures/run_container.png)
+Starting from the second line in the picture, we are inside the container.
+
 Exit the container after running it with ctrl+P then ctrl+Q.
 
 ### TLDR
@@ -54,7 +60,7 @@ Exit the container after running it with ctrl+P then ctrl+Q.
 
 ### After running the container
 
-Continuing to treat our container as a remote machine:
+Continuing with the anology of using a remote machine:
 
 | Remote Machine Command | Docker equivalent | Use | Example |
 | ----- | ----- | ----- | ----- |
@@ -62,3 +68,23 @@ Continuing to treat our container as a remote machine:
 | ssh | docker attach \<name\> | connect to machine | `docker attach dratini`|
 | `scp local_file remote:remote_path` | `docker cp local_file name:container_path`| copy from local to remote | `docker cp test.fil dratini:/data`|
 | `scp remote:remote_file local_path` | `docker cp name:container_path local_path` | copy from remote to local | `docker cp dratini:/data/test.fil .`
+
+## Advanced
+
+### Bind Mounts
+
+Bind mounts are a faster alternative to copying files into the container. This "binds" a directory on the host machine to a directory in the container. Bind mounting a directory allows the container to read and write data inside that directory.
+
+Let's say we have a directory `/root/data` that contains some `h5` files we want to use. We can bind mount it to a container called `dratini` using:
+
+```bash
+docker run --name dratini --mount type=bind,source=/root/data,target=/mounted_data -it fx196/blimpy:py3_kern_stable bash
+```
+
+This will create a path `/mounted_data` inside the container, allowing the container to access the contents of `/root/data` by accessing `/mounted_data`.
+
+![Bind Mounting](./demo_pictures/bind_mount.png)
+
+Changing the contents of `/mounted_data` in the containter will also change the contents of `/root/data` on the host. If we use `h52fil` inside the mounted directory, we can access the result directly on the host machine without needing to use `docker cp`. This is illustrated below:
+
+![Calling h52fil inside mounted_data](./demo_pictures/changing_bind_mount_contents.png)
