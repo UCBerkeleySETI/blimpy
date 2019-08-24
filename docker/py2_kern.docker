@@ -9,9 +9,12 @@ RUN docker-apt-install \
      python-slalib \
      python-pytest-runner \
      python-pytest \
-     python-pip
+     python-pip \
+     git \
+     curl
 COPY . /code
 WORKDIR /code
+RUN cd tests && bash download_data.sh && cd ..
 RUN find blimpy tests -name "*.pyc" -delete
 RUN pip install ".[full]"
 RUN python setup.py test

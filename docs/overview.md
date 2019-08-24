@@ -1,8 +1,7 @@
 [![Build Status](https://travis-ci.org/UCBerkeleySETI/blimpy.svg?branch=master)](https://travis-ci.org/UCBerkeleySETI/blimpy)
-[![Documentation Status](https://readthedocs.org/projects/blimpy/badge/?version=latest)](https://blimpy.readthedocs.io/en/latest/?badge=latest)
-[![Coverage Status](https://coveralls.io/repos/github/FX196/blimpy/badge.svg?branch=master)](https://coveralls.io/github/FX196/blimpy?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/telegraphic/blimpy/badge.svg?branch=master)](https://coveralls.io/github/telegraphic/blimpy?branch=master)
 
-## Breakthrough Listen I/O Methods for Python.
+## Breakthrough Listen I/O Methods for Python
 
 ### Filterbank + Raw file readers
 
@@ -11,7 +10,7 @@ by the Breakthrough Listen instruments.
 
 ### Installation
 
-The latest release (1.3.6) can be installed via pip:
+The latest release (1.3.5) can be installed via pip:
 
 ```
 pip install blimpy
@@ -25,7 +24,7 @@ pip install https://github.com/UCBerkeleySETI/blimpy/tarball/master
 
 You will need numpy, h5py astropy, scipy, and matplotlib as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately.
 
-Note that h5py needs to be installed in this way. 
+Note that h5py needs to be installed in this way.
 
 ```
 $ pip install --no-binary=h5py h5py
@@ -63,22 +62,12 @@ The [Guppi Raw format](https://github.com/UCBerkeleySETI/breakthrough/blob/maste
 
 ```python
 from blimpy import GuppiRaw
-gr = GuppiRaw('/path/to/guppirawfile.raw')
+r = GuppiRaw('/path/to/guppirawfile.raw')
 
-header, data = gr.read_next_data_block()
-```
-
-or
-
-```python
-from blimpy import GuppiRaw
-gr = GuppiRaw('/path/to/guppirawfile.raw')
-
-for header, data_x, data_y in gr.get_data():
-    # process data
+header, data = r.read_next_data_block()
 ```
 
 Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.
 
 
-### This readme is far from complete. If you have any request/questions please lets us know!
+**This readme is far from complete. If you have any request/questions please lets us know!**
