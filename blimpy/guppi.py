@@ -7,6 +7,7 @@ A python file handler for guppi RAW files from the GBT.
 The guppi raw format consists of a FITS-like header, followed by a block of data,
 and repeated over and over until the end of the file.
 """
+from __future__ import division
 
 import numpy as np
 import os
@@ -24,12 +25,13 @@ if 'DISPLAY' in os.environ.keys():
 
     try:
         import matplotlib
-        #matplotlib.use('Qt5Agg')
+        # matplotlib.use('Qt5Agg')
     except ImportError:
         pass
     import pylab as plt
 else:
     import matplotlib
+
     matplotlib.use('Agg')
     import pylab as plt
 
@@ -37,13 +39,14 @@ else:
 # Config values
 ###
 
-MAX_PLT_POINTS      = 65536 * 4              # Max number of points in matplotlib plot
-MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
-MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024     # Max size of data array to load into memory
+MAX_PLT_POINTS = 65536 * 4  # Max number of points in matplotlib plot
+MAX_IMSHOW_POINTS = (8192, 4096)  # Max number of points in imshow plot
+MAX_DATA_ARRAY_SIZE = 1024 * 1024 * 1024  # Max size of data array to load into memory
 
 
 class EndOfFileError(Exception):
     pass
+
 
 class GuppiRaw(object):
     """ Python class for reading Guppi raw files
@@ -56,6 +59,7 @@ class GuppiRaw(object):
                         This saves seeking through the file to check how many
                         integrations there are in the file.
     """
+
     def __init__(self, filename, n_blocks=None):
         self.filename = filename
         if PYTHON3:
@@ -73,11 +77,28 @@ class GuppiRaw(object):
         self._d = np.zeros(1, dtype='complex64')
         self._d_x = np.zeros(1, dtype='int8')
         self._d_y = np.zeros(1, dtype='int8')
+        self.data_gen = None
 
     def __enter__(self):
-         return self
+        """
+        reopen the file each time a `with` block is entered
+        :return:
+        """
+        if PYTHON3:
+            self.file_obj = open(self.filename, 'rb')
+        else:
+            self.file_obj = open(self.filename, 'r')
+        self.filesize = os.path.getsize(self.filename)
+        return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        """
+        closes the file after `with` block has exited
+        :param exception_type:
+        :param exception_value:
+        :param traceback:
+        :return:
+        """
         self.file_obj.close()
 
     def __repr__(self):
@@ -102,11 +123,11 @@ class GuppiRaw(object):
             while keep_reading:
                 if start_idx + 80 > self.filesize:
                     keep_reading = False
-                    raise EndOfFileError
+                    raise EndOfFileError("End Of Data File")
                 line = self.file_obj.read(80)
                 if PYTHON3:
                     line = line.decode("utf-8")
-                #print line
+                # print line
                 if line.startswith('END'):
                     keep_reading = False
                     break
@@ -127,8 +148,8 @@ class GuppiRaw(object):
                 header_dict[key] = val
         except ValueError:
             print("CURRENT LINE: ", line)
-            print("BLOCK START IDX: ",  start_idx)
-            print("FILE SIZE: ",  self.filesize)
+            print("BLOCK START IDX: ", start_idx)
+            print("FILE SIZE: ", self.filesize)
             print("NEXT 512 BYTES: \n")
             print(self.file_obj.read(512))
             raise
@@ -155,12 +176,25 @@ class GuppiRaw(object):
         self.file_obj.seek(0)
         return header_dict
 
-    def read_next_data_block_shape(self):
-        header, data_idx = self.read_header()
+    def read_next_data_block_shape(self, header=None):
+        """
+        Calculate the shape of the next data block.  Use provided header
+        instead of reading header if provided.
+
+        Args:
+            header (dict) - keyword:value pairs of header metadata read from
+            current block
+
+        Returns:
+            dshape (tuple) - shape of the corresponding data block
+        """
+        if(header is None):
+            header, data_idx = self.read_header()
         n_chan = int(header['OBSNCHAN'])
-        n_pol  = int(header['NPOL'])
-        n_samples = int(header['BLOCSIZE']) / n_chan / n_pol
-        
+        n_pol = int(header['NPOL'])
+        n_bit = int(header['NBITS'])
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
+
         is_chanmaj = False
         if 'CHANMAJ' in header.keys():
             if int(header['CHANMAJ']) == 1:
@@ -171,33 +205,112 @@ class GuppiRaw(object):
             dshape = (n_chan, int(n_samples), n_pol)
         return dshape
 
+    def get_data(self):
+        """
+        returns a generator object that reads data a block at a time;
+        the generator prints "File depleted" and returns nothing when all data in the file has been read.
+        :return:
+        """
+        with self as gr:
+            while True:
+                try:
+                    yield gr.generator_read_next_data_block_int8()
+                except EndOfFileError as e:
+                    print("\nFile depleted")
+                    raise StopIteration
+
     def read_next_data_block_int8(self):
+        """
+        Instantiates a new generator as self.data_gen if there wasn't one already
+        Calls next() on the generator once and returns the value
+        Handles generator depletion
+        :return: header, data_x, data_y
+        """
+        if not self.data_gen:
+            self.data_gen = self.get_data()
+        try:
+            header, data_x, data_y = next(self.data_gen)
+        except StopIteration:
+            self.data_gen = None
+            return None, None, None
+        self._d_x, self._d_y = data_x, data_y
+        return header, np.copy(self._d_x), np.copy(self._d_y)
+
+    def generator_read_next_data_block_int8(self):
         """ Read the next block of data and its header
 
         Returns: (header, data)
             header (dict): dictionary of header metadata
             data (np.array): Numpy array of data, converted into to complex64.
+
         """
         header, data_idx = self.read_header()
-        dshape = self.read_next_data_block_shape()
         self.file_obj.seek(data_idx)
-        
+
+        # Read data and reshape
+
+        n_chan = int(header['OBSNCHAN'])
+        n_pol = int(header['NPOL'])
+        n_bit = int(header['NBITS'])
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
+
         d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
 
         # Handle 2-bit and 4-bit data
         if n_bit != 8:
             d = unpack(d, n_bit)
 
-        d = d.reshape(dshape)    # Real, imag
+        d = d.reshape((n_chan, n_samples, n_pol))  # Real, imag
 
         if self._d_x.shape != d[..., 0:2].shape:
-                self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
-                self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
+            self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
+            self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
 
         self._d_x[:] = d[..., 0:2]
         self._d_y[:] = d[..., 2:4]
         return header, self._d_x, self._d_y
-    
+
+    def read_next_data_block_int8_2x(self):
+        """ Read the next block of data and its header
+
+        Returns: (header, data)
+            header (dict): dictionary of header metadata
+            data (np.array): Numpy array of data, converted into to complex64.
+        TODO: Deprecate?
+        """
+        header, data_idx = self.read_header()
+        self.file_obj.seek(data_idx)
+
+        # Read data and reshape
+
+        n_chan = int(header['OBSNCHAN'])
+        n_pol = int(header['NPOL'])
+        n_bit = int(header['NBITS'])
+        n_samples = int(int(header['BLOCSIZE']) / (n_chan * n_pol * (n_bit / 8)))
+
+        d = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
+
+        header, data_idx = self.read_header()
+        self.file_obj.seek(data_idx)
+        d2 = np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8')
+
+        # Handle 2-bit and 4-bit data
+        if n_bit != 8:
+            d = unpack(d, n_bit)
+
+        d = d.reshape((n_chan, n_samples, n_pol))  # Real, imag
+        d2 = d2.reshape((n_chan, n_samples, n_pol))
+        d = np.concatenate((d, d2), axis=1)
+        print(d.shape)
+
+        if self._d_x.shape != (n_chan, n_samples * 2, n_pol):
+            self._d_x = np.ascontiguousarray(np.zeros(d[..., 0:2].shape, dtype='int8'))
+            self._d_y = np.ascontiguousarray(np.zeros(d[..., 2:4].shape, dtype='int8'))
+
+        self._d_x[:] = d[..., 0:2]
+        self._d_y[:] = d[..., 2:4]
+        return header, self._d_x, self._d_y
+
     def read_next_data_block(self):
         """ Read the next block of data and its header
 
@@ -205,18 +318,8 @@ class GuppiRaw(object):
             header (dict): dictionary of header metadata
             data (np.array): Numpy array of data, converted into to complex64.
         """
-        header, data_idx = self.read_header()
-        dshape = self.read_next_data_block_shape()
-        self.file_obj.seek(data_idx)
-        
-        d = np.ascontiguousarray(np.fromfile(self.file_obj, count=header['BLOCSIZE'], dtype='int8'))
-
-        # Handle 2-bit and 4-bit data
-        n_bit = header['NBITS']
-        if n_bit != 8:
-            d = unpack(d, n_bit)
-        
-        d = d.reshape(dshape)    # Real, imag
+        header, dx, dy = self.read_next_data_block_int8()
+        d = np.append(dx, dy, axis=2)
 
         if self._d.shape != d.shape:
             self._d = np.zeros(d.shape, dtype='float32')
@@ -236,7 +339,7 @@ class GuppiRaw(object):
 
         self.file_obj.seek(data_idx0)
         block_size = int(header0['BLOCSIZE'])
-        n_bits     = int(header0['NBITS'])
+        n_bits = int(header0['NBITS'])
         self.file_obj.seek(int(header0['BLOCSIZE']), 1)
         n_blocks = 1
         end_found = False
@@ -249,7 +352,6 @@ class GuppiRaw(object):
             except EndOfFileError:
                 end_found = True
                 break
-
 
         self.file_obj.seek(0)
         return n_blocks
@@ -295,7 +397,7 @@ class GuppiRaw(object):
         if d_xx_fft.shape[0] > MAX_PLT_POINTS:
             dec_fac_x = d_xx_fft.shape[0] / MAX_PLT_POINTS
 
-        d_xx_fft  = rebin(d_xx_fft, dec_fac_x)
+        d_xx_fft = rebin(d_xx_fft, dec_fac_x)
 
         print("Plotting...")
         if plot_db:
@@ -325,37 +427,37 @@ class GuppiRaw(object):
 
         # Using .get() method allows us to fill in default values if not present
         fb_head["source_name"] = gp_head.get("SRC_NAME", "unknown")
-        fb_head["az_start"]    = gp_head.get("AZ", 0)
-        fb_head["za_start"]    = gp_head.get("ZA", 0)
+        fb_head["az_start"] = gp_head.get("AZ", 0)
+        fb_head["za_start"] = gp_head.get("ZA", 0)
 
-        fb_head["src_raj"]     = Angle(str(gp_head.get("RA", 0.0)) + "hr")
-        fb_head["src_dej"]     = Angle(str(gp_head.get("DEC", 0.0)) + "deg")
+        fb_head["src_raj"] = Angle(str(gp_head.get("RA", 0.0)) + "hr")
+        fb_head["src_dej"] = Angle(str(gp_head.get("DEC", 0.0)) + "deg")
         fb_head["rawdatafile"] = self.filename
 
         # hardcoded
-        fb_head["machine_id"]    = 20
-        fb_head["data_type"]     = 1      # blio datatype
-        fb_head["barycentric"]      = 0
+        fb_head["machine_id"] = 20
+        fb_head["data_type"] = 1  # blio datatype
+        fb_head["barycentric"] = 0
         fb_head["pulsarcentric"] = 0
-        fb_head["nbits"]         = 32
+        fb_head["nbits"] = 32
 
         # TODO - compute these values. Need to figure out the correct calcs
-        fb_head["tstart"]        = 0.0
-        fb_head["tsamp"]         = 1.0
-        fb_head["fch1"]          = 0.0
-        fb_head["foff"]          = 187.5 / nchans
+        fb_head["tstart"] = 0.0
+        fb_head["tsamp"] = 1.0
+        fb_head["fch1"] = 0.0
+        fb_head["foff"] = 187.5 / nchans
 
         # Need to be updated based on output specs
-        fb_head["nchans"]        = nchans
-        fb_head["nifs"]          = 1
-        fb_head["nbeams"]        = 1
+        fb_head["nchans"] = nchans
+        fb_head["nifs"] = 1
+        fb_head["nbeams"] = 1
 
         return fb_head
 
 
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on guppi raw files """
-    
+
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description="Command line utility for creating spectra from GuppiRaw files.")

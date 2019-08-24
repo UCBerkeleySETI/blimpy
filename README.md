@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/UCBerkeleySETI/blimpy.svg?branch=master)](https://travis-ci.org/UCBerkeleySETI/blimpy)
-[![Coverage Status](https://coveralls.io/repos/github/telegraphic/blimpy/badge.svg?branch=master)](https://coveralls.io/github/telegraphic/blimpy?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/blimpy/badge/?version=latest)](https://blimpy.readthedocs.io/en/latest/?badge=latest)
+[![Coverage Status](https://coveralls.io/repos/github/FX196/blimpy/badge.svg?branch=master)](https://coveralls.io/github/FX196/blimpy?branch=master)
 
 ## Breakthrough Listen I/O Methods for Python.
 
@@ -10,7 +11,7 @@ by the Breakthrough Listen instruments.
 
 ### Installation
 
-The latest release (1.3.5) can be installed via pip:
+The latest release (1.3.6) can be installed via pip:
 
 ```
 pip install blimpy
@@ -62,9 +63,19 @@ The [Guppi Raw format](https://github.com/UCBerkeleySETI/breakthrough/blob/maste
 
 ```python
 from blimpy import GuppiRaw
-r = GuppiRaw('/path/to/guppirawfile.raw')
+gr = GuppiRaw('/path/to/guppirawfile.raw')
 
-header, data = r.read_next_data_block()
+header, data = gr.read_next_data_block()
+```
+
+or
+
+```python
+from blimpy import GuppiRaw
+gr = GuppiRaw('/path/to/guppirawfile.raw')
+
+for header, data_x, data_y in gr.get_data():
+    # process data
 ```
 
 Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.

@@ -6,16 +6,16 @@ Python class and command line utility for reading and plotting waterfall files.
 
 This provides a class, Waterfall(), which can be used to read a blimpy file (.fil or .h5):
 
-    ````
-    fil = Waterfall('test_psr.fil')
-    print fil.header
-    print fil.data.shape
-    print fil.freqs
+
+    fil = Waterfall("test_psr.fil")
+    print(fil.header)
+    print(fil.data.shape)
+    print(fil.freqs)
 
     plt.figure()
     fil.plot_spectrum(t=0)
     plt.show()
-    ````
+
 
 TODO: check the file seek logic works correctly for multiple IFs
 
@@ -84,7 +84,8 @@ class Waterfall(object):
     def __repr__(self):
         return "Waterfall data: %s" % self.filename
 
-    def __init__(self, filename=None, f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=1., header_dict=None, data_array=None):
+    def __init__(self, filename=None, f_start=None, f_stop=None, t_start=None, t_stop=None,
+                 load_data=True, max_load=1., header_dict=None, data_array=None):
         """ Class for loading and plotting blimpy data.
 
         This class parses the blimpy file and stores the header and data
@@ -249,7 +250,11 @@ class Waterfall(object):
 
     def calc_n_coarse_chan(self, chan_bw=None):
         """ This makes an attempt to calculate the number of coarse channels in a given freq selection.
-            It assumes for now that a single coarse channel is 2.9296875 MHz
+
+            Note:
+                This is unlikely to work on non-Breakthrough Listen data, as a-priori knowledge of
+                the digitizer system is required.
+
         """
 
         n_coarse_chan = self.container.calc_n_coarse_chan(chan_bw)
