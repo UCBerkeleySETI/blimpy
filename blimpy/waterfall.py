@@ -22,10 +22,9 @@ TODO: check the file seek logic works correctly for multiple IFs
 """
 
 import sys
-import time
 import os
 import numpy as np
-import types
+import six
 
 from blimpy.io import file_wrapper as fw
 from .plotting import *
@@ -143,12 +142,12 @@ class Waterfall(object):
             self.filename = b''
 
         # Attach methods
-        self.plot_spectrum         = types.MethodType(plot_spectrum, self, Waterfall)
-        self.plot_waterfall        = types.MethodType(plot_waterfall, self, Waterfall)
-        self.plot_kurtosis         = types.MethodType(plot_kurtosis, self, Waterfall)
-        self.plot_time_series      = types.MethodType(plot_time_series, self, Waterfall)
-        self.plot_all              = types.MethodType(plot_all, self, Waterfall)
-        self.plot_spectrum_min_max = types.MethodType(plot_spectrum_min_max, self, Waterfall)
+        self.plot_spectrum         = six.create_bound_method(plot_spectrum, self)
+        self.plot_waterfall        = six.create_bound_method(plot_waterfall, self)
+        self.plot_kurtosis         = six.create_bound_method(plot_kurtosis, self)
+        self.plot_time_series      = six.create_bound_method(plot_time_series, self)
+        self.plot_all              = six.create_bound_method(plot_all, self)
+        self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
 
     def __load_data(self):
         """ Helper for loading data form a container. Should not be called manually. """
