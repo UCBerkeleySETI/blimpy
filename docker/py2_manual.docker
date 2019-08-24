@@ -1,5 +1,5 @@
 FROM kernsuite/base:3
-RUN docker-apt-install libhdf5-serial-dev gfortran python-pip git pkg-config
+RUN docker-apt-install libhdf5-serial-dev gfortran python-pip git pkg-config curl
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install --only-binary=numpy,scipy numpy scipy
 RUN pip install matplotlib pytest
@@ -10,5 +10,6 @@ RUN pip install git+https://github.com/h5py/h5py
 RUN pip install git+https://github.com/kiyo-masui/bitshuffle
 ADD . /code
 WORKDIR /code
+RUN cd tests && bash download_data.sh && cd ..
 RUN pip install ".[full]"
 RUN python setup.py test
