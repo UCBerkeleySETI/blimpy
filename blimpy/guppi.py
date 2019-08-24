@@ -7,6 +7,7 @@ A python file handler for guppi RAW files from the GBT.
 The guppi raw format consists of a FITS-like header, followed by a block of data,
 and repeated over and over until the end of the file.
 """
+from __future__ import division
 
 import numpy as np
 import os
