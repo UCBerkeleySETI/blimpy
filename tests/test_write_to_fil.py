@@ -1,6 +1,6 @@
 import blimpy as bl
 
-from data import voyager_h5
+from tests.data import voyager_h5
 
 def test_write_to_fil():
     """ Load Voyager dataset and test plotting """

@@ -27,7 +27,7 @@ def plot_spectrum(wf, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=N
     if isinstance(t, int):
         print("extracting integration %i..." % t)
         plot_data = plot_data[t]
-    elif t == b'all':
+    elif t == 'all':
         print("averaging along time axis...")
         # Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
         if len(plot_data.shape) > 1:
