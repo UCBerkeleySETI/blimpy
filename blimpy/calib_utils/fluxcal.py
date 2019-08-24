@@ -2,6 +2,8 @@ from blimpy import Waterfall
 import numpy as np
 import pylab as plt
 from scipy.integrate import trapz
+from astropy import units as u
+import matplotlib.pyplot as plt
 
 def foldcal(data,tsamp, diode_p=0.04,numsamps=1000,switch=False,inds=False):
     '''
@@ -146,7 +148,7 @@ def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
     calflux : float
         Known flux of calibrator source at a particular frequency
     calfreq : float
-        Frequency where calibrator source has flux calflux (see above)
+        Frequency where calibrator source has flux calflux (MHz) (see above)
     spec_in : float
         Known power-law spectral index of calibrator source. Use convention flux(frequency) = constant * frequency^(spec_in)
     centerfreqs : 1D Array (float)
@@ -250,7 +252,74 @@ def get_Tsys(calON_obs,calOFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs
     ----------
     (See diode_spec())
     '''
-    return diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=False,oneflux=False,**kwargs)[1]
+    obs = Waterfall(calON_obs,max_load=150)
+    ncoarse = obs.calc_n_coarse_chan()
+    chan_per_coarse = obs.header['nchans']/ncoarse
+    freqs = obs.populate_freqs()
+    cfreqs = get_centerfreqs(freqs,chan_per_coarse)
+    S_sys = diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=False,oneflux=False,**kwargs)[1]
+
+    T_sys = Jy_to_Kelvin(S_sys,cfreqs)
+    return T_sys,cfreqs
+
+def get_Tsys_nodiode(calON_obs_name,calOFF_obs_name,calflux,calfreq,spec_in,plot=False,**kwargs):
+    '''
+    Calculates system temperature from two flux calibrator scans taken without noise diode flickering.
+    CURRENTLY ONLY IMPLEMENTED FOR STOKES I DATA.
+
+    Parameters
+    ----------
+    calON_obs_name : str
+        Path to filterbank file for scan ON calibrator target
+    calOFF_obs_name : str
+        Path to filterbank file for scan OFF calibrator
+    calflux : float
+        Flux in Jy of the calibrator source
+    calfreq : float or int
+        Frequency at which calflux was taken (MHz)
+    spec_in : float
+        Spectral index of this calibrator
+    '''
+    calON_obs = Waterfall(calON_obs_name,max_load=150)
+    calOFF_obs = Waterfall(calOFF_obs_name,max_load=150)
+    ncoarse = calON_obs.calc_n_coarse_chan()
+    chan_per_coarse = calON_obs.header['nchans']/ncoarse
+
+    ONobs_spec = np.squeeze(np.mean(calON_obs.data,axis=0))
+    OFFobs_spec = np.squeeze(np.mean(calOFF_obs.data,axis=0))
+    freqs = calON_obs.populate_freqs()
+
+    ON_coarse_spec = integrate_chans(ONobs_spec,freqs,chan_per_coarse)
+    OFF_coarse_spec = integrate_chans(OFFobs_spec,freqs,chan_per_coarse)
+    cfreqs = get_centerfreqs(freqs,chan_per_coarse)
+    cal_fluxes = get_calfluxes(calflux,calfreq,spec_in,cfreqs,oneflux=False)
+
+    S_sys = (OFF_coarse_spec)/(ON_coarse_spec-OFF_coarse_spec)*cal_fluxes
+
+    #Convert to Kelvins
+    T_sys,cfreqs = Jy_to_Kelvin(S_sys,cfreqs)
+    return T_sys,cfreqs
+
+
+def Jy_to_Kelvin(flux,freqs):
+    '''
+    Convert flux spectrum in Jy/beam to temperature units. Frequency inputs in MHz.
+
+    Parameters
+    ----------
+    flux : 1D Array (float)
+        Spectrum over frequency band in Jy
+    freqs : 1D Array (float)
+        Frequencies (in MHz)
+    '''
+    beam_FWHM = 755.0/(np.mean(freqs*10**(-3)))*u.arcsec
+    fwhm_to_sig = 1./(8*np.log(2))**0.5
+    beam_area = 2*np.pi*(beam_FWHM*fwhm_to_sig)**2
+    freq_MHz = np.mean(freqs)*u.MHz
+    equiv = u.brightness_temperature(beam_area,freq_MHz)
+    T = (flux*u.Jy).to(u.K,equivalencies=equiv)
+
+    return T,freqs
 
 def calibrate_fluxes(main_obs_name,dio_name,dspec,Tsys,fullstokes=False,**kwargs):
     '''
