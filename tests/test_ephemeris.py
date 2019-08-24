@@ -3,7 +3,7 @@ import numpy as np
 from pprint import pprint
 import pylab as plt
 
-from data import voyager_fil, voyager_h5
+from tests.data import voyager_fil, voyager_h5
 
 from blimpy.ephemeris import compute_lst, compute_lsrk
 

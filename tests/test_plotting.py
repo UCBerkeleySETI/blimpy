@@ -3,7 +3,7 @@ import numpy as np
 from pprint import pprint
 import pylab as plt
 
-from data import voyager_fil, voyager_h5
+from tests.data import voyager_fil, voyager_h5
 from blimpy.plotting import plot_waterfall, plot_spectrum, plot_spectrum_min_max, \
     plot_kurtosis, plot_time_series, plot_all
 

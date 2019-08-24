@@ -1,7 +1,7 @@
 from blimpy import dice
 import pytest
 
-from data import voyager_h5
+from tests.data import voyager_h5
 
 def test_dice():
     with pytest.raises(SystemExit):

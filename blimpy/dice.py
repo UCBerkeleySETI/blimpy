@@ -97,16 +97,17 @@ def cmd_tool(args=None):
         logger.error('Please give either start and/or end frequencies. Otherwise use fil2h5 or h52fil functions.')
         sys.exit()
 
+    #Read start frequency and bandwidth from data set
+    file_big = Waterfall(args.in_fname, max_load = args.max_load)
+    f_min_file = file_big.header[b'fch1']
+    f_max_file = file_big.header[b'fch1'] + file_big.header[b'nchans']*file_big.header[b'foff']
+
     if args.f_start == None:
         logger.warning('Lower frequency not given, setting to ' + str(f_min_file) + ' MHz to match file.')
 
     if args.f_stop == None:
         logger.warning('Higher frequency not given, setting to ' + str(f_max_file) + ' MHz to match file.')
 
-    #Read start frequency and bandwidth from data set
-    file_big = Waterfall(args.in_fname, max_load = args.max_load)
-    f_min_file = file_big.header['fch1']
-    f_max_file = file_big.header['fch1'] + file_big.header['nchans']*file_big.header['foff']
 
     if f_max_file < f_min_file:
             f_max_file,f_min_file = f_min_file,f_max_file

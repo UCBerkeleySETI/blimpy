@@ -1,4 +1,4 @@
-from data import voyager_h5
+from tests.data import voyager_h5
 import blimpy as bl
 import os
 

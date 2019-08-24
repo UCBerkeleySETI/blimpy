@@ -395,7 +395,7 @@ def cmd_tool(args=None):
 
     # And if we want to plot data, then plot data.
     if not info_only:
-        from plotting.config import plt
+        from .plotting.config import plt
 
         print('')
 
