@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/UCBerkeleySETI/blimpy.svg?branch=master)](https://travis-ci.org/UCBerkeleySETI/blimpy)
 [![Documentation Status](https://readthedocs.org/projects/blimpy/badge/?version=latest)](https://blimpy.readthedocs.io/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/FX196/blimpy/badge.svg?branch=master)](https://coveralls.io/github/FX196/blimpy?branch=master)
+ [![JOSS status](http://joss.theoj.org/papers/e58ef21f0a924041bf9438fd75f8aed0/status.svg)](http://joss.theoj.org/papers/e58ef21f0a924041bf9438fd75f8aed0)
 
 ## Breakthrough Listen I/O Methods for Python.
 
@@ -17,19 +18,27 @@ The latest release (1.3.6) can be installed via pip:
 pip install blimpy
 ```
 
-Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `python setup.py install` (with sudo if required) or by using the following terminal command:
+Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `python setup.py install` or `pip install .` (with sudo if required), or by using the following terminal command:
 
 ```
 pip install https://github.com/UCBerkeleySETI/blimpy/tarball/master
 ```
 
-You will need numpy, h5py astropy, scipy, and matplotlib as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately.
+To install everything required to run the unit tests, run:
 
-Note that h5py needs to be installed in this way. 
+```
+pip install -e .[full]
+```
+
+You will need `numpy`, `h5py`, `astropy`, `scipy`, and `matplotlib` as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately. To interact with files compressed with [bitshuffle](https://github.com/kiyo-masui/bitshuffle), you'll need the `bitshuffle` package too.
+
+Note that h5py generally needs to be installed in this way:
 
 ```
 $ pip install --no-binary=h5py h5py
 ```
+
+
 
 ### Command line utilities
 
