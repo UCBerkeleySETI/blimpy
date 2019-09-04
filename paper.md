@@ -14,7 +14,7 @@ authors:
     orcid: 0000-0003-2516-3546
     affiliation: "+, 1, 3"
   - name: Yuhong Chen
-    affiliation: 2    
+     affiliation: 1    
   - name: Mark Siebert
     affiliation: 2    
 affiliations:
