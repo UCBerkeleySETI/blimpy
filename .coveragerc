@@ -1,0 +1,2 @@
+[run]
+omit = *calib_utils*, *deprecated*

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 try:
     from . import waterfall
     from .waterfall import Waterfall
-    from .filterbank import Filterbank, read_header, fix_header
+    from blimpy.deprecated.filterbank import Filterbank, read_header, fix_header
     from .guppi import GuppiRaw
     from . import utils
 except ImportError:
@@ -13,12 +13,12 @@ except ImportError:
 try:
     from . import fil2h5
     from . import h52fil
-    from . import gup2hdf
+    from blimpy.deprecated import gup2hdf
 except:
     print("Warning: Cannot import HDF5 utilities")
 
 try:
-    from . import file_wrapper
+    from blimpy.io import file_wrapper
     from . import match_fils
 except:
     pass

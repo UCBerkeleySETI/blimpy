@@ -21,13 +21,16 @@ TODO: check the file seek logic works correctly for multiple IFs
 
 """
 
-import os
 import sys
-import time
+import os
+import numpy as np
+import six
 
-from blimpy.filterbank import Filterbank
-from blimpy import file_wrapper as fw
-from blimpy.sigproc import *
+from blimpy.io import file_wrapper as fw
+from .plotting import *
+
+from astropy.time import Time
+from astropy import units as u
 
 
 #------
@@ -67,34 +70,18 @@ except ImportError:
 
 #import pdb #pdb.set_trace()
 
-# Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
-if 'DISPLAY' in os.environ.keys():
-    import pylab as plt
-else:
-    import matplotlib
-    matplotlib.use('Agg')
-    import pylab as plt
-
-
-
-###
-# Config values
-###
-
-MAX_PLT_POINTS      = 65536                  # Max number of points in matplotlib plot
-MAX_IMSHOW_POINTS   = (8192, 4096)           # Max number of points in imshow plot
-MAX_HEADER_BLOCKS   = 100                    # Max size of header (in 512-byte blocks)
-MAX_BLOB_MB         = 1024                   # Max size of blob in MB
-
-
+MAX_BLOB_MB = 1024
 
 
 ###
 # Main blimpy class
 ###
 
-class Waterfall(Filterbank):
+class Waterfall(object):
     """ Class for loading and writing blimpy data (.fil, .h5) """
+
+    def __repr__(self):
+        return "Waterfall data: %s" % self.filename
 
     def __init__(self, filename=None, f_start=None, f_stop=None, t_start=None, t_stop=None,
                  load_data=True, max_load=1., header_dict=None, data_array=None):
@@ -140,6 +127,8 @@ class Waterfall(Filterbank):
             self.beam_axis = 1  # Place holder
             self.stokes_axis = 4  # Place holder
 
+            self.logger = logger
+
             self.__load_data()
 
         elif header_dict is not None and data_array is not None:
@@ -151,6 +140,14 @@ class Waterfall(Filterbank):
 
         else:
             self.filename = b''
+
+        # Attach methods
+        self.plot_spectrum         = six.create_bound_method(plot_spectrum, self)
+        self.plot_waterfall        = six.create_bound_method(plot_waterfall, self)
+        self.plot_kurtosis         = six.create_bound_method(plot_kurtosis, self)
+        self.plot_time_series      = six.create_bound_method(plot_time_series, self)
+        self.plot_all              = six.create_bound_method(plot_all, self)
+        self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
 
     def __load_data(self):
         """ Helper for loading data form a container. Should not be called manually. """
@@ -165,7 +162,7 @@ class Waterfall(Filterbank):
 
         self.__load_data()
 
-    def __update_header(self):
+    def _update_header(self):
         """ Updates the header information from the original file to the selection.
         """
 
@@ -181,18 +178,6 @@ class Waterfall(Filterbank):
         #Updating time stamp for first time bin from selection
         self.header[b'tstart'] = self.container.populate_timestamps(update_header=True)
 
-    def populate_freqs(self):
-        """
-        """
-
-        return self.container.populate_freqs()
-
-    def populate_timestamps(self):
-        """
-        """
-
-        return self.container.populate_timestamps()
-
     def info(self):
         """ Print header information and other derived information. """
 
@@ -203,6 +188,11 @@ class Waterfall(Filterbank):
                 val = val.to_string(unit=u.hour, sep=':')
             if key == 'src_dej':
                 val = val.to_string(unit=u.deg, sep=':')
+            if key in ('foff', 'fch1'):
+                val *= u.MHz
+            if key == b'tstart':
+                print("%16s : %32s" % ("tstart (ISOT)", Time(val, format='mjd').isot))
+                key = "tstart (MJD)"
             print("%16s : %32s" % (key, val))
 
         print("\n%16s : %32s" % ("Num ints in file", self.n_ints_in_file))
@@ -212,247 +202,8 @@ class Waterfall(Filterbank):
         print("%16s : %32s" % ("Minimum freq (MHz)", self.container.f_start))
         print("%16s : %32s" % ("Maximum freq (MHz)", self.container.f_stop))
 
-    def write_to_fil(self, filename_out, *args, **kwargs):
-        """ Write data to .fil file.
-            It check the file size then decides how to write the file.
 
-        Args:
-            filename_out (str): Name of output file
-        """
-
-        #For timing how long it takes to write a file.
-        t0 = time.time()
-
-        #Update header
-        self.__update_header()
-
-        if self.container.isheavy():
-            self.__write_to_fil_heavy(filename_out)
-        else:
-            self.__write_to_fil_light(filename_out)
-
-        t1 = time.time()
-        logger.info('Conversion time: %2.2fsec' % (t1- t0))
-
-    def __write_to_fil_heavy(self, filename_out, *args, **kwargs):
-        """ Write data to .fil file.
-
-        Args:
-            filename_out (str): Name of output file
-        """
-
-        #Note that a chunk is not a blob!!
-        chunk_dim = self.__get_chunk_dimensions()
-        blob_dim = self.__get_blob_dimensions(chunk_dim)
-        n_blobs = self.container.calc_n_blobs(blob_dim)
-
-        #Write header of .fil file
-        n_bytes  = self.header[b'nbits'] / 8
-        with open(filename_out, "wb") as fileh:
-            fileh.write(generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
-
-        logger.info('Using %i n_blobs to write the data.'% n_blobs)
-        for ii in range(0, n_blobs):
-            logger.info('Reading %i of %i' % (ii + 1, n_blobs))
-
-            bob = self.container.read_blob(blob_dim,n_blob=ii)
-
-            #Write data of .fil file.
-            with open(filename_out, "a") as fileh:
-                j = bob
-                if n_bytes == 4:
-                    np.float32(j.ravel()).tofile(fileh)
-                elif n_bytes == 2:
-                    np.int16(j.ravel()).tofile(fileh)
-                elif n_bytes == 1:
-                    np.int8(j.ravel()).tofile(fileh)
-
-    def __write_to_fil_light(self, filename_out, *args, **kwargs):
-        """ Write data to .fil file.
-
-        Args:
-            filename_out (str): Name of output file
-        """
-
-        n_bytes  = self.header[b'nbits'] / 8
-        with open(filename_out, "wb") as fileh:
-            fileh.write(generate_sigproc_header(self)) #generate_sigproc_header comes from sigproc.py
-            j = self.data
-            if n_bytes == 4:
-                np.float32(j.ravel()).tofile(fileh)
-            elif n_bytes == 2:
-                np.int16(j.ravel()).tofile(fileh)
-            elif n_bytes == 1:
-                np.int8(j.ravel()).tofile(fileh)
-
-    def write_to_hdf5(self, filename_out, *args, **kwargs):
-        """ Write data to HDF5 file.
-            It check the file size then decides how to write the file.
-
-        Args:
-            filename_out (str): Name of output file
-        """
-
-        #For timing how long it takes to write a file.
-        t0 = time.time()
-
-        #Update header
-        self.__update_header()
-
-        if self.container.isheavy():
-            self.__write_to_hdf5_heavy(filename_out)
-        else:
-            self.__write_to_hdf5_light(filename_out)
-
-        t1 = time.time()
-        logger.info('Conversion time: %2.2fsec' % (t1- t0))
-
-    def __write_to_hdf5_heavy(self, filename_out, *args, **kwargs):
-        """ Write data to HDF5 file.
-
-        Args:
-            filename_out (str): Name of output file
-        """
-
-        block_size = 0
-
-        #Note that a chunk is not a blob!!
-        chunk_dim = self.__get_chunk_dimensions()
-        blob_dim = self.__get_blob_dimensions(chunk_dim)
-        n_blobs = self.container.calc_n_blobs(blob_dim)
-
-        with h5py.File(filename_out, 'w') as h5:
-
-            h5.attrs[b'CLASS'] = b'FILTERBANK'
-            h5.attrs[b'VERSION'] = b'1.0'
-
-            if HAS_BITSHUFFLE:
-                bs_compression = bitshuffle.h5.H5FILTER
-                bs_compression_opts = (block_size, bitshuffle.h5.H5_COMPRESS_LZ4)
-            else:
-                bs_compression = None
-                bs_compression_opts = None
-                logger.warning("Warning: bitshuffle not found. No compression applied.")
-
-            dset = h5.create_dataset('data',
-                            shape=self.selection_shape,
-                            chunks=chunk_dim,
-                            compression=bs_compression,
-                            compression_opts=bs_compression_opts,
-                            dtype=self.data.dtype)
-
-            dset_mask = h5.create_dataset('mask',
-                            shape=self.selection_shape,
-                            chunks=chunk_dim,
-                            compression=bs_compression,
-                            compression_opts=bs_compression_opts,
-                            dtype='uint8')
-
-            dset.dims[0].label = b"frequency"
-            dset.dims[1].label = b"feed_id"
-            dset.dims[2].label = b"time"
-
-            dset_mask.dims[0].label = b"frequency"
-            dset_mask.dims[1].label = b"feed_id"
-            dset_mask.dims[2].label = b"time"
-
-            # Copy over header information as attributes
-            for key, value in self.header.items():
-                dset.attrs[key] = value
-
-            if blob_dim[self.freq_axis] < self.selection_shape[self.freq_axis]:
-
-                logger.info('Using %i n_blobs to write the data.'% n_blobs)
-                for ii in range(0, n_blobs):
-                    logger.info('Reading %i of %i' % (ii + 1, n_blobs))
-
-                    bob = self.container.read_blob(blob_dim,n_blob=ii)
-
-                    #-----
-                    #Using channels instead of frequency.
-                    c_start = self.container.chan_start_idx + ii*blob_dim[self.freq_axis]
-                    t_start = self.container.t_start + (c_start/self.selection_shape[self.freq_axis])*blob_dim[self.time_axis]
-                    t_stop = t_start + blob_dim[self.time_axis]
-
-                    # Reverse array if frequency axis is flipped
-#                     if self.header['foff'] < 0:
-#                         c_stop = self.selection_shape[self.freq_axis] - (c_start)%self.selection_shape[self.freq_axis]
-#                         c_start = c_stop - blob_dim[self.freq_axis]
-#                     else:
-                    c_start = (c_start)%self.selection_shape[self.freq_axis]
-                    c_stop = c_start + blob_dim[self.freq_axis]
-                    #-----
-
-                    logger.debug(t_start,t_stop,c_start,c_stop)
-
-                    dset[t_start:t_stop,0,c_start:c_stop] = bob[:]
-
-            else:
-
-                logger.info('Using %i n_blobs to write the data.'% n_blobs)
-                for ii in range(0, n_blobs):
-                    logger.info('Reading %i of %i' % (ii + 1, n_blobs))
-
-                    bob = self.container.read_blob(blob_dim,n_blob=ii)
-                    t_start = self.container.t_start + ii*blob_dim[self.time_axis]
-
-                    #This prevents issues when the last blob is smaller than the others in time
-                    if (ii+1)*blob_dim[self.time_axis] > self.n_ints_in_file:
-                        t_stop = self.n_ints_in_file
-                    else:
-                        t_stop = (ii+1)*blob_dim[self.time_axis]
-
-                    dset[t_start:t_stop] = bob[:]
-
-    def __write_to_hdf5_light(self, filename_out, *args, **kwargs):
-        """ Write data to HDF5 file in one go.
-
-        Args:
-            filename_out (str): Name of output file
-        """
-
-        block_size = 0
-
-        with h5py.File(filename_out, 'w') as h5:
-
-            h5.attrs[b'CLASS']   = b'FILTERBANK'
-            h5.attrs[b'VERSION'] = b'1.0'
-
-            if HAS_BITSHUFFLE:
-                bs_compression = bitshuffle.h5.H5FILTER
-                bs_compression_opts = (block_size, bitshuffle.h5.H5_COMPRESS_LZ4)
-            else:
-                bs_compression = None
-                bs_compression_opts = None
-                logger.warning("Warning: bitshuffle not found. No compression applied.")
-
-
-            dset = h5.create_dataset('data',
-                        data=self.data,
-#                          compression='lzf')
-                        compression=bs_compression,
-                        compression_opts=bs_compression_opts)
-
-            dset_mask = h5.create_dataset('mask',
-                        shape=self.file_shape,
-#                                 compression='lzf',
-                        compression=bs_compression,
-                        compression_opts=bs_compression_opts,
-                        dtype='uint8')
-
-            dset.dims[0].label = b"frequency"
-            dset.dims[1].label = b"feed_id"
-            dset.dims[2].label = b"time"
-
-            dset_mask.dims[0].label = b"frequency"
-            dset_mask.dims[1].label = b"feed_id"
-            dset_mask.dims[2].label = b"time"
-
-            # Copy over header information as attributes
-            for key, value in self.header.items():
-                dset.attrs[key] = value
-
-    def __get_blob_dimensions(self, chunk_dim):
+    def _get_blob_dimensions(self, chunk_dim):
         """ Sets the blob dimmentions, trying to read around 1024 MiB at a time.
             This is assuming a chunk is about 1 MiB.
         """
@@ -471,7 +222,7 @@ class Waterfall(Filterbank):
 
         return blob_dim
 
-    def __get_chunk_dimensions(self):
+    def _get_chunk_dimensions(self):
         """ Sets the chunking dimmentions depending on the file type.
         """
 
@@ -509,8 +260,6 @@ class Waterfall(Filterbank):
 
         return n_coarse_chan
 
-
-
     def grab_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None, if_id=0):
         """ Extract a portion of data by frequency range.
 
@@ -523,8 +272,8 @@ class Waterfall(Filterbank):
             (freqs, data) (np.arrays): frequency axis in MHz and data subset
         """
 
-        self.freqs = self.populate_freqs()
-        self.timestamps = self.populate_timestamps()
+        self.freqs = self.container.populate_freqs()
+        self.timestamps = self.container.populate_timestamps()
 
         if f_start is None:
             f_start = self.freqs[0]
@@ -543,8 +292,51 @@ class Waterfall(Filterbank):
 
         return plot_f, plot_data
 
+    def write_to_fil(self, filename_out, *args, **kwargs):
+        from blimpy.io import write_to_fil
+        write_to_fil(self, filename_out)
+
+    def write_to_hdf5(self, filename_out, *args, **kwargs):
+        from blimpy.io import write_to_hdf5
+        write_to_hdf5(self, filename_out, *args, **kwargs)
+
+    def blank_dc(self, n_coarse_chan):
+        """ Blank DC bins in coarse channels.
+
+        Note: currently only works if entire file is read
+        """
+
+        if n_coarse_chan < 1:
+            logger.warning('Coarse channel number < 1, unable to blank DC bin.')
+            return None
+
+        if not n_coarse_chan % int(n_coarse_chan) == 0:
+            logger.warning('Selection does not contain an integer number of coarse channels, unable to blank DC bin.')
+            return None
+
+        n_coarse_chan = int(n_coarse_chan)
+
+        n_chan = self.data.shape[-1]
+        n_chan_per_coarse = int(n_chan / n_coarse_chan)
+
+        mid_chan = int(n_chan_per_coarse / 2)
+
+        for ii in range(n_coarse_chan):
+            ss = ii*n_chan_per_coarse
+            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
+
+    def calibrate_band_pass_N1(self):
+        """ One way to calibrate the band pass is to take the median value
+            for every frequency fine channel, and divide by it.
+        """
+
+        band_pass = np.median(self.data.squeeze(),axis=0)
+        self.data = self.data/band_pass
+
+
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on blimpy files """
+
 
     from argparse import ArgumentParser
 
@@ -579,7 +371,7 @@ def cmd_tool(args=None):
     parser.add_argument('-F', action='store_true', default=False, dest='to_fil',
                        help='Write file to .fil format.')
     parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
-                        help='Filename output (if not probided, the name will be the same but with apropiate extension).')
+                        help='Filename output (if not provided, the name will be the same but with appropriate extension).')
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                         help='Maximum data limit to load. Default:1GB')
 
@@ -602,8 +394,9 @@ def cmd_tool(args=None):
         info_only = True
 
     # And if we want to plot data, then plot data.
-
     if not info_only:
+        from .plotting.config import plt
+
         print('')
 
         if parse_args.blank_dc:
@@ -644,26 +437,24 @@ def cmd_tool(args=None):
 
     else:
 
+        fileroot = os.path.splitext(filename)[0]
+
         if parse_args.to_hdf5 and parse_args.to_fil:
             raise Warning('Either provide to_hdf5 or to_fil, but not both.')
 
-        if parse_args.to_hdf5:
+        elif parse_args.to_hdf5:
             if not filename_out:
-                filename_out = filename.replace('.fil','.h5')
-            elif '.h5' not in filename_out:
-                filename_out = filename_out.replace('.fil','')+'.h5'
+                filename_out = fileroot + '.h5'
 
-            logger.info('Writing file : %s'%(filename_out))
+            logger.info('Writing file : %s'% filename_out)
             fil.write_to_hdf5(filename_out)
             logger.info('File written.')
 
-        if parse_args.to_fil:
+        elif parse_args.to_fil:
             if not filename_out:
-                filename_out = filename.replace('.h5','.fil')
-            elif '.fil' not in filename_out:
-                filename_out = filename_out.replace('.h5','')+'.fil'
+                filename_out = fileroot + '.fil'
 
-            logger.info('Writing file : %s'%(filename_out))
+            logger.info('Writing file : %s'% filename_out)
             fil.write_to_fil(filename_out)
             logger.info('File written.')
 

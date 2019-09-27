@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '1.3.6'
+__version__ = '1.4.0'
 
 # create entry points
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
@@ -28,6 +28,7 @@ install_requires = [
         'cython',
         'h5py',
         'scipy',
+        'six'
 ]
 
 extras_require = {
@@ -46,7 +47,7 @@ setup(name='blimpy',
       install_requires=install_requires,
       extras_require=extras_require,
       url='https://github.com/ucberkeleyseti/blimpy',
-      author='Danny Price, Emilio Enriquez, Griffin Foster, Greg Hellbourg',
+      author='Danny Price, Emilio Enriquez, Yuhong Chen, Mark Siebert, and BL contributors',
       author_email='dancpr@berkeley.edu',
       entry_points=entry_points,
       packages=find_packages(),
@@ -63,5 +64,5 @@ setup(name='blimpy',
       ],
       setup_requires=['pytest-runner'],
       tests_require=['pytest'],
-      test_suite="tests",
+      test_suite="blimpytests",
 )
