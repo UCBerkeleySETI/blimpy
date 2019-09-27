@@ -30,7 +30,7 @@ else:
 logging.basicConfig(format=format,stream=stream,level = level_log)
 #------
 
-def cmd_tool():
+def cmd_tool(args=None):
     '''Read input and output frequency, and output file name
     '''
 
@@ -42,18 +42,21 @@ def cmd_tool():
     parser.add_argument('-o', '--output_filename', action='store', default=None, dest='out_fname', type=str, help='Ouput file name to write (to HDF5 or FIL).')
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1GB')
 
-    args = parser.parse_args()
+    if args is None:
+        args = sys.argv[1:]
 
-    if len(sys.argv) == 1:
+        if len(sys.argv) == 1:
             logger.error('Indicate file name and start and stop frequencies')
             sys.exit()
 
-    if args.in_fname == None:
+    args = parser.parse_args(args)
+
+    if args.in_fname is None:
             logger.error('Need to indicate input file name')
             sys.exit()
 
-    if args.out_fname == None:
-        if (args.out_format == None) or (args.out_format == 'h5'):
+    if args.out_fname is None:
+        if (args.out_format is None) or (args.out_format == 'h5'):
             if args.in_fname[len(args.in_fname)-4:] == '.fil':
                 args.out_fname = args.in_fname
                 args.out_fname = args.out_fname.replace('.fil','_diced.h5')
@@ -94,16 +97,17 @@ def cmd_tool():
         logger.error('Please give either start and/or end frequencies. Otherwise use fil2h5 or h52fil functions.')
         sys.exit()
 
+    #Read start frequency and bandwidth from data set
+    file_big = Waterfall(args.in_fname, max_load = args.max_load)
+    f_min_file = file_big.header[b'fch1']
+    f_max_file = file_big.header[b'fch1'] + file_big.header[b'nchans']*file_big.header[b'foff']
+
     if args.f_start == None:
         logger.warning('Lower frequency not given, setting to ' + str(f_min_file) + ' MHz to match file.')
 
     if args.f_stop == None:
         logger.warning('Higher frequency not given, setting to ' + str(f_max_file) + ' MHz to match file.')
 
-    #Read start frequency and bandwidth from data set
-    file_big = Waterfall(args.in_fname, max_load = args.max_load)
-    f_min_file = file_big.header['fch1']
-    f_max_file = file_big.header['fch1'] + file_big.header['nchans']*file_big.header['foff']
 
     if f_max_file < f_min_file:
             f_max_file,f_min_file = f_min_file,f_max_file

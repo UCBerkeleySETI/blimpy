@@ -395,7 +395,7 @@ class GuppiRaw(object):
         # Rebin to max number of points
         dec_fac_x = 1
         if d_xx_fft.shape[0] > MAX_PLT_POINTS:
-            dec_fac_x = d_xx_fft.shape[0] / MAX_PLT_POINTS
+            dec_fac_x = int(d_xx_fft.shape[0] / MAX_PLT_POINTS)
 
         d_xx_fft = rebin(d_xx_fft, dec_fac_x)
 
