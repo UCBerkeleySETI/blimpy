@@ -2,7 +2,7 @@ import blimpy as bl
 import numpy as np
 from pprint import pprint
 from tests.data import voyager_fil, voyager_h5
-
+from blimpy.plotting.config import plt
 
 def compare_waterfall_fil_to_h5():
     """ Load Voyager dataset and test that both fil and hdf5 readers return same headers and data """
@@ -53,14 +53,14 @@ def compare_waterfall_fil_to_h5_methods_and_attributes():
 
     print("Checking if basic methods run without raising Exceptions")
     # Check they can be run
-    a.populate_freqs()
-    a.populate_timestamps()
+    a.container.populate_freqs()
+    a.container.populate_timestamps()
     a.info()
     a.blank_dc(1)
     a.calibrate_band_pass_N1()
 
-    b.populate_freqs()
-    b.populate_timestamps()
+    b.container.populate_freqs()
+    b.container.populate_timestamps()
     b.info()
     b.blank_dc(1)
     b.calibrate_band_pass_N1()
@@ -114,18 +114,30 @@ def test_plotting_doesnt_cause_exceptions():
     b = bl.Waterfall(voyager_fil)
 
     a.plot_all()
+    plt.clf()
     a.plot_kurtosis()
+    plt.clf()
     a.plot_spectrum()
+    plt.clf()
     a.plot_spectrum_min_max()
+    plt.clf()
     a.plot_waterfall()
+    plt.clf()
     a.plot_time_series()
+    plt.clf()
 
     b.plot_all()
+    plt.clf()
     b.plot_kurtosis()
+    plt.clf()
     b.plot_spectrum()
+    plt.clf()
     b.plot_spectrum_min_max()
+    plt.clf()
     b.plot_waterfall()
+    plt.clf()
     b.plot_time_series()
+    plt.clf()
 
 if __name__ == "__main__":
     compare_waterfall_fil_to_h5()

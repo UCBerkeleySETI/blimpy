@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from .guppi import GuppiRaw
+from blimpy.guppi import GuppiRaw
 import h5py
 try:
     import bitshuffle.h5
