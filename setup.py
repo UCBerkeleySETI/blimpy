@@ -5,6 +5,9 @@ from setuptools import setup, find_packages
 
 __version__ = '1.4.0'
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 # create entry points
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
 entry_points = {
@@ -41,7 +44,8 @@ extras_require = {
 setup(name='blimpy',
       version=__version__,
       description='Python utilities for Breakthrough Listen SETI observations',
-      long_description="Python utilities for Breakthrough Listen SETI observations. It includes data handling, formating, dicing and plotting.",
+      long_description=long_description,
+      long_description_content_type='text/markdown',
       platform=['*nix'],
       license='BSD',
       install_requires=install_requires,
