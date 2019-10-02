@@ -15,12 +15,11 @@ before_script:
 - true
 script:
 - pwd
-- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -it ${DIST}:latest "/code/tests/run_tests.sh"
+- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -e CODECOV_TOKEN=${CODECOV_TOKEN} -it ${DIST}:latest "tests/run_tests.sh"
+
 after_success:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - export REPO=fx196/blimpy
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo "$TRAVIS_BRANCH" ; fi`
   - docker tag ${DIST}:latest $REPO:${DIST%.docker}_$TAG
   - docker push $REPO
-notifications:
-  webhooks: https://coveralls.io/webhook

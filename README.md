@@ -1,18 +1,19 @@
 [![Build Status](https://travis-ci.org/UCBerkeleySETI/blimpy.svg?branch=master)](https://travis-ci.org/UCBerkeleySETI/blimpy)
 [![Documentation Status](https://readthedocs.org/projects/blimpy/badge/?version=latest)](https://blimpy.readthedocs.io/en/latest/?badge=latest)
-[![Coverage Status](https://coveralls.io/repos/github/FX196/blimpy/badge.svg?branch=master)](https://coveralls.io/github/FX196/blimpy?branch=master)
+[![codecov](https://codecov.io/gh/UCBerkeleySETI/blimpy/branch/master/graph/badge.svg)](https://codecov.io/gh/UCBerkeleySETI/blimpy)
  [![JOSS status](http://joss.theoj.org/papers/e58ef21f0a924041bf9438fd75f8aed0/status.svg)](http://joss.theoj.org/papers/e58ef21f0a924041bf9438fd75f8aed0)
 
 ## Breakthrough Listen I/O Methods for Python.
 
 ### Filterbank + Raw file readers
 
-This repository contains Python 2 readers for interacting with Sigproc filterbank (.fil), HDF5 (.h5) and guppi raw (.raw) files generated
-by the Breakthrough Listen instruments.
+This repository contains Python 2 readers for interacting with [Sigproc filterbank](http://sigproc.sourceforge.net/sigproc.pdf) (.fil), HDF5 (.h5) and [guppi raw](https://baseband.readthedocs.io/en/stable/guppi/) (.raw) files,
+as used in the [Breakthrough Listen](https://seti.berkeley.edu) search for intelligent life.
+
 
 ### Installation
 
-The latest release (1.3.6) can be installed via pip:
+The latest release can be installed via pip:
 
 ```
 pip install blimpy
@@ -55,11 +56,11 @@ Use the `-h` flag to any of the above command line utilities to display their av
 
 ### Reading blimpy filterbank files in .fil or .h5 format
 
-The `blimpy.Waterfall`  provides a Python API for interacting with filterbank data. It supports all BL filterbank data products; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/breakthrough/blob/master/GBT/voyager/voyager.ipynb) for an overview.
-The [Sigproc user guide](http://sigproc.sourceforge.net/sigproc.pdf) gives details of the filterbank (.fil) format. This method is the most up-to-date and supercedes the depreciated `blimpy.Filterbank` which can only import .fil files.
+The `blimpy.Waterfall`  provides a Python API for interacting with filterbank data. It supports all BL filterbank data products; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/blimpy/blob/master/examples/voyager.ipynb) for an overview. 
 
 From the python, ipython or jupiter notebook environments.
-```
+
+```python
 from blimpy import Waterfall
 fb = Waterfall('/path/to/filterbank.fil')
 #fb = Waterfall('/path/to/filterbank.h5') #works the same way
@@ -103,5 +104,8 @@ For python2, use:
 
 Here is a [more complete guide](./docker_guide.md) on using blimpy in Docker.
 
+### Further reading
 
-### This readme is far from complete. If you have any request/questions please lets us know!
+A detailed overview of the data formats used in Breakthrough Listen can be found in our [data format paper](https://ui.adsabs.harvard.edu/abs/2019arXiv190607391L/abstract). An archive of data files from the Breakthrough Listen program is provided at [seti.berkeley.edu/opendata](http://seti.berkeley.edu/opendata).
+
+### If you have any requests or questions, please lets us know!
