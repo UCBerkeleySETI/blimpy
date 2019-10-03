@@ -150,12 +150,20 @@ class Waterfall(object):
         self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
 
     def __load_data(self):
-        """ Helper for loading data form a container. Should not be called manually. """
+        """ Helper for loading data from a container. Should not be called manually. """
 
         self.data = self.container.data
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Reads data selection if small enough.
+
+        Args:
+            f_start (float): Start frequency in MHz
+            f_stop (float): Stop frequency in MHz
+            t_start (int): Integer time index to start at
+            t_stop (int): Integer time index to stop at
+
+        Data is loaded into self.data (nothing is returned)
         """
 
         self.container.read_data(f_start=f_start, f_stop=f_stop,t_start=t_start, t_stop=t_stop)
@@ -163,8 +171,7 @@ class Waterfall(object):
         self.__load_data()
 
     def _update_header(self):
-        """ Updates the header information from the original file to the selection.
-        """
+        """ Updates the header information from the original file to the selection. """
 
         #Updating frequency of first channel from selection
         if self.header[b'foff'] < 0:
@@ -204,8 +211,18 @@ class Waterfall(object):
 
 
     def _get_blob_dimensions(self, chunk_dim):
-        """ Sets the blob dimmentions, trying to read around 1024 MiB at a time.
+        """ Sets the blob dimensions, trying to read around 1024 MiB at a time.
             This is assuming a chunk is about 1 MiB.
+
+            Notes:
+                A 'blob' is the max size that will be read into memory at once.
+                A 'chunk' is a HDF5 concept to do with efficient read access, see
+                https://portal.hdfgroup.org/display/HDF5/Chunking+in+HDF5
+
+            Args:
+                chunk_dim (array of ints): Shape of chunk, e.g. (1024, 1, 768)
+
+            Returns size of blob (array of ints).
         """
 
         #Taking the size into consideration, but avoiding having multiple blobs within a single time bin.
@@ -223,7 +240,12 @@ class Waterfall(object):
         return blob_dim
 
     def _get_chunk_dimensions(self):
-        """ Sets the chunking dimmentions depending on the file type.
+        """ Sets the chunking dimensions depending on the file type.
+
+            Notes: A 'chunk' is a HDF5 concept to do with efficient read access, see
+            https://portal.hdfgroup.org/display/HDF5/Chunking+in+HDF5
+
+            Returns chunk dimensions, e.g. (2048, 1, 512)
         """
 
         #Usually '.0000.' is in self.filename
@@ -254,6 +276,7 @@ class Waterfall(object):
                 This is unlikely to work on non-Breakthrough Listen data, as a-priori knowledge of
                 the digitizer system is required.
 
+            Returns n_coarse_chan (int), number of coarse channels
         """
 
         n_coarse_chan = self.container.calc_n_coarse_chan(chan_bw)
@@ -303,6 +326,8 @@ class Waterfall(object):
     def blank_dc(self, n_coarse_chan):
         """ Blank DC bins in coarse channels.
 
+        Removes the DC spike in centre of coarse channel bins.
+
         Note: currently only works if entire file is read
         """
 
@@ -328,6 +353,8 @@ class Waterfall(object):
     def calibrate_band_pass_N1(self):
         """ One way to calibrate the band pass is to take the median value
             for every frequency fine channel, and divide by it.
+
+            sets data = data / band_pass
         """
 
         band_pass = np.median(self.data.squeeze(),axis=0)

@@ -371,10 +371,14 @@ class GuppiRaw(object):
         print("MAX: %2.3f" % data.max())
         print("MIN: %2.3f" % data.min())
 
-        import pylab as plt
-
     def plot_histogram(self, filename=None):
-        """ Plot a histogram of data values """
+        """ Plot a histogram of data values
+
+        Args:
+            filename (str): Name out output filename. If not set, file will not be saved to disk.
+
+        TODO: Move into plotting/
+        """
         header, data = self.read_next_data_block()
         data = data.view('float32')
 
@@ -385,7 +389,14 @@ class GuppiRaw(object):
         plt.show()
 
     def plot_spectrum(self, filename=None, plot_db=True):
-        """ Do a (slow) numpy FFT and take power of data """
+        """ Do a (slow) numpy FFT and take power of data
+
+        Args:
+            filename (str): Name out output filename. If not set, file will not be saved to disk.
+            plot_db (bool): If True, will plot in dB scale, otherwise linear.
+
+        TODO: Move into plotting/
+        """
         header, data = self.read_next_data_block()
 
         print("Computing FFT...")
@@ -413,14 +424,23 @@ class GuppiRaw(object):
         plt.show()
 
     def generate_filterbank_header(self, nchans=1, ):
-        """ Generate a blimpy header dictionary """
+        """ Generate a blimpy header dictionary
+
+        This function is useful for generating a default header so the raw data
+        can be saved into a filterbank file.
+
+        Args:
+            nchans (int): Number of channels in filterbank header.
+
+        TODO: Deprecate or move to sigproc.py?
+        """
         gp_head = self.read_first_header()
         fb_head = {}
 
         telescope_str = gp_head.get("TELESCOP", "unknown")
-        if telescope_str in ('GBT', 'GREENBANK'):
+        if telescope_str.upper() in ('GBT', 'GREENBANK'):
             fb_head["telescope_id"] = 6
-        elif telescope_str in ('PKS', 'PARKES'):
+        elif telescope_str.upper() in ('PKS', 'PARKES'):
             fb_head["telescop_id"] = 7
         else:
             fb_head["telescop_id"] = 0
@@ -456,11 +476,11 @@ class GuppiRaw(object):
 
 
 def cmd_tool(args=None):
-    """ Command line tool for plotting and viewing info on guppi raw files """
+    """ Command line tool for plotting and viewing info on GUPPI Raw files """
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description="Command line utility for creating spectra from GuppiRaw files.")
+    parser = ArgumentParser(description="Command line utility quick look at GUPPI Raw files. ")
 
     parser.add_argument('filename', type=str, help='Name of file to read')
     parser.add_argument('-o', dest='outdir', type=str, default='./', help='output directory for PNG files')
