@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-'''
+"""
     Simple script for quicly making an h5 file from a .fil.
 
     ..author: Emilio Enriquez (jeenriquez@gmail.com)
 
     July 28th 2017
-'''
+"""
 
 try:
     from .waterfall import Waterfall
@@ -34,13 +34,19 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 #------
 
 
-def make_h5_file(filename,out_dir='./', new_filename = None, max_load = None):
-    ''' Converts file to HDF5 (.h5) format. Default saves output in current dir.
-    '''
+def make_h5_file(filename,out_dir='./', new_filename=None, max_load=None):
+    """ Converts file to HDF5 (.h5) format. Default saves output in current dir.
+
+    Args:
+        filename (str): Name of filterbank file to read
+        out_dir (str): Output directory path. Defaults to cwd
+        new_filename (None or str): Name of output filename. If not set, will default
+                                    to same as input, but with .h5 instead of .fil
+    """
 
     fil_file = Waterfall(filename, max_load = max_load)
     if not new_filename:
-        new_filename = out_dir+filename.replace('.fil','.h5').split('/')[-1]
+        new_filename = out_dir+filename.replace('.fil', '.h5').split('/')[-1]
 
     if '.h5' not in new_filename:
         new_filename = new_filename+'.h5'
@@ -48,8 +54,20 @@ def make_h5_file(filename,out_dir='./', new_filename = None, max_load = None):
     fil_file.write_to_hdf5(new_filename)
 
 def cmd_tool():
-    '''
-    '''
+    """ Command line utility for converting Sigproc filterbank (.fil) to  HDF5 (.h5) format
+
+    Usage:
+        fil2h5 <FULL_PATH_TO_FIL_FILE> [options]
+
+    Options:
+      -h, --help            show this help message and exit
+      -o OUT_DIR, --out_dir=OUT_DIR
+                            Location for output files. Default: local dir.
+      -n NEW_FILENAME, --new_filename=NEW_FILENAME
+                            New name. Default: replaces extention to .h5
+      -d, --delete_input    This option deletes the input file after conversion.
+      -l MAX_LOAD           Maximum data limit to load. Default:1GB
+    """
 
     p = OptionParser()
     p.set_usage('Command line utility for converting Sigproc filterbank (.fil) to  HDF5 (.h5) format  \n >>fil2h5 <FULL_PATH_TO_FIL_FILE> [options]')
@@ -72,6 +90,6 @@ def cmd_tool():
         logger.info("'Deleting input file: %s"%(filename))
         os.remove(filename)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     cmd_tool()
