@@ -4,8 +4,12 @@ from .compute_lst import compute_lst
 def compute_lsrk(wf):
     """ Computes the LSR in km/s
 
-    uses the MJD, RA and DEC of observation to compute
-    along with the telescope location. Requires pyslalib
+    Computes the Local standard of rest kinematic using the time (MJD),
+    RA and DEC of the observation to compute along with the telescope location.
+    Requires pyslalib
+
+    Args:
+        wf (bl.Waterfall): Waterfall object for which to compute LSR
     """
     ra = Angle(wf.header[b'src_raj'], unit='hourangle')
     dec = Angle(wf.header[b'src_dej'], unit='degree')
