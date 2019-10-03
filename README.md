@@ -90,6 +90,20 @@ for header, data_x, data_y in gr.get_data():
 
 Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.
 
+### Using blimpy inside Docker
+The blimpy images are pushed to a public repository after each successful build on Travis.
+If you have Docker installed, you can run the following commands to pull our images, which have the environment and dependencies set up for you.
+
+For python3, use:
+
+`docker pull fx196/blimpy:py3_kern_stable`
+
+For python2, use:
+
+`docker pull fx196/blimpy:py2_kern_stable`
+
+Here is a [more complete guide](./docker_guide.md) on using blimpy in Docker.
+
 ### Further reading
 
 A detailed overview of the data formats used in Breakthrough Listen can be found in our [data format paper](https://ui.adsabs.harvard.edu/abs/2019arXiv190607391L/abstract). An archive of data files from the Breakthrough Listen program is provided at [seti.berkeley.edu/opendata](http://seti.berkeley.edu/opendata).

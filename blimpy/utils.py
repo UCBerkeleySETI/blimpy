@@ -5,9 +5,9 @@ useful helper functions for common data manipulation tasks
 import numpy as np
 
 
-def db(x):
+def db(x, offset=0):
     """ Convert linear to dB """
-    return 10 * np.log10(x)
+    return 10 * np.log10(x + offset)
 
 
 def lin(x):
