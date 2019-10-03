@@ -16,7 +16,7 @@ before_script:
 script:
 - pwd
 - ls
-- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -e CODECOV_TOKEN=${CODECOV_TOKEN} -it ${DIST}:latest "/code/tests/run_tests.sh"
+- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -e CODECOV_TOKEN=${CODECOV_TOKEN} -it ${DIST}:latest "(cd /code && tests/run_tests.sh)"
 
 after_success:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
