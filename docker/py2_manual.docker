@@ -13,3 +13,4 @@ WORKDIR /code
 RUN cd tests && bash download_data.sh && cd ..
 RUN pip install ".[full]"
 RUN python setup.py test
+WORKDIR /home
