@@ -15,8 +15,7 @@ except:
 local_host = socket.gethostname()
 
 def reset_outs():
-    '''
-    '''
+    """ Returns None, None, used as a helper """
 
     return None,None
 
@@ -31,7 +30,13 @@ def make_batch_script():
     os.chmod('tail_sum.sh', 0o775)
 
 def find_header_size(filename):
-    ''' Script to find the header size of a filterbank file'''
+    """Script to find the header size of a filterbank file
+
+    Args:
+        filename (str): Name of file
+
+    Returns size of header in Bytes (int)
+    """
 
     # open datafile
     filfile=open(filename,'rb')
@@ -44,7 +49,15 @@ def find_header_size(filename):
     return headersize
 
 def cmd_tool(args=None):
-    """ Command line tool to make a md5sum comparison of two .fil files. """
+    """ Command line tool to make a MD5sum comparison of two .fil files.
+
+    Supplies a command line:
+        matchfils <FIL_FILE1> <FIL_FILE2>
+    which will compare the two files to confirm the files have matching MD5sums
+
+    Notes:
+        This command is specific to BL @ Green Bank
+    """
 
     if 'bl' in local_host:
         header_loc = '/usr/local/sigproc/bin/header' #Current location of header command in GBT.
