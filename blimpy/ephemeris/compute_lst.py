@@ -2,7 +2,13 @@ from .config import *
 
 
 def compute_lst(wf):
-    """ Compute LST for observation """
+    """ Compute LST for observation
+
+    Computes local sidereal time (LST) for the observation, using SLALIB.
+
+    Args:
+        wf (bl.Waterfall): blimpy Waterfall object.
+    """
     if wf.header[b'telescope_id'] == 6:
         wf.coords = gbt_coords
     elif wf.header[b'telescope_id'] == 4:
