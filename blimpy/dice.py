@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-'''
+"""
     Script to dice data to course channel level. From BL FIL of HDF5 files, and outputs HDF5 with '_diced' appended to the file name.
 
     ..author: Greg Hellbourg (gregory.hellbourg@berkeley.edu)
 
     March 2018
-'''
+"""
 
 
 from .waterfall import Waterfall
@@ -31,10 +31,22 @@ logging.basicConfig(format=format,stream=stream,level = level_log)
 #------
 
 def cmd_tool(args=None):
-    '''Read input and output frequency, and output file name
-    '''
+    """ Dices (extracts frequency range) hdf5 or fil files to new file.
 
-    parser = argparse.ArgumentParser(description='Dices hdf5 or fil files and writes to hdf5 or fil.')
+    optional arguments:
+      -h, --help            show this help message and exit
+      -f IN_FNAME, --input_filename IN_FNAME
+                            Name of file to write from (HDF5 or FIL)
+      -b F_START            Start frequency in MHz
+      -e F_STOP             Stop frequency in MHz
+      -x OUT_FORMAT, --output_file OUT_FORMAT
+                            Output file format [.h5 or .fil].
+      -o OUT_FNAME, --output_filename OUT_FNAME
+                            Ouput file name to write (to HDF5 or FIL).
+      -l MAX_LOAD           Maximum data limit to load. Default:1GB
+    """
+
+    parser = argparse.ArgumentParser(description='Dices (extracts frequency range)  hdf5 or fil files and writes to hdf5 or fil.')
     parser.add_argument('-f', '--input_filename', action='store', default=None, dest='in_fname', type=str, help='Name of file to write from (HDF5 or FIL)')
     parser.add_argument('-b', action='store', default=None, dest='f_start', type=float, help='Start frequency in MHz')
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float, help='Stop frequency in MHz')
@@ -162,5 +174,4 @@ def cmd_tool(args=None):
 
 
 if __name__ == "__main__":
-
     cmd_tool()
