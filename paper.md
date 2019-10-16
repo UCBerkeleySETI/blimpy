@@ -16,7 +16,7 @@ authors:
   - name: Yuhong Chen
     affiliation: 1    
   - name: Mark Siebert
-    affiliation: 2    
+    affiliation: 1    
 affiliations:
   - name: Equal contribution from both authors
     index: +
@@ -37,7 +37,7 @@ the main venue to search for artificial signals of extraterrestrial origin. The 
 is the latest large-scale project for the search of technosignatures,  and thanks to modern telescopes
 and instrumentation, as well as significant amounts of dedicated observing time, the program
 has become the largest SETI endeavour in history. This has also resulted in an unprecedented amount of
-publicly-available data [@Lebofsky:2019]. Over 1 PB of from the Breakthrough Listen program may be downloaded from
+publicly-available data [@Lebofsky:2019]. Over 1 PB of data from the Breakthrough Listen program may be downloaded from
 [seti.berkeley.edu/opendata](http://seti.berkeley.edu/opendata).
 
 The ``Blimpy``---Breakthrough Listen I/O Methods for Python---package provides Python 2.7+/3.6+ utilities
