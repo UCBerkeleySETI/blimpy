@@ -1,5 +1,5 @@
 ---
-title: 'blimpy: Breakthrough Listen I/O Methods for Python'
+title: 'Blimpy: Breakthrough Listen I/O Methods for Python'
 tags:
   - Python
   - astronomy
@@ -20,11 +20,11 @@ authors:
 affiliations:
   - name: Equal contribution from both authors
     index: +
-  - name: Department of Astronomy,  University of California Berkeley, Berkeley CA 94720
+  - name: Department of Astronomy,  University of California Berkeley, Berkeley CA 94720, United States of America
     index: 1
   - name: Centre for Astrophysics & Supercomputing, Swinburne University of Technology, Hawthorn, VIC 3122, Australia
     index: 2
-  - name: Radboud University Nijmegen, Nimegen, NL
+  - name: Department of Astrophysics/IMAPP, Radboud University, Nijmegen, Netherlands
     index: 3
 date: 27 June 2019
 bibliography: paper.bib
