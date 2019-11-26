@@ -31,7 +31,8 @@ install_requires = [
         'cython',
         'h5py',
         'scipy',
-        'six'
+        'six',
+        'hdf5plugin'
 ]
 
 extras_require = {
