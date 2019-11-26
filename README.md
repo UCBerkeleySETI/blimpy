@@ -7,7 +7,7 @@
 
 ### Filterbank + Raw file readers
 
-This repository contains Python 2 readers for interacting with [Sigproc filterbank](http://sigproc.sourceforge.net/sigproc.pdf) (.fil), HDF5 (.h5) and [guppi raw](https://baseband.readthedocs.io/en/stable/guppi/) (.raw) files,
+This repository contains Python 2/3 readers for interacting with [Sigproc filterbank](http://sigproc.sourceforge.net/sigproc.pdf) (.fil), HDF5 (.h5) and [guppi raw](https://baseband.readthedocs.io/en/stable/guppi/) (.raw) files,
 as used in the [Breakthrough Listen](https://seti.berkeley.edu) search for intelligent life.
 
 
