@@ -32,7 +32,8 @@ install_requires = [
         'h5py',
         'scipy',
         'six',
-        'hdf5plugin'
+        'hdf5plugin',
+        'pandas'
 ]
 
 extras_require = {
