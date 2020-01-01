@@ -5,15 +5,16 @@
 # TELESCOPE: Name of telescope
 # SIGPROC_ID: Identifier as assigned by sigproc standard
 # SIGPROC_ID_SHORT: abbreviated sigproc_id
-# X,Y,Z: Coordinates of telescope 
+# X Y Z: Coordinates of telescope 
 # DISH_DIAMETER: Dish diameter if applicable else -1
 # DATE_ADDED: date record was added or updated
 # ADDED_BY: authour of update
 # TELESCOPE_NAME TELESCOPE_NAME_SHORT SIGPROC_ID  X    Y    Z   DISH_DIAMETER DATE_ADDED ADDED_BY
-"Fake","F",0,-1,0.000,0.000,0.000,-1,1/1/2020,Daniel R
+TELESCOPE_NAME,TELESCOPE_NAME_SHORT,SIGPROC_ID,X,Y,Z,DISH_DIAMETER,DATE_ADDED,ADDED_BY
+"Fake","F",0,0.000,0.000,0.000,-1,"1/1/2020","Daniel R"
 "ARECIBO","AO",1,2390490.0,-5564764.0,1994727.0,200.0,1/1/2020,Daniel R
 "Nancay","NC",3,4324165.81,165927.11,4670132.83,100.0,1/1/2020,Daniel R
-"Parkes 64m","PARKES","PK",4,-4554231.5,2816759.1,-3454036.3,64.0,1/1/2020,Daniel R
+"PARKES","PK",4,-4554231.5,2816759.1,-3454036.3,64.0,1/1/2020,Daniel R
 "JODRELL","JB",5,3822252.643,-153995.683,5086051.443,76.0,1/1/2020,Daniel R
 "GBT","GB",6,882589.65,-4924872.32,3943729.348,100.0,1/1/2020,Daniel R
 "GMRT","GM",7,1656342.30,5797947.77,2073243.16,-1,1/1/2020,Daniel R
