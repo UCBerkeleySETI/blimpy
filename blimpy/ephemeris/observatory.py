@@ -22,13 +22,12 @@ class Observatory:
         Returns:
             self
         '''
-        iter_csv = pd.read_csv(
-            os.path.join(
-                sys.path[0],
-                'observatory_info.csv'),
+        abs_path = os.path.dirname(os.path.realpath(__file__))
+        iter_csv = pd.read_csv(os.path.join(abs_path, 'observatory_info.csv'),
             comment='#',
             iterator=True,
             chunksize=1000)
+      
         if telescope_id is not None:
             dataframe = pd.concat(
                 [chunk[chunk['SIGPROC_ID'] == telescope_id] for chunk in iter_csv])
@@ -92,3 +91,4 @@ class Observatory:
                 output_str += "\t" + str(key) + ": " + \
                     str(self._info_dict[key]) + "\n"
         return output_str
+
