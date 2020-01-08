@@ -32,7 +32,8 @@ install_requires = [
         'h5py',
         'scipy',
         'six',
-        'hdf5plugin'
+        'hdf5plugin',
+        'pandas'
 ]
 
 extras_require = {
@@ -56,6 +57,7 @@ setup(name='blimpy',
       author_email='dancpr@berkeley.edu',
       entry_points=entry_points,
       packages=find_packages(),
+      include_package_data=True,
       zip_safe=False,
       classifiers=[
           'Development Status :: 5 - Production/Stable',
