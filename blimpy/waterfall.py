@@ -50,24 +50,6 @@ else:
 logging.basicConfig(format=format,stream=stream,level = level_log)
 
 
-try:
-    HAS_BITSHUFFLE = True
-    import bitshuffle.h5
-except ImportError:
-    try:
-        import hdf5plugin
-        logger.warning('Could not import bitshuffle, using hdf5plugin failover. Write access disabled.')
-    except ImportError:
-        pass
-    HAS_BITSHUFFLE = False
-    pass
-
-try:
-    import h5py
-    HAS_HDF5 = True
-except ImportError:
-    HAS_HDF5 = False
-
 #import pdb #pdb.set_trace()
 
 MAX_BLOB_MB = 1024

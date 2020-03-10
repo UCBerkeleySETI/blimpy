@@ -6,6 +6,7 @@ import os
 import sys
 import numpy as np
 import h5py
+import hdf5plugin
 import six
 
 from astropy.coordinates import Angle

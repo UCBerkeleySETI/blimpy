@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '1.4.2'
+__version__ = '1.5.0'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -38,7 +38,6 @@ install_requires = [
 
 extras_require = {
         'full': [
-            'bitshuffle',
             'pyslalib',
         ]
 }

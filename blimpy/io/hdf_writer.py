@@ -1,19 +1,6 @@
 import time
 import h5py
-
-try:
-    import h5py
-    HAS_HDF5 = True
-except ImportError:
-    HAS_HDF5 = False
-
-try:
-    HAS_BITSHUFFLE = True
-    import bitshuffle.h5
-except ImportError:
-    HAS_BITSHUFFLE = False
-    pass
-
+import hdf5plugin
 
 def write_to_hdf5(wf, filename_out, *args, **kwargs):
     """ Write data to HDF5 file.
@@ -57,13 +44,8 @@ def __write_to_hdf5_heavy(wf, filename_out, *args, **kwargs):
         h5.attrs[b'CLASS'] = b'FILTERBANK'
         h5.attrs[b'VERSION'] = b'1.0'
 
-        if HAS_BITSHUFFLE:
-            bs_compression = bitshuffle.h5.H5FILTER
-            bs_compression_opts = (block_size, bitshuffle.h5.H5_COMPRESS_LZ4)
-        else:
-            bs_compression = None
-            bs_compression_opts = None
-            wf.logger.warning("Warning: bitshuffle not found. No compression applied.")
+        bs_compression = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression']
+        bs_compression_opts = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression_opts']
 
         dset = h5.create_dataset('data',
                                  shape=wf.selection_shape,
@@ -150,14 +132,8 @@ def __write_to_hdf5_light(wf, filename_out, *args, **kwargs):
         h5.attrs[b'CLASS']   = b'FILTERBANK'
         h5.attrs[b'VERSION'] = b'1.0'
 
-        if HAS_BITSHUFFLE:
-            bs_compression = bitshuffle.h5.H5FILTER
-            bs_compression_opts = (block_size, bitshuffle.h5.H5_COMPRESS_LZ4)
-        else:
-            bs_compression = None
-            bs_compression_opts = None
-            wf.logger.warning("Warning: bitshuffle not found. No compression applied.")
-
+        bs_compression = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression']
+        bs_compression_opts = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression_opts']
 
         dset = h5.create_dataset('data',
                                  data=wf.data,
