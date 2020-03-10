@@ -31,7 +31,8 @@ To install everything required to run the unit tests, run:
 pip install -e .[full]
 ```
 
-You will need `numpy`, `h5py`, `astropy`, `scipy`, and `matplotlib` as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately. To interact with files compressed with [bitshuffle](https://github.com/kiyo-masui/bitshuffle), you'll need the `bitshuffle` package too.
+You will need `numpy`, `h5py`, `astropy`, `scipy`, and `matplotlib` as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately. 
+To interact with compressed files, you'll need the `hdf5plugin` package too.
 
 Note that h5py generally needs to be installed in this way:
 
