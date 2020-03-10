@@ -321,7 +321,7 @@ class H5Reader(Reader):
             self.filestat = os.stat(filename)
             self.filesize = self.filestat.st_size/(1024.0**2)
             self.load_data = load_data
-            self.h5 = h5py.File(self.filename)
+            self.h5 = h5py.File(self.filename, mode='r')
             self.read_header()
             self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
             self.n_ints_in_file = self.h5["data"].shape[self.time_axis] #

@@ -1,6 +1,7 @@
 import time
 import h5py
 import hdf5plugin
+from blimpy import utils
 
 def write_to_hdf5(wf, filename_out, *args, **kwargs):
     """ Write data to HDF5 file.
@@ -17,15 +18,15 @@ def write_to_hdf5(wf, filename_out, *args, **kwargs):
     wf._update_header()
 
     if wf.container.isheavy():
-        __write_to_hdf5_heavy(wf, filename_out)
+        __write_to_hdf5_heavy(wf, filename_out, *args, **kwargs)
     else:
-        __write_to_hdf5_light(wf, filename_out)
+        __write_to_hdf5_light(wf, filename_out, *args, **kwargs)
 
     t1 = time.time()
     wf.logger.info('Conversion time: %2.2fsec' % (t1- t0))
 
 
-def __write_to_hdf5_heavy(wf, filename_out, *args, **kwargs):
+def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
     """ Write data to HDF5 file.
 
     Args:
@@ -47,27 +48,35 @@ def __write_to_hdf5_heavy(wf, filename_out, *args, **kwargs):
         bs_compression = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression']
         bs_compression_opts = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression_opts']
 
+        dout_shape     = list(wf.selection_shape)    # Make sure not a tuple
+        dout_chunk_dim = list(chunk_dim)
+
+        if f_scrunch is not None:
+            dout_shape[-1] //= f_scrunch
+            dout_chunk_dim[-1] //= f_scrunch
+            wf.header[b'foff'] *= f_scrunch
+
         dset = h5.create_dataset('data',
-                                 shape=wf.selection_shape,
-                                 chunks=chunk_dim,
+                                 shape=dout_shape,
+                                 chunks=dout_chunk_dim,
                                  compression=bs_compression,
                                  compression_opts=bs_compression_opts,
                                  dtype=wf.data.dtype)
 
         dset_mask = h5.create_dataset('mask',
-                                      shape=wf.selection_shape,
-                                      chunks=chunk_dim,
+                                      shape=dout_shape,
+                                      chunks=dout_chunk_dim,
                                       compression=bs_compression,
                                       compression_opts=bs_compression_opts,
                                       dtype='uint8')
 
-        dset.dims[0].label = b"frequency"
+        dset.dims[2].label = b"frequency"
         dset.dims[1].label = b"feed_id"
-        dset.dims[2].label = b"time"
+        dset.dims[0].label = b"time"
 
-        dset_mask.dims[0].label = b"frequency"
+        dset_mask.dims[2].label = b"frequency"
         dset_mask.dims[1].label = b"feed_id"
-        dset_mask.dims[2].label = b"time"
+        dset_mask.dims[0].label = b"time"
 
         # Copy over header information as attributes
         for key, value in wf.header.items():
@@ -96,8 +105,12 @@ def __write_to_hdf5_heavy(wf, filename_out, *args, **kwargs):
                 c_stop = c_start + blob_dim[wf.freq_axis]
                 #-----
 
-                wf.logger.debug(t_start,t_stop,c_start,c_stop)
+                if f_scrunch is not None:
+                    c_start //= f_scrunch
+                    c_stop  //= f_scrunch
+                    bob = utils.rebin(bob, n_z=f_scrunch)
 
+                wf.logger.debug(t_start,t_stop,c_start,c_stop)
                 dset[t_start:t_stop,0,c_start:c_stop] = bob[:]
 
         else:
@@ -115,10 +128,13 @@ def __write_to_hdf5_heavy(wf, filename_out, *args, **kwargs):
                 else:
                     t_stop = (ii+1)*blob_dim[wf.time_axis]
 
+                if f_scrunch is not None:
+                    bob = utils.rebin(bob, n_z=f_scrunch)
+
                 dset[t_start:t_stop] = bob[:]
 
 
-def __write_to_hdf5_light(wf, filename_out, *args, **kwargs):
+def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
     """ Write data to HDF5 file in one go.
 
     Args:
@@ -135,26 +151,31 @@ def __write_to_hdf5_light(wf, filename_out, *args, **kwargs):
         bs_compression = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression']
         bs_compression_opts = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression_opts']
 
+        if f_scrunch is None:
+            data_out = wf.data
+        else:
+            wf.logger.info('Frequency scrunching by %i' % f_scrunch)
+            data_out = utils.rebin(wf.data, n_z=f_scrunch)
+            wf.header[b'foff'] *= f_scrunch
+
         dset = h5.create_dataset('data',
-                                 data=wf.data,
-                                 #                          compression='lzf')
+                                 data=data_out,
                                  compression=bs_compression,
                                  compression_opts=bs_compression_opts)
 
         dset_mask = h5.create_dataset('mask',
-                                      shape=wf.file_shape,
-                                      #                                 compression='lzf',
+                                      shape=data_out.shape,
                                       compression=bs_compression,
                                       compression_opts=bs_compression_opts,
                                       dtype='uint8')
 
-        dset.dims[0].label = b"frequency"
+        dset.dims[2].label = b"frequency"
         dset.dims[1].label = b"feed_id"
-        dset.dims[2].label = b"time"
+        dset.dims[0].label = b"time"
 
-        dset_mask.dims[0].label = b"frequency"
+        dset_mask.dims[2].label = b"frequency"
         dset_mask.dims[1].label = b"feed_id"
-        dset_mask.dims[2].label = b"time"
+        dset_mask.dims[0].label = b"time"
 
         # Copy over header information as attributes
         for key, value in wf.header.items():
