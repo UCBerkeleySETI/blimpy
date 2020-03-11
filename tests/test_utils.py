@@ -26,6 +26,14 @@ def test_rebin():
     assert np.allclose(bR, [1.5, 1.5, 1.5, 1.5])
 
     c = np.zeros([10, 10, 10])
+    cR = utils.rebin(c, n_z=2)
+    assert cR.shape == (10, 10, 5)
+    cR = utils.rebin(c, n_y=2)
+    assert cR.shape == (10, 5, 10)
+    cR = utils.rebin(c, n_x=2)
+    assert cR.shape == (5, 10, 10)
+
+    c = np.zeros([10, 10, 10, 10])
     with pytest.raises(RuntimeError):
         utils.rebin(c, 2, 2)
 

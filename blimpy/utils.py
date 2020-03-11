@@ -21,7 +21,7 @@ def closest(xarr, val):
     return idx_closest
 
 
-def rebin(d, n_x, n_y=None):
+def rebin(d, n_x=None, n_y=None, n_z=None):
     """ Rebin data by averaging bins together
 
     Args:
@@ -32,12 +32,17 @@ def rebin(d, n_x, n_y=None):
     Returns:
     d: rebinned data with shape (n_x, n_y)
     """
+    n_x = 1 if n_x is None else n_x
+    n_y = 1 if n_y is None else n_y
+    n_z = 1 if n_z is None else n_z
 
-    if d.ndim == 2:
-        if n_y is None:
-            n_y = 1
-        if n_x is None:
-            n_x = 1
+    if d.ndim == 3:
+        d = d[:int(d.shape[0] // n_x) * n_x, :int(d.shape[1] // n_y) * n_y, :int(d.shape[2] // n_z) * n_z]
+        d = d.reshape((d.shape[0] // n_x, n_x, d.shape[1] // n_y, n_y, d.shape[2] // n_z, n_z))
+        d = d.mean(axis=5)
+        d = d.mean(axis=3)
+        d = d.mean(axis=1)
+    elif d.ndim == 2:
         d = d[:int(d.shape[0] // n_x) * n_x, :int(d.shape[1] // n_y) * n_y]
         d = d.reshape((d.shape[0] // n_x, n_x, d.shape[1] // n_y, n_y))
         d = d.mean(axis=3)
@@ -47,7 +52,7 @@ def rebin(d, n_x, n_y=None):
         d = d.reshape((d.shape[0] // n_x, n_x))
         d = d.mean(axis=1)
     else:
-        raise RuntimeError("Only NDIM <= 2 supported")
+        raise RuntimeError("Only NDIM <= 3 supported")
     return d
 
 

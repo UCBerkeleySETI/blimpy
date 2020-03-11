@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '1.4.2'
+__version__ = '1.5.0'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -17,12 +17,14 @@ entry_points = {
         'rawutil = blimpy.guppi:cmd_tool',
         'fil2h5 = blimpy.fil2h5:cmd_tool',
         'h52fil = blimpy.h52fil:cmd_tool',
+        'bl_scrunch = blimpy.bl_scrunch:cmd_tool',
         'matchfils = blimpy.match_fils:cmd_tool',
         'bldice = blimpy.dice:cmd_tool'
      ]
 }
 
 install_requires = [
+        'setuptools<40.0;python_version=="2.7"',
         'matplotlib<3.0;python_version=="2.7"',
         'matplotlib;python_version>"2.7"',
         'astropy<3.0;python_version=="2.7"',
@@ -38,7 +40,6 @@ install_requires = [
 
 extras_require = {
         'full': [
-            'bitshuffle',
             'pyslalib',
         ]
 }

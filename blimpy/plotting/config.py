@@ -2,10 +2,11 @@ import os
 import numpy as np
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
+import matplotlib
+
 if 'DISPLAY' in os.environ.keys():
     import pylab as plt
 else:
-    import matplotlib
     matplotlib.use('Agg')
     import pylab as plt
 
