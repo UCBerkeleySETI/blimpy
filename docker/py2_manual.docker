@@ -5,7 +5,7 @@ RUN pip install pip==18.1
 RUN pip install wheel==0.32.3
 RUN pip install --only-binary=numpy numpy==1.16
 RUN pip install --only-binary=scipy scipy==1.1.0
-RUN pip install matplotlib==2.25 
+RUN pip install matplotlib==2.2.5 
 RUN pip install pytest==4.6.7
 ENV CFLAGS="-I/usr/include/hdf5/serial -L/usr/lib/x86_64-linux-gnu/hdf5/serial"
 RUN ln -s /usr/lib/x86_64-linux-gnu/libhdf5_serial.so /usr/lib/x86_64-linux-gnu/libhdf5.so
