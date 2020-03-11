@@ -24,6 +24,7 @@ entry_points = {
 }
 
 install_requires = [
+        'setuptools<40.0;python_version=="2.7"',
         'matplotlib<3.0;python_version=="2.7"',
         'matplotlib;python_version>"2.7"',
         'astropy<3.0;python_version=="2.7"',
