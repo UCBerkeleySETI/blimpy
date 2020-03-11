@@ -13,6 +13,7 @@ except ImportError:
 try:
     from . import fil2h5
     from . import h52fil
+    from . import bl_scrunch
     from blimpy.deprecated import gup2hdf
 except:
     print("Warning: Cannot import HDF5 utilities")

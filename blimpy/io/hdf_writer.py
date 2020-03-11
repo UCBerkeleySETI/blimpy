@@ -3,12 +3,14 @@ import h5py
 import hdf5plugin
 from blimpy import utils
 
-def write_to_hdf5(wf, filename_out, *args, **kwargs):
+
+def write_to_hdf5(wf, filename_out, f_scrunch=None, *args, **kwargs):
     """ Write data to HDF5 file.
         It check the file size then decides how to write the file.
 
     Args:
         filename_out (str): Name of output file
+        f_scrunch (int or None): Average (scrunch) N channels together
     """
 
     #For timing how long it takes to write a file.
@@ -18,9 +20,9 @@ def write_to_hdf5(wf, filename_out, *args, **kwargs):
     wf._update_header()
 
     if wf.container.isheavy():
-        __write_to_hdf5_heavy(wf, filename_out, *args, **kwargs)
+        __write_to_hdf5_heavy(wf, filename_out, f_scrunch=f_scrunch, *args, **kwargs)
     else:
-        __write_to_hdf5_light(wf, filename_out, *args, **kwargs)
+        __write_to_hdf5_light(wf, filename_out, f_scrunch=f_scrunch, *args, **kwargs)
 
     t1 = time.time()
     wf.logger.info('Conversion time: %2.2fsec' % (t1- t0))
@@ -31,6 +33,7 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
 
     Args:
         filename_out (str): Name of output file
+        f_scrunch (int or None): Average (scrunch) N channels together
     """
 
     block_size = 0
@@ -57,15 +60,15 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
             wf.header[b'foff'] *= f_scrunch
 
         dset = h5.create_dataset('data',
-                                 shape=dout_shape,
-                                 chunks=dout_chunk_dim,
+                                 shape=tuple(dout_shape),
+                                 chunks=tuple(dout_chunk_dim),
                                  compression=bs_compression,
                                  compression_opts=bs_compression_opts,
                                  dtype=wf.data.dtype)
 
         dset_mask = h5.create_dataset('mask',
-                                      shape=dout_shape,
-                                      chunks=dout_chunk_dim,
+                                      shape=tuple(dout_shape),
+                                      chunks=tuple(dout_chunk_dim),
                                       compression=bs_compression,
                                       compression_opts=bs_compression_opts,
                                       dtype='uint8')
@@ -139,6 +142,7 @@ def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
 
     Args:
         filename_out (str): Name of output file
+        f_scrunch (int or None): Average (scrunch) N channels together
     """
 
     block_size = 0
@@ -180,3 +184,4 @@ def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
         # Copy over header information as attributes
         for key, value in wf.header.items():
             dset.attrs[key] = value
+

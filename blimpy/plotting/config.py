@@ -2,10 +2,20 @@ import os
 import numpy as np
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
-if 'DISPLAY' in os.environ.keys():
-    import pylab as plt
-else:
-    import matplotlib
+import matplotlib
+HAS_DISPLAY = True
+try:
+    from tkinter import TclError
+except:
+    HAS_DISPLAY = False
+
+if 'DISPLAY' in os.environ.keys() and HAS_DISPLAY:
+    try:
+        import pylab as plt
+    except TclError:
+        HAS_DISPLAY = False
+
+if not HAS_DISPLAY:
     matplotlib.use('Agg')
     import pylab as plt
 
