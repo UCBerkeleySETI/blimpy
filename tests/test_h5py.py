@@ -1,5 +1,5 @@
 import h5py
-import bitshuffle.h5
+import hdf5plugin
 import numpy
 import tempfile
 
@@ -15,9 +15,8 @@ def test_is_h5py_correctly_installed():
     dataset = f.create_dataset(
         "data",
         (100, 100, 100),
-        compression=bitshuffle.h5.H5FILTER,
-        compression_opts=(block_size, bitshuffle.h5.H5_COMPRESS_LZ4),
         dtype='float32',
+        **hdf5plugin.Bitshuffle(nelems=0, lz4=True)
     )
 
     array = numpy.random.rand(100, 100, 100)
