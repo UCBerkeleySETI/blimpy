@@ -11,8 +11,6 @@ import blimpy.io.sigproc
 
 # import pdb;# pdb.set_trace()
 
-
-
 from blimpy.io.fil_reader import FilReader
 from blimpy.io.hdf_reader import H5Reader
 

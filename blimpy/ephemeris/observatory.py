@@ -1,27 +1,27 @@
 #!/usr/local/bin/python
-'''-------------------------------------
+"""-------------------------------------
 observatory.py
 blimpy
 --------------------------------------
-'''
+"""
 import os
 import sys
 import pandas as pd
 
 
 class Observatory:
-    ''' Class for handling observatory data.
+    """ Class for handling observatory data.
         Data is stored in ./observatory_info.csv
-    '''
+    """
 
     def __init__(self, telescope_id=None, telescope_name=None):
-        ''' init method for Observatory class
+        """ init method for Observatory class
         Parameters:
             telescope_id (int): sigproc telescope_id
             telescope_name (str): telescope name. see ./observatory_info.csv
         Returns:
             self
-        '''
+        """
         abs_path = os.path.dirname(os.path.realpath(__file__))
         iter_csv = pd.read_csv(os.path.join(abs_path, 'observatory_info.csv'),
             comment='#',
@@ -49,11 +49,11 @@ class Observatory:
         self._info_dict = fields_dict
 
     def get_telescope_name(self):
-        '''getter method'''
+        """getter method"""
         return self._telescope_name
 
     def get_telescope_name_short(self):
-        '''getter method'''
+        """getter method"""
         return self._telescope_name_short
 
     def get_sigproc_id(self):

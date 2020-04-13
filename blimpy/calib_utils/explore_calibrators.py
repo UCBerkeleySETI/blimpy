@@ -29,10 +29,10 @@ def spec_in(S_hi,S_low,freq_hi,freq_low):
     return np.log(S_hi/S_low)/np.log(freq_hi/freq_low)
 
 def source_power_law_fit(source,minfreq,maxfreq):
-    '''
+    """
     Calculates optimized power-law parameters. Considers data for a particular source
     from calibrators.txt between minfreq and maxfreq (in MHz)
-    '''
+    """
     freqs = get_freqs(MHz=True) #In MHz
     fluxes = cal_fluxes(source)
     freqs_cut = freqs[np.where(np.logical_and(freqs>=minfreq, freqs<=maxfreq))]
@@ -43,10 +43,10 @@ def source_power_law_fit(source,minfreq,maxfreq):
     return popt
 
 def plot_flux_comp(source,name=None,custom_minfreq=None,custom_maxfreq=None):
-    '''
+    """
     Plots the result of source_power_law_fit() along with the data from calibrators.txt
     for the source in question. Use 'name' to save the resulting plot.
-    '''
+    """
     freqs = get_freqs(MHz=True) #In MHz
     fluxes = cal_fluxes(source)
     errs = errors()
