@@ -40,7 +40,7 @@ install_requires = [
 
 extras_require = {
         'full': [
-            'pyslali',
+            'pyslalib',
         ]
 }
 
