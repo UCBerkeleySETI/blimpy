@@ -39,7 +39,7 @@ def __write_to_fil_heavy(wf, filename_out, *args, **kwargs):
     n_blobs = wf.container.calc_n_blobs(blob_dim)
 
     # Write header of .fil file
-    n_bytes = wf.header[b'nbits'] / 8
+    n_bytes = wf.header['nbits'] / 8
     with open(filename_out, "wb") as fileh:
         fileh.write(generate_sigproc_header(wf))  # generate_sigproc_header comes from sigproc.py
 
@@ -67,7 +67,7 @@ def __write_to_fil_light(wf, filename_out, *args, **kwargs):
         filename_out (str): Name of output file
     """
 
-    n_bytes = wf.header[b'nbits'] / 8
+    n_bytes = wf.header['nbits'] / 8
     with open(filename_out, "wb") as fileh:
         fileh.write(generate_sigproc_header(wf))  # generate_sigproc_header comes from sigproc.py
         j = wf.data

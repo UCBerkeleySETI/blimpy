@@ -52,7 +52,7 @@ def cmd_tool(args=None):
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float, help='Stop frequency in MHz')
     parser.add_argument('-x', '--output_file', action='store', default=None, dest='out_format', type=str, help='Output file format [.h5 or .fil].')
     parser.add_argument('-o', '--output_filename', action='store', default=None, dest='out_fname', type=str, help='Ouput file name to write (to HDF5 or FIL).')
-    parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1GB')
+    parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1G')
 
     if args is None:
         args = sys.argv[1:]
@@ -111,8 +111,8 @@ def cmd_tool(args=None):
 
     #Read start frequency and bandwidth from data set
     file_big = Waterfall(args.in_fname, max_load = args.max_load)
-    f_min_file = file_big.header[b'fch1']
-    f_max_file = file_big.header[b'fch1'] + file_big.header[b'nchans']*file_big.header[b'foff']
+    f_min_file = file_big.header['fch1']
+    f_max_file = file_big.header['fch1'] + file_big.header['nchans']*file_big.header['foff']
 
     if args.f_start == None:
         logger.warning('Lower frequency not given, setting to ' + str(f_min_file) + ' MHz to match file.')

@@ -12,7 +12,7 @@ def plot_spectrum(wf, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=N
         c: color for line
         kwargs: keyword args to be passed to matplotlib plot()
     """
-    if wf.header[b'nbits'] <= 2:
+    if wf.header['nbits'] <= 2:
         logged = False
         t = 'all'
     ax = plt.gca()
@@ -20,7 +20,7 @@ def plot_spectrum(wf, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=N
     plot_f, plot_data = wf.grab_data(f_start, f_stop, if_id)
 
     # Using accending frequency for all plots.
-    if wf.header[b'foff'] < 0:
+    if wf.header['foff'] < 0:
         plot_data = plot_data[..., ::-1]  # Reverse data
         plot_f = plot_f[::-1]
 
@@ -59,7 +59,7 @@ def plot_spectrum(wf, t=0, f_start=None, f_stop=None, logged=False, if_id=0, c=N
     plt.legend()
 
     try:
-        plt.title(wf.header[b'source_name'])
+        plt.title(wf.header['source_name'])
     except KeyError:
         plt.title(wf.filename)
 

@@ -11,9 +11,9 @@ def compute_lsrk(wf):
     Args:
         wf (bl.Waterfall): Waterfall object for which to compute LSR
     """
-    ra = Angle(wf.header[b'src_raj'], unit='hourangle')
-    dec = Angle(wf.header[b'src_dej'], unit='degree')
-    mjdd = wf.header[b'tstart']
+    ra = Angle(wf.header['src_raj'], unit='hourangle')
+    dec = Angle(wf.header['src_dej'], unit='degree')
+    mjdd = wf.header['tstart']
     rarad = ra.to('radian').value
     dcrad = dec.to('radian').value
     last = compute_lst(wf)

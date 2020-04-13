@@ -65,7 +65,7 @@ class GuppiRaw(object):
         if PYTHON3:
             self.file_obj = open(filename, 'rb')
         else:
-            self.file_obj = open(filename, 'r')
+            self.file_obj = open(filename, 'rb')
         self.filesize = os.path.getsize(filename)
 
         if not n_blocks:
@@ -87,7 +87,7 @@ class GuppiRaw(object):
         if PYTHON3:
             self.file_obj = open(self.filename, 'rb')
         else:
-            self.file_obj = open(self.filename, 'r')
+            self.file_obj = open(self.filename, 'rb')
         self.filesize = os.path.getsize(self.filename)
         return self
 
