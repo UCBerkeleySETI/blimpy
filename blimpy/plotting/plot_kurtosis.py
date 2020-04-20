@@ -15,7 +15,7 @@ def plot_kurtosis(wf, f_start=None, f_stop=None, if_id=0, **kwargs):
     plot_f, plot_data = wf.grab_data(f_start, f_stop, if_id)
 
     # Using accending frequency for all plots.
-    if wf.header[b'foff'] < 0:
+    if wf.header['foff'] < 0:
         plot_data = plot_data[..., ::-1]  # Reverse data
         plot_f = plot_f[::-1]
 

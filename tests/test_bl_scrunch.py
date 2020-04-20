@@ -9,8 +9,8 @@ from tests.data import voyager_h5
 
 
 def test_scrunch():
-    ''' Tests the conversion of fil files into h5 in both light and heavy modes.
-    '''
+    """ Tests the conversion of fil files into h5 in both light and heavy modes.
+    """
 
     # Creating test file.
     bl.bl_scrunch.bl_scrunch(voyager_h5, new_filename='test.scrunched.h5', f_scrunch=8)

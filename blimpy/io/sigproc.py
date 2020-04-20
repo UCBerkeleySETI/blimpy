@@ -49,30 +49,30 @@ except ImportError:
 #   * ibeam (int): number of the beam in this file (?)
 
 header_keyword_types = {
-    b'telescope_id' : b'<l',
-    b'machine_id'   : b'<l',
-    b'data_type'    : b'<l',
-    b'barycentric'  : b'<l',
-    b'pulsarcentric': b'<l',
-    b'nbits'        : b'<l',
-    b'nsamples'     : b'<l',
-    b'nchans'       : b'<l',
-    b'nifs'         : b'<l',
-    b'nbeams'       : b'<l',
-    b'ibeam'        : b'<l',
-    b'rawdatafile'  : b'str',
-    b'source_name'  : b'str',
-    b'az_start'     : b'<d',
-    b'za_start'     : b'<d',
-    b'tstart'       : b'<d',
-    b'tsamp'        : b'<d',
-    b'fch1'         : b'<d',
-    b'foff'         : b'<d',
-    b'refdm'        : b'<d',
-    b'period'       : b'<d',
-    b'src_raj'      : b'angle',
-    b'src_dej'      : b'angle',
-    }
+    'telescope_id' : '<l',
+    'machine_id'   : '<l',
+    'data_type'    : '<l',
+    'barycentric'  : '<l',
+    'pulsarcentric': '<l',
+    'nbits'        : '<l',
+    'nsamples'     : '<l',
+    'nchans'       : '<l',
+    'nifs'         : '<l',
+    'nbeams'       : '<l',
+    'ibeam'        : '<l',
+    'rawdatafile'  : 'str',
+    'source_name'  : 'str',
+    'az_start'     : '<d',
+    'za_start'     : '<d',
+    'tstart'       : '<d',
+    'tsamp'        : '<d',
+    'fch1'         : '<d',
+    'foff'         : '<d',
+    'refdm'        : '<d',
+    'period'       : '<d',
+    'src_raj'      : 'angle',
+    'src_dej'      : 'angle',
+}
 
 
 def len_header(filename):
@@ -108,32 +108,29 @@ def read_next_header_keyword(fh):
     Returns:
     """
     n_bytes = np.fromstring(fh.read(4), dtype='uint32')[0]
-    #print n_bytes
 
     if n_bytes > 255:
         n_bytes = 16
 
-    keyword = fh.read(n_bytes)
+    keyword = fh.read(n_bytes).decode('ascii')
 
-    #print keyword
-
-    if keyword == b'HEADER_START' or keyword == b'HEADER_END':
+    if keyword == 'HEADER_START' or keyword == 'HEADER_END':
         return keyword, 0, fh.tell()
     else:
         dtype = header_keyword_types[keyword]
         #print dtype
         idx = fh.tell()
-        if dtype == b'<l':
+        if dtype == '<l':
             val = struct.unpack(dtype, fh.read(4))[0]
-        if dtype == b'<d':
+        if dtype == '<d':
             val = struct.unpack(dtype, fh.read(8))[0]
-        if dtype == b'str':
+        if dtype == 'str':
             str_len = np.fromstring(fh.read(4), dtype='uint32')[0]
-            val = fh.read(str_len)
-        if dtype == b'angle':
+            val = fh.read(str_len).decode('ascii')
+        if dtype == 'angle':
             val = struct.unpack('<d', fh.read(8))[0]
             val = fil_double_to_angle(val)
-            if keyword == b'src_raj':
+            if keyword == 'src_raj':
                 val = Angle(val, unit=u.hour)
             else:
                 val = Angle(val, unit=u.deg)
@@ -149,7 +146,7 @@ def is_filterbank(filename):
         try:
             keyword, value, idx = read_next_header_keyword(fh)
             try:
-                assert keyword == b'HEADER_START'
+                assert keyword == 'HEADER_START'
             except AssertionError:
                 is_fil = False
         except KeyError:
@@ -178,13 +175,13 @@ def read_header(filename, return_idxs=False):
         keyword, value, idx = read_next_header_keyword(fh)
 
         try:
-            assert keyword == b'HEADER_START'
+            assert keyword == 'HEADER_START'
         except AssertionError:
             raise RuntimeError("Not a valid blimpy file.")
 
         while True:
             keyword, value, idx = read_next_header_keyword(fh)
-            if keyword == b'HEADER_END':
+            if keyword == 'HEADER_END':
                 break
             else:
                 header_dict[keyword] = value
@@ -219,10 +216,10 @@ def fix_header(filename, keyword, new_value):
 
     # Find out the datatype for the given keyword
     dtype = header_keyword_types[keyword]
-    dtype_to_type = {b'<l'  : np.int32,
-                     b'str' : bytes,
-                     b'<d'  : np.float64,
-                     b'angle' : to_sigproc_angle}
+    dtype_to_type = {'<l'  : np.int32,
+                     'str' : bytes,
+                     '<d'  : np.float64,
+                     'angle' : to_sigproc_angle}
     value_dtype = dtype_to_type[dtype]
 
     # Generate the new string
@@ -275,25 +272,24 @@ def to_sigproc_keyword(keyword, value=None):
     Returns:
         value_str (str): serialized string to write to file.
     """
-
-    keyword = bytes(keyword)
-
     if value is None:
-        return np.int32(len(keyword)).tostring() + keyword
+        return np.int32(len(keyword)).tostring() + keyword.encode('ascii')
     else:
         dtype = header_keyword_types[keyword]
 
-        dtype_to_type = {b'<l'  : np.int32,
-                         b'str' : str,
-                         b'<d'  : np.float64,
-                         b'angle' : to_sigproc_angle}
+        dtype_to_type = {'<l'  : np.int32,
+                         'str' : str,
+                         '<d'  : np.float64,
+                         'angle' : to_sigproc_angle}
 
         value_dtype = dtype_to_type[dtype]
 
+        if isinstance(value, str):
+            value = value.encode('ascii')
         if value_dtype is str:
-            return np.int32(len(keyword)).tostring() + keyword + np.int32(len(value)).tostring() + value
+            return np.int32(len(keyword)).tostring() + keyword.encode('ascii') + np.int32(len(value)).tostring() + value
         else:
-            return np.int32(len(keyword)).tostring() + keyword + value_dtype(value).tostring()
+            return np.int32(len(keyword)).tostring() + keyword.encode('ascii') + value_dtype(value).tostring()
 
 def generate_sigproc_header(f):
     """ Generate a serialzed sigproc header which can be written to disk.
@@ -306,21 +302,21 @@ def generate_sigproc_header(f):
     """
 
     header_string = b''
-    header_string += to_sigproc_keyword(b'HEADER_START')
+    header_string += to_sigproc_keyword('HEADER_START')
 
     for keyword in f.header.keys():
-        if keyword == b'src_raj':
-            header_string += to_sigproc_keyword(b'src_raj')  + to_sigproc_angle(f.header[b'src_raj'])
-        elif keyword == b'src_dej':
-            header_string += to_sigproc_keyword(b'src_dej')  + to_sigproc_angle(f.header[b'src_dej'])
-        elif keyword == b'az_start' or keyword == b'za_start':
+        if keyword == 'src_raj':
+            header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
+        elif keyword == 'src_dej':
+            header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
+        elif keyword == 'az_start' or keyword == 'za_start':
             header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
         elif keyword not in header_keyword_types.keys():
             pass
         else:
             header_string += to_sigproc_keyword(keyword, f.header[keyword])
 
-    header_string += to_sigproc_keyword(b'HEADER_END')
+    header_string += to_sigproc_keyword('HEADER_END')
     return header_string
 
 
@@ -351,17 +347,17 @@ def calc_n_ints_in_file(filename):
     """ Calculate number of integrations in a given file """
     # Load binary data
     h = read_header(filename)
-    n_bytes  = int(h[b'nbits'] / 8)
+    n_bytes  = int(h['nbits'] / 8)
 
-    n_chans = h[b'nchans']
-    n_ifs   = h[b'nifs']
+    n_chans = h['nchans']
+    n_ifs   = h['nifs']
     idx_data = len_header(filename)
     f = open(filename, 'rb')
     f.seek(idx_data)
     filesize = os.path.getsize(filename)
     n_bytes_data = filesize - idx_data
 
-    if h[b'nbits'] == 2:
+    if h['nbits'] == 2:
         n_ints = int(4 * n_bytes_data / (n_chans * n_ifs))
     else:
         n_ints = int(n_bytes_data / (n_bytes * n_chans * n_ifs))

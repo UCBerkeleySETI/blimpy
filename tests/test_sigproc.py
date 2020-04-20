@@ -14,24 +14,24 @@ def test_sigproc_is_fil():
 
 def test_sigproc_generate_headers():
     """ Test if you can generate headers OK from files """
-    a = bl.Filterbank(voyager_h5)
-    b = bl.Filterbank(voyager_fil)
+    a = bl.Waterfall(voyager_h5)
+    b = bl.Waterfall(voyager_fil)
     sigproc.generate_sigproc_header(a)
     sigproc.generate_sigproc_header(b)
 
 def test_fil_write():
     try:
-        a = bl.Filterbank(voyager_h5)
-        b = bl.Filterbank(voyager_fil)
+        a = bl.Waterfall(voyager_h5)
+        b = bl.Waterfall(voyager_fil)
 
         a.write_to_fil('test.fil')
         b.write_to_fil('test2.fil')
 
-        c = bl.Filterbank('test.fil')
-        d = bl.Filterbank('test2.fil')
+        c = bl.Waterfall('test.fil')
+        d = bl.Waterfall('test2.fil')
 
         for key in a.header.keys():
-            if key != b'DIMENSION_LABELS':
+            if key != 'DIMENSION_LABELS':
                 assert a.header[key] == c.header[key]
                 assert key in c.header.keys()
                 assert a.header[key] == d.header[key]

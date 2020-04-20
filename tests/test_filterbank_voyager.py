@@ -10,8 +10,8 @@ def compare_filterbank_fil_to_h5():
     """ Load Voyager dataset and test that both fil and hdf5 readers return same headers and data """
 
     print("Loading FIL and HDF5 data with Waterfall()..."),
-    a = bl.Filterbank(voyager_h5)
-    b = bl.Filterbank(voyager_fil)
+    a = bl.Waterfall(voyager_h5)
+    b = bl.Waterfall(voyager_fil)
     print("OK")
 
     print("Reading headers..")
@@ -38,8 +38,8 @@ def compare_filterbank_fil_to_h5():
 
 def test_plotting_doesnt_cause_exceptions():
     """ Try running the plotting routines. They should not raise expections even without X windows """
-    a = bl.Filterbank(voyager_h5)
-    b = bl.Filterbank(voyager_fil)
+    a = bl.Waterfall(voyager_h5)
+    b = bl.Waterfall(voyager_fil)
 
     a.plot_all()
     a.plot_kurtosis()

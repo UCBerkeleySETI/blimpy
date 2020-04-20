@@ -114,14 +114,14 @@ class Waterfall(object):
             self.__load_data()
 
         elif header_dict is not None and data_array is not None:
-            self.filename = b''
+            self.filename = ''
             self.header = header_dict
             self.data = data_array
             self.n_ints_in_file = 0
             self._setup_freqs()
 
         else:
-            self.filename = b''
+            self.filename = ''
 
         # Attach methods
         self.plot_spectrum         = six.create_bound_method(plot_spectrum, self)
@@ -156,16 +156,16 @@ class Waterfall(object):
         """ Updates the header information from the original file to the selection. """
 
         #Updating frequency of first channel from selection
-        if self.header[b'foff'] < 0:
-            self.header[b'fch1'] = self.container.f_stop
+        if self.header['foff'] < 0:
+            self.header['fch1'] = self.container.f_stop
         else:
-            self.header[b'fch1'] = self.container.f_start
+            self.header['fch1'] = self.container.f_start
 
         #Updating number of coarse channels.
-        self.header[b'nchans'] = self.container.selection_shape[self.freq_axis]
+        self.header['nchans'] = self.container.selection_shape[self.freq_axis]
 
         #Updating time stamp for first time bin from selection
-        self.header[b'tstart'] = self.container.populate_timestamps(update_header=True)
+        self.header['tstart'] = self.container.populate_timestamps(update_header=True)
 
     def info(self):
         """ Print header information and other derived information. """
@@ -179,7 +179,7 @@ class Waterfall(object):
                 val = val.to_string(unit=u.deg, sep=':')
             if key in ('foff', 'fch1'):
                 val *= u.MHz
-            if key == b'tstart':
+            if key == 'tstart':
                 print("%16s : %32s" % ("tstart (ISOT)", Time(val, format='mjd').isot))
                 key = "tstart (MJD)"
             print("%16s : %32s" % (key, val))
@@ -197,7 +197,7 @@ class Waterfall(object):
             This is assuming a chunk is about 1 MiB.
 
             Notes:
-                A 'blob' is the max size that will be read into memory at once.
+                A 'blo' is the max size that will be read into memory at once.
                 A 'chunk' is a HDF5 concept to do with efficient read access, see
                 https://portal.hdfgroup.org/display/HDF5/Chunking+in+HDF5
 
@@ -231,17 +231,17 @@ class Waterfall(object):
         """
 
         #Usually '.0000.' is in self.filename
-        if np.abs(self.header[b'foff']) < 1e-5:
+        if np.abs(self.header['foff']) < 1e-5:
             logger.info('Detecting high frequency resolution data.')
             chunk_dim = (1,1,1048576) #1048576 is the number of channels in a coarse channel.
             return chunk_dim
         #Usually '.0001.' is in self.filename
-        elif np.abs(self.header[b'tsamp']) < 1e-3:
+        elif np.abs(self.header['tsamp']) < 1e-3:
             logger.info('Detecting high time resolution data.')
             chunk_dim = (2048,1,512) #512 is the total number of channels per single band (ie. blc00)
             return chunk_dim
         #Usually '.0002.' is in self.filename
-        elif np.abs(self.header[b'foff']) < 1e-2 and np.abs(self.header[b'foff'])  >= 1e-5:
+        elif np.abs(self.header['foff']) < 1e-2 and np.abs(self.header['foff'])  >= 1e-5:
             logger.info('Detecting intermediate frequency and time resolution data.')
             chunk_dim = (10,1,65536)  #65536 is the total number of channels per single band (ie. blc00)
 #            chunk_dim = (1,1,65536/4)
@@ -357,11 +357,11 @@ def cmd_tool(args=None):
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot; \
                         "t" for time series; "mm" for spectrum including min max; "k" for kurtosis; \
                         "a" for all available plots and information; and "ank" for all but kurtosis.')
-    parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
+    parser.add_argument('-', action='store', default=None, dest='f_start', type=float,
                         help='Start frequency (begin), in MHz')
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float,
                         help='Stop frequency (end), in MHz')
-    parser.add_argument('-B', action='store', default=None, dest='t_start', type=int,
+    parser.add_argument('-b', action='store', default=None, dest='t_start', type=int,
                         help='Start integration (begin, inclusive) ID ')
     parser.add_argument('-E', action='store', default=None, dest='t_stop', type=int,
                         help='Stop integration (end, exclusive) ID')
@@ -382,7 +382,7 @@ def cmd_tool(args=None):
     parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
                         help='Filename output (if not provided, the name will be the same but with appropriate extension).')
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
-                        help='Maximum data limit to load. Default:1GB')
+                        help='Maximum data limit to load. Default:1G')
 
     if args is None:
         args = sys.argv[1:]

@@ -1,8 +1,6 @@
 language: python
 matrix:
   include:
-  - env: DIST=py2_kern.docker
-  - env: DIST=py2_manual.docker
   - env: DIST=py3_kern.docker
   - env: DIST=py3_manual.docker
 services:

@@ -5,9 +5,9 @@ from blimpy import Waterfall
 import numpy as np
 
 def get_diff(dio_cross,feedtype,**kwargs):
-    '''
+    """
     Returns ON-OFF for all Stokes parameters given a cross_pols noise diode measurement
-    '''
+    """
     #Get Stokes parameters, frequencies, and time sample length
     obs = Waterfall(dio_cross,max_load=150)
     freqs = obs.populate_freqs()
@@ -32,10 +32,10 @@ def get_diff(dio_cross,feedtype,**kwargs):
     return Idiff,Qdiff,Udiff,Vdiff,freqs
 
 def plot_Stokes_diode(dio_cross,diff=True,feedtype='l',**kwargs):
-    '''
+    """
     Plots the uncalibrated full stokes spectrum of the noise diode.
     Use diff=False to plot both ON and OFF, or diff=True for ON-OFF
-    '''
+    """
 
     #If diff=True, get ON-OFF. If not get ON and OFF separately
     if diff==True:
@@ -75,10 +75,10 @@ def plot_Stokes_diode(dio_cross,diff=True,feedtype='l',**kwargs):
 
 
 def plot_calibrated_diode(dio_cross,chan_per_coarse=8,feedtype='l',**kwargs):
-    '''
+    """
     Plots the corrected noise diode spectrum for a given noise diode measurement
     after application of the inverse Mueller matrix for the electronics chain.
-    '''
+    """
     #Get full stokes data for the ND observation
     obs = Waterfall(dio_cross,max_load=150)
     freqs = obs.populate_freqs()
@@ -118,10 +118,10 @@ def plot_calibrated_diode(dio_cross,chan_per_coarse=8,feedtype='l',**kwargs):
 
 
 def plot_phase_offsets(dio_cross,chan_per_coarse=8,feedtype='l',ax1=None,ax2=None,legend=True,**kwargs):
-    '''
+    """
     Plots the calculated phase offsets of each coarse channel along with
     the UV (or QU) noise diode spectrum for comparison
-    '''
+    """
     #Get ON-OFF ND spectra
     Idiff,Qdiff,Udiff,Vdiff,freqs = get_diff(dio_cross,feedtype,**kwargs)
     obs = Waterfall(dio_cross,max_load=150)
@@ -165,10 +165,10 @@ def plot_phase_offsets(dio_cross,chan_per_coarse=8,feedtype='l',ax1=None,ax2=Non
         plt.legend()
 
 def plot_gain_offsets(dio_cross,dio_chan_per_coarse=8,feedtype='l',ax1=None,ax2=None,legend=True,**kwargs):
-    '''
+    """
     Plots the calculated gain offsets of each coarse channel along with
     the time averaged power spectra of the X and Y feeds
-    '''
+    """
     #Get ON-OFF ND spectra
     Idiff,Qdiff,Udiff,Vdiff,freqs = get_diff(dio_cross,feedtype,**kwargs)
     obs = Waterfall(dio_cross,max_load=150)
@@ -215,7 +215,7 @@ def plot_gain_offsets(dio_cross,dio_chan_per_coarse=8,feedtype='l',ax1=None,ax2=
         plt.legend()
 
 def plot_diode_fold(dio_cross,bothfeeds=True,feedtype='l',min_samp=-500,max_samp=7000,legend=True,**kwargs):
-    '''
+    """
     Plots the calculated average power and time sampling of ON (red) and
     OFF (blue) for a noise diode measurement over the observation time series
     '''

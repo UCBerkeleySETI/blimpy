@@ -7,16 +7,16 @@ BlimPy
 from blimpy.ephemeris import Observatory
 
 def error_msg(s):
-    ''' Just making clearer error messages '''
+    """ Just making clearer error messages """
     return "test_observatory.py: " + s
 
 def test_observatory_construction():
-    ''' Constructor test '''
+    """ Constructor test """
     obs = Observatory(telescope_id=0)
     assert obs.get_telescope_name() != None, error_msg("Could not create observatory")
 
 def test_observatory_values():
-    ''' Observatory values test along with beam halfwidth calculation test'''
+    """ Observatory values test along with beam halfwidth calculation test"""
     obs = Observatory(telescope_id=0)
   
     assert obs.get_telescope_name() == 'Fake', error_msg("Incorrect name")

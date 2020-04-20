@@ -9,8 +9,8 @@ from tests.data import voyager_fil
 
 
 def test_fil2h5_conversion():
-    '''Tests the conversion of fil files into h5 in both light and heavy modes.
-    '''
+    """Tests the conversion of fil files into h5 in both light and heavy modes.
+    """
 
     # Creating test file.
     bl.fil2h5.make_h5_file(voyager_fil, new_filename='test.h5')

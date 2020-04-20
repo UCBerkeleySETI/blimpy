@@ -76,7 +76,7 @@ def cmd_tool():
     p.add_option('-f', '--fscrunch', dest='f_scrunch', default=1, type=int,
                  help='Average (aka scrunch) across frequency. Number of channels to average together.')
     p.add_option('-l', action='store', default=None, dest='max_load', type=float,
-                 help='Maximum data limit to load. Default:1GB')
+                 help='Maximum data limit to load. Default:1G')
 
     opts, args = p.parse_args(sys.argv[1:])
 

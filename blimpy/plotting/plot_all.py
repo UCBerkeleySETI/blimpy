@@ -15,7 +15,7 @@ def plot_all(wf, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis
         if_id (int): IF identification (if multiple IF signals in file)
         kwargs: keyword args to be passed to matplotlib plot() and imshow()
     """
-    if wf.header[b'nbits'] <=2:
+    if wf.header['nbits'] <=2:
         logged = False
 
     nullfmt = NullFormatter()  # no labels
@@ -114,17 +114,17 @@ def plot_all(wf, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis
                   65: 'KAT7'
                   }
 
-    telescope = telescopes.get(wf.header[b"telescope_id"], wf.header[b"telescope_id"])
+    telescope = telescopes.get(wf.header['telescope_id'], wf.header['telescope_id'])
 
     plot_header = "%14s: %s\n" % ("TELESCOPE_ID", telescope)
-    for key in (b'SRC_RAJ', b'SRC_DEJ', b'TSTART', b'NCHANS', b'NBEAMS', b'NIFS', b'NBITS'):
+    for key in ('SRC_RAJ', 'SRC_DEJ', 'TSTART', 'NCHANS', 'NBEAMS', 'NIFS', 'NBITS'):
         try:
             plot_header += "%14s: %s\n" % (key, wf.header[key.lower()])
         except KeyError:
             pass
-    fch1 = "%6.6f MHz" % wf.header[b'fch1']
+    fch1 = "%6.6f MHz" % wf.header['fch1']
 
-    foff = (wf.header[b'foff'] * 1e6 * u.Hz)
+    foff = (wf.header['foff'] * 1e6 * u.Hz)
     if np.abs(foff) > 1e6 * u.Hz:
         foff = str(foff.to('MHz'))
     elif np.abs(foff) > 1e3 * u.Hz:
