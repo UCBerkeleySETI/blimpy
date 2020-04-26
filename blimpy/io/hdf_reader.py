@@ -105,12 +105,12 @@ class H5Reader(Reader):
         for key, val in self.h5['data'].attrs.items():
             #if six.PY3:
             #    key = bytes(key, 'ascii')
+            if isinstance(val, bytes):
+                val = val.decode('ascii')
             if key == 'src_raj':
                 self.header[key] = Angle(val, unit='hr')
             elif key == 'src_dej':
                 self.header[key] = Angle(val, unit='deg')
-            elif key in ('source_name', 'rawdatafile'):
-                self.header[key] = val.decode('ascii')
             else:
                 self.header[key] = val
 
