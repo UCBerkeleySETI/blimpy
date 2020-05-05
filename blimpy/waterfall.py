@@ -357,11 +357,11 @@ def cmd_tool(args=None):
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot; \
                         "t" for time series; "mm" for spectrum including min max; "k" for kurtosis; \
                         "a" for all available plots and information; and "ank" for all but kurtosis.')
-    parser.add_argument('-', action='store', default=None, dest='f_start', type=float,
+    parser.add_argument('-b', action='store', default=None, dest='f_start', type=float,
                         help='Start frequency (begin), in MHz')
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float,
                         help='Stop frequency (end), in MHz')
-    parser.add_argument('-b', action='store', default=None, dest='t_start', type=int,
+    parser.add_argument('-B', action='store', default=None, dest='t_start', type=int,
                         help='Start integration (begin, inclusive) ID ')
     parser.add_argument('-E', action='store', default=None, dest='t_stop', type=int,
                         help='Stop integration (end, exclusive) ID')
