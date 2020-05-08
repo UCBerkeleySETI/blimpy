@@ -218,7 +218,7 @@ def plot_diode_fold(dio_cross,bothfeeds=True,feedtype='l',min_samp=-500,max_samp
     """
     Plots the calculated average power and time sampling of ON (red) and
     OFF (blue) for a noise diode measurement over the observation time series
-    '''
+    """
     #Get full stokes data of ND measurement
     obs = Waterfall(dio_cross,max_load=150)
     tsamp = obs.header['tsamp']
