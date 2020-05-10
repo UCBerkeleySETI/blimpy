@@ -216,7 +216,7 @@ class Reader(object):
         self._setup_chans()
 
         #create freq array
-        i_vals = np.arange(self.chan_start_idx, self.chan_stop_idx)
+        i_vals = np.arange(self.chan_start_idx, self.chan_stop_idx + 1)
         freqs = self.header['foff'] * i_vals + f0
 
         return freqs

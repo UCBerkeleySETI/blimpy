@@ -289,11 +289,11 @@ class Waterfall(object):
         i1 = np.argmin(np.abs(self.freqs - f_stop))
 
         if i0 < i1:
-            plot_f    = self.freqs[i0:i1 + 1]
-            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i0:i1 + 1])
+            plot_f    = self.freqs[i0:i1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i0:i1])
         else:
-            plot_f    = self.freqs[i1:i0 + 1]
-            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
+            plot_f    = self.freqs[i1:i0]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0])
 
         return plot_f, plot_data
 
