@@ -39,7 +39,8 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
     block_size = 0
 
     #Note that a chunk is not a blob!!
-    chunk_dim = wf._get_chunk_dimensions()
+    #chunk_dim = wf._get_chunk_dimensions() <-- seems intended for raw to fil
+    chunk_dim = (1, 1, wf.selection_shape[-1])
     blob_dim  = wf._get_blob_dimensions(chunk_dim)
     n_blobs   = wf.container.calc_n_blobs(blob_dim)
 
