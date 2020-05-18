@@ -40,7 +40,12 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
 
     #Note that a chunk is not a blob!!
     #chunk_dim = wf._get_chunk_dimensions() <-- seems intended for raw to fil
-    chunk_dim = (1, 1, wf.selection_shape[-1])
+    #And, chunk dimensions should not exceed the Waterfall selection shape dimensions.
+    chunk_list = list(wf._get_chunk_dimensions())
+    for ix in range(0, len(chunk_list)):
+        if chunk_list[ix] > wf.selection_shape[ix]:
+            chunk_list[ix] = wf.selection_shape[ix]
+    chunk_dim = tuple(chunk_list)
     blob_dim  = wf._get_blob_dimensions(chunk_dim)
     n_blobs   = wf.container.calc_n_blobs(blob_dim)
 
