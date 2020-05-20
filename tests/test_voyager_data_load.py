@@ -53,14 +53,14 @@ def test_grab_data_works_across_all_fil_h5():
     for ii, rr in enumerate(all_readers):
         f, d = rr.grab_data(f_start=8419.29, f_stop=8419.30)
         print(f.shape, d.shape)
-        assert f.shape == (3579,)
-        assert d.shape == (16, 3579)
+        assert f.shape == (3580,)
+        assert d.shape == (16, 3580)
 
     for ii, rr in enumerate(all_readers):
         f, d = rr.grab_data(f_start=8419.29685, f_stop=8419.2971)
         print(f.shape, d.shape)
-        assert f.shape == (90,)
-        assert d.shape == (16, 90)
+        assert f.shape == (91,)
+        assert d.shape == (16, 91)
 
 if __name__ == "__main__":
     test_waterfall_data_load_range_freq()
