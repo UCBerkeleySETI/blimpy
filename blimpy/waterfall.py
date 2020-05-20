@@ -188,8 +188,14 @@ class Waterfall(object):
         print("%16s : %32s" % ("File shape", self.file_shape))
         print("--- Selection Info ---")
         print("%16s : %32s" % ("Data selection shape", self.selection_shape))
-        print("%16s : %32s" % ("Minimum freq (MHz)", self.container.f_start))
-        print("%16s : %32s" % ("Maximum freq (MHz)", self.container.f_stop))
+        if self.header['foff'] < 0:
+            minfreq = self.container.f_start - self.header['foff']
+            maxfreq = self.container.f_stop
+        else:
+            minfreq = self.container.f_start
+            maxfreq = self.container.f_stop - self.header['foff']
+        print("%16s : %32s" % ("Minimum freq (MHz)", minfreq))
+        print("%16s : %32s" % ("Maximum freq (MHz)", maxfreq))
 
 
     def _get_blob_dimensions(self, chunk_dim):
