@@ -66,9 +66,9 @@ def plot_spectrum_min_max(wf, t=0, f_start=None, f_stop=None, logged=False, if_i
     plt.xlim(plot_f[0], plot_f[-1])
     if logged:
         try:
-            plt.ylim(db(fig_min), db(fig_max))
+            plt.ylim(db(fig_min) - 1, db(fig_max) + 1)
         except ValueError:
             if fig_max != 0:
-                plt.ylim(db(plot_data[0][plot_data[0] != 0].min()), db(fig_max))
+                plt.ylim(db(plot_data[0][plot_data[0] != 0].min()) - 1, db(fig_max) + 1)
             else:
                 plt.ylim(-10, 20)
