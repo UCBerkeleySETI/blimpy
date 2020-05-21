@@ -14,15 +14,16 @@ def plot_time_series(wf, f_start=None, f_stop=None, if_id=0, logged=True, orient
 
     ax = plt.gca()
     plot_f, plot_data = wf.grab_data(f_start, f_stop, if_id)
-
-    if logged and wf.header['nbits'] >= 8:
-        plot_data = db(plot_data)
-    print(plot_data)
+    
     # Since the data has been squeezed, the axis for time goes away if only one bin, causing a bug with axis=1
     if len(plot_data.shape) > 1:
         plot_data = np.nanmean(plot_data, axis=1)
     else:
         plot_data = np.nanmean(plot_data)
+    print(plot_data)
+
+    if logged and wf.header['nbits'] >= 8:
+        plot_data = db(plot_data)
     print(plot_data)
 
     # Make proper time axis for plotting (but only for plotting!). Note that this makes the values inclusive.
