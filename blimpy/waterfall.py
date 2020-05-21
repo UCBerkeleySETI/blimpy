@@ -379,7 +379,7 @@ def cmd_tool(args=None):
                        help='save plot graphic to file (give filename as argument)')
     parser.add_argument('-S', action='store_true', default=False, dest='save_only',
                        help='Turn off plotting of data and only save to file.')
-    parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
+    parser.add_argument('-D', action='store_false', default=False, dest='blank_dc',
                        help='Use to not blank DC bin.')
     parser.add_argument('-H', action='store_true', default=False, dest='to_hdf5',
                        help='Write file to hdf5 format.')
