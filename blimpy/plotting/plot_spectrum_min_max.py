@@ -23,9 +23,6 @@ def plot_spectrum_min_max(wf, t=0, f_start=None, f_stop=None, logged=False, if_i
         db_plot_data = db(plot_data[0])
         fig_max = np.nanmax(db_plot_data[db_plot_data != np.inf])
         fig_min = np.nanmin(db_plot_data[db_plot_data != -np.inf])
-        print(db_plot_data)
-        print(fig_min)
-        print(fig_max)
     else:
         fig_max = plot_data[0].max()
         fig_min = plot_data[0].min()
