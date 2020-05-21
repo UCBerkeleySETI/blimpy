@@ -19,8 +19,13 @@ def plot_spectrum_min_max(wf, t=0, f_start=None, f_stop=None, logged=False, if_i
         plot_data = plot_data[..., ::-1]  # Reverse data
         plot_f = plot_f[::-1]
 
-    fig_max = plot_data[0].max()
-    fig_min = plot_data[0].min()
+    if logged:
+        db_plot_data = db(plot_data[0])
+        fig_max = np.nanmax(db_plot_data)
+        fig_min = np.nanmin(db_plot_data)
+    else:
+        fig_max = plot_data[0].max()
+        fig_min = plot_data[0].min()
 
     print("averaging along time axis...")
 
@@ -66,9 +71,6 @@ def plot_spectrum_min_max(wf, t=0, f_start=None, f_stop=None, logged=False, if_i
     plt.xlim(plot_f[0], plot_f[-1])
     if logged:
         try:
-            plt.ylim(db(fig_min) - 1, db(fig_max) + 1)
+            plt.ylim(fig_min - 1, fig_max + 1)
         except ValueError:
-            if fig_max != 0:
-                plt.ylim(db(plot_data[0][plot_data[0] != 0].min()) - 1, db(fig_max) + 1)
-            else:
-                plt.ylim(-10, 20)
+            plt.ylim(-10, 20)
