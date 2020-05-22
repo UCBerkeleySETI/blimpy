@@ -53,7 +53,7 @@ def make_h5_file(filename,out_dir='./', new_filename=None, max_load=None):
 
     fil_file.write_to_hdf5(new_filename)
 
-def cmd_tool():
+def cmd_tool(flags=None):
     """ Command line utility for converting Sigproc filterbank (.fil) to  HDF5 (.h5) format
 
     Usage:
@@ -74,9 +74,12 @@ def cmd_tool():
     p.add_option('-o', '--out_dir', dest='out_dir', type='str', default='./', help='Location for output files. Default: local dir. ')
     p.add_option('-n', '--new_filename', dest='new_filename', type='str', default='', help='New name. Default: replaces extention to .h5')
     p.add_option('-d', '--delete_input', dest='delete_input', action='store_true', default=False, help='This option deletes the input file after conversion.')
-    p.add_option('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1G')
+    p.add_option('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1GB')
 
-    opts, args = p.parse_args(sys.argv[1:])
+    if flags is None:
+        opts, args = p.parse_args(sys.argv[1:])
+    else:
+        opts, args = p.parse_args(flags)
 
     if len(args)!=1:
         logger.info('Please specify a file name \nExiting.')

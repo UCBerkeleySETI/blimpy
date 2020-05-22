@@ -273,11 +273,11 @@ def plot_diode_fold(dio_cross,bothfeeds=True,feedtype='l',min_samp=-500,max_samp
 
 
 def plot_fullcalib(dio_cross,feedtype='l',**kwargs):
-    '''
+    """
     Generates and shows five plots: Uncalibrated diode, calibrated diode, fold information,
     phase offsets, and gain offsets for a noise diode measurement. Most useful diagnostic plot to
     make sure calibration proceeds correctly.
-    '''
+    """
 
     plt.figure("Multiple Calibration Plots", figsize=(12,9))
     left, width = 0.075,0.435
@@ -323,9 +323,9 @@ def plot_fullcalib(dio_cross,feedtype='l',**kwargs):
     plt.show()
 
 def plot_diodespec(ON_obs,OFF_obs,calflux,calfreq,spec_in,units='mJy',**kwargs):
-    '''
+    """
     Plots the full-band Stokes I spectrum of the noise diode (ON-OFF)
-    '''
+    """
 
     dspec = diode_spec(ON_obs,OFF_obs,calflux,calfreq,spec_in,**kwargs)
     obs = Waterfall(ON_obs,max_load=150)

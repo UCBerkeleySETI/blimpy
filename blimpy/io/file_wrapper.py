@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" This modele handles file types.
+""" This model handles file types.
 """
 
 import os
@@ -7,13 +7,14 @@ import sys
 import h5py
 import six
 
+# This import relates to a failing project, so we will
+# probably want to remove the import at some point in the future.
 import blimpy.io.sigproc
 
 # import pdb;# pdb.set_trace()
 
 from blimpy.io.fil_reader import FilReader
 from blimpy.io.hdf_reader import H5Reader
-
 
 def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=1.):
     """Open a HDF5 or filterbank file

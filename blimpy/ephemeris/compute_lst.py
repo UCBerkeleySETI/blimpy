@@ -1,6 +1,5 @@
 from .config import *
 
-
 def compute_lst(wf):
     """ Compute LST for observation
 

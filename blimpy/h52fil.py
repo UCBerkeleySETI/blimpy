@@ -72,7 +72,7 @@ def cmd_tool():
     p.add_option('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
                  help='This option deletes the input file after conversion.')
     p.add_option('-l', action='store', default=None, dest='max_load', type=float,
-                 help='Maximum data limit to load. Default:1G')
+                 help='Maximum data limit to load. Default:1GB')
 
     opts, args = p.parse_args(sys.argv[1:])
 

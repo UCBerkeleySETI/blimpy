@@ -84,7 +84,7 @@ def len_header(filename):
     Returns:
         idx_end (int): length of header, in bytes
     """
-    with  open(filename, 'rb') as f:
+    with open(filename, 'rb') as f:
         header_sub_count = 0
         eoh_found = False
         while not eoh_found:
