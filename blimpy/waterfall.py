@@ -188,8 +188,14 @@ class Waterfall(object):
         print("%16s : %32s" % ("File shape", self.file_shape))
         print("--- Selection Info ---")
         print("%16s : %32s" % ("Data selection shape", self.selection_shape))
-        print("%16s : %32s" % ("Minimum freq (MHz)", self.container.f_start))
-        print("%16s : %32s" % ("Maximum freq (MHz)", self.container.f_stop))
+        if self.header['foff'] < 0:
+            minfreq = self.container.f_start - self.header['foff']
+            maxfreq = self.container.f_stop
+        else:
+            minfreq = self.container.f_start
+            maxfreq = self.container.f_stop - self.header['foff']
+        print("%16s : %32s" % ("Minimum freq (MHz)", minfreq))
+        print("%16s : %32s" % ("Maximum freq (MHz)", maxfreq))
 
 
     def _get_blob_dimensions(self, chunk_dim):
@@ -289,11 +295,11 @@ class Waterfall(object):
         i1 = np.argmin(np.abs(self.freqs - f_stop))
 
         if i0 < i1:
-            plot_f    = self.freqs[i0:i1]
-            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i0:i1])
+            plot_f    = self.freqs[i0:i1 + 1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i0:i1 + 1])
         else:
-            plot_f    = self.freqs[i1:i0]
-            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0])
+            plot_f    = self.freqs[i1:i0 + 1]
+            plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
 
         return plot_f, plot_data
 
@@ -373,7 +379,7 @@ def cmd_tool(args=None):
                        help='save plot graphic to file (give filename as argument)')
     parser.add_argument('-S', action='store_true', default=False, dest='save_only',
                        help='Turn off plotting of data and only save to file.')
-    parser.add_argument('-D', action='store_false', default=True, dest='blank_dc',
+    parser.add_argument('-D', action='store_false', default=False, dest='blank_dc',
                        help='Use to not blank DC bin.')
     parser.add_argument('-H', action='store_true', default=False, dest='to_hdf5',
                        help='Write file to hdf5 format.')
