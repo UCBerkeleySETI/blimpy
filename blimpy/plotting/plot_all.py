@@ -15,7 +15,7 @@ def plot_all(wf, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis
         if_id (int): IF identification (if multiple IF signals in file)
         kwargs: keyword args to be passed to matplotlib plot() and imshow()
     """
-    if wf.header['nbits'] <=2:
+    if wf.header['nbits'] <= 2:
         logged = False
 
     nullfmt = NullFormatter()  # no labels
@@ -51,9 +51,8 @@ def plot_all(wf, t=0, f_start=None, f_stop=None, logged=False, if_id=0, kurtosis
 
     #         heatmap = axColorbar.pcolor(plot_data, edgecolors = 'none', picker=True)
     #         plt.colorbar(heatmap, cax = axColorbar)
-
-
     # --------
+    
     axMinMax = plt.axes(rect_min_max)
     print('Plotting Min Max')
     plot_spectrum_min_max(wf, logged=logged, f_start=f_start, f_stop=f_stop, t=t)

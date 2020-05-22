@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    Simple script for quicly making an .fil file from a .h5.
+    Simple script for quickly making a .fil file from a .h5.
 
     ..author: Emilio Enriquez (jeenriquez@gmail.com)
 
@@ -47,7 +47,7 @@ def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
 
     fil_file.write_to_fil(new_filename)
 
-def cmd_tool():
+def cmd_tool(flags=None):
     """  Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format
 
     Usage:
@@ -72,11 +72,13 @@ def cmd_tool():
     p.add_option('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
                  help='This option deletes the input file after conversion.')
     p.add_option('-l', action='store', default=None, dest='max_load', type=float,
-                 help='Maximum data limit to load. Default:1G')
+                 help='Maximum data limit to load. Default:1GB')
+    if flags is None:
+        opts, args = p.parse_args(sys.argv[1:])
+    else:
+        opts, args = p.parse_args(flags)
 
-    opts, args = p.parse_args(sys.argv[1:])
-
-    if len(args)!=1:
+    if len(args) != 1:
         logger.info('Please specify a file name \nExiting.')
         sys.exit()
     else:

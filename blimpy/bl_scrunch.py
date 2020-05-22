@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    Simple script for quicly making an .fil file from a .h5.
+    Simple script for quickly making a .fil file from a .h5.
 
     ..author: Emilio Enriquez (jeenriquez@gmail.com)
 
@@ -49,7 +49,7 @@ def bl_scrunch(filename, out_dir='./', new_filename=None, max_load=None, f_scrun
     print("Using fscrunch %i" % f_scrunch)
     fil_file.write_to_hdf5(new_filename, f_scrunch=f_scrunch)
 
-def cmd_tool():
+def cmd_tool(args=None):
     """  Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format
 
     Usage:
@@ -76,12 +76,15 @@ def cmd_tool():
     p.add_option('-f', '--fscrunch', dest='f_scrunch', default=1, type=int,
                  help='Average (aka scrunch) across frequency. Number of channels to average together.')
     p.add_option('-l', action='store', default=None, dest='max_load', type=float,
-                 help='Maximum data limit to load. Default:1G')
+                 help='Maximum data limit to load. Default:1GB')
 
-    opts, args = p.parse_args(sys.argv[1:])
+    if args is None:
+        opts, args = p.parse_args(sys.argv[1:])
+    else:
+        opts, args = p.parse_args(args)
 
-    if len(args)!=1:
-        logger.info('Please specify a file name \nExiting.')
+    if len(args) != 1:
+        logger.info('Please specify a file name. \nExiting.')
         sys.exit()
     else:
         filename = args[0]

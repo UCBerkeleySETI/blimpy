@@ -57,23 +57,22 @@ class Observatory:
         return self._telescope_name_short
 
     def get_sigproc_id(self):
-        '''getter method'''
+        """getter method"""
         return self._sigproc_id
 
     def get_xyz_coords(self):
-        '''getter method'''
+        """getter method"""
         return self._xyz_coords
 
     def calc_beam_halfwidth(self, freq):
-        ''' Calculates beam halfwidth
+        """ Calculates beam halfwidth
             Code adapted from PRESTO
             Note: returns -1 if dish diameter. Possible //TODO, throw error
         Parameters:
             freq (int or float): frequency in MHz
         Returns:
             float: beam halfwidth in arcsec
-
-        '''
+        """
         # constants from PRESTO
         rad_to_deg = 57.29577951308232087679815481410517033240547246656
         sol = 299792458.0
@@ -83,7 +82,7 @@ class Observatory:
             self._dish_diam * rad_to_deg * 3600.0
 
     def __str__(self):
-        ''' str method overload '''
+        """ str method overload """
         output_str = 'Observatory: ' + self._telescope_name + "\n"
         keys = sorted(self._info_dict.keys())
         for key in keys:
@@ -91,4 +90,3 @@ class Observatory:
                 output_str += "\t" + str(key) + ": " + \
                     str(self._info_dict[key]) + "\n"
         return output_str
-

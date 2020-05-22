@@ -203,7 +203,7 @@ class Waterfall(object):
             This is assuming a chunk is about 1 MiB.
 
             Notes:
-                A 'blo' is the max size that will be read into memory at once.
+                A 'blob' is the max size that will be read into memory at once.
                 A 'chunk' is a HDF5 concept to do with efficient read access, see
                 https://portal.hdfgroup.org/display/HDF5/Chunking+in+HDF5
 
@@ -388,7 +388,7 @@ def cmd_tool(args=None):
     parser.add_argument('-o', action='store', default=None, dest='filename_out', type=str,
                         help='Filename output (if not provided, the name will be the same but with appropriate extension).')
     parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
-                        help='Maximum data limit to load. Default:1G')
+                        help='Maximum data limit to load. Default:1GB')
 
     if args is None:
         args = sys.argv[1:]
@@ -455,6 +455,9 @@ def cmd_tool(args=None):
         fileroot = os.path.splitext(filename)[0]
 
         if parse_args.to_hdf5 and parse_args.to_fil:
+            # If this is the last statement anyway,
+            # and consequently, an output file is not generated,
+            # why do we not raise an error?
             raise Warning('Either provide to_hdf5 or to_fil, but not both.')
 
         elif parse_args.to_hdf5:
