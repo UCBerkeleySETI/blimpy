@@ -44,7 +44,7 @@ def find_header_size(filename):
     filfile.seek(0)
     #read some region larger than the header.
     round1 = filfile.read(1000)
-    headersize = round1.find('HEADER_END')+len('HEADER_END')
+    headersize = round1.find(b'HEADER_END')+len(b'HEADER_END')
 
     return headersize
 
