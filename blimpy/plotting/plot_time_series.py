@@ -20,12 +20,9 @@ def plot_time_series(wf, f_start=None, f_stop=None, if_id=0, logged=True, orient
         plot_data = np.nanmean(plot_data, axis=1)
     else:
         plot_data = np.nanmean(plot_data)
-        
-    print(plot_data)
 
     if logged and wf.header['nbits'] >= 8:
         plot_data = db(plot_data)
-    print(plot_data)
 
     # Make proper time axis for plotting (but only for plotting!). Note that this makes the values inclusive.
     extent = calc_extent(wf, plot_f=plot_f, plot_t=wf.timestamps, MJD_time=MJD_time)
