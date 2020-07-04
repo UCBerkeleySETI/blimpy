@@ -5,13 +5,6 @@ from astropy.coordinates import Angle
 import os
 #import six
 
-#try:
-#    import h5py
-#    HAS_HDF5 = True
-#except ImportError:
-#    HAS_HDF5 = False
-
-
 ###
 # Header parsing
 ###
