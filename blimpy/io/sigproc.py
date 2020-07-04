@@ -3,7 +3,6 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import Angle
 import os
-#import six
 
 ###
 # Header parsing
