@@ -3,13 +3,13 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import Angle
 import os
-import six
+#import six
 
-try:
-    import h5py
-    HAS_HDF5 = True
-except ImportError:
-    HAS_HDF5 = False
+#try:
+#    import h5py
+#    HAS_HDF5 = True
+#except ImportError:
+#    HAS_HDF5 = False
 
 
 ###
@@ -107,34 +107,32 @@ def read_next_header_keyword(fh):
 
     Returns:
     """
-    n_bytes = np.fromstring(fh.read(4), dtype='uint32')[0]
+    n_bytes = np.frombuffer(fh.read(4), dtype='uint32')[0]
 
     if n_bytes > 255:
         n_bytes = 16
 
     keyword = fh.read(n_bytes).decode('ascii')
 
-    if keyword == 'HEADER_START' or keyword == 'HEADER_END':
+    if keyword in ('HEADER_START', 'HEADER_END'):
         return keyword, 0, fh.tell()
-    else:
-        dtype = header_keyword_types[keyword]
-        #print dtype
-        idx = fh.tell()
-        if dtype == '<l':
-            val = struct.unpack(dtype, fh.read(4))[0]
-        if dtype == '<d':
-            val = struct.unpack(dtype, fh.read(8))[0]
-        if dtype == 'str':
-            str_len = np.fromstring(fh.read(4), dtype='uint32')[0]
-            val = fh.read(str_len).decode('ascii')
-        if dtype == 'angle':
-            val = struct.unpack('<d', fh.read(8))[0]
-            val = fil_double_to_angle(val)
-            if keyword == 'src_raj':
-                val = Angle(val, unit=u.hour)
-            else:
-                val = Angle(val, unit=u.deg)
-        return keyword, val, idx
+    dtype = header_keyword_types[keyword]
+    idx = fh.tell()
+    if dtype == '<l':
+        val = struct.unpack(dtype, fh.read(4))[0]
+    if dtype == '<d':
+        val = struct.unpack(dtype, fh.read(8))[0]
+    if dtype == 'str':
+        str_len = np.frombuffer(fh.read(4), dtype='uint32')[0]
+        val = fh.read(str_len).decode('ascii')
+    if dtype == 'angle':
+        val = struct.unpack('<d', fh.read(8))[0]
+        val = fil_double_to_angle(val)
+        if keyword == 'src_raj':
+            val = Angle(val, unit=u.hour)
+        else:
+            val = Angle(val, unit=u.deg)
+    return keyword, val, idx
 
 
 def is_filterbank(filename):
@@ -183,14 +181,12 @@ def read_header(filename, return_idxs=False):
             keyword, value, idx = read_next_header_keyword(fh)
             if keyword == 'HEADER_END':
                 break
-            else:
-                header_dict[keyword] = value
-                header_idxs[keyword] = idx
+            header_dict[keyword] = value
+            header_idxs[keyword] = idx
 
     if return_idxs:
         return header_idxs
-    else:
-        return header_dict
+    return header_dict
 
 def fix_header(filename, keyword, new_value):
     """ Apply a quick patch-up to a Filterbank header by overwriting a header value
@@ -237,23 +233,23 @@ def fix_header(filename, keyword, new_value):
         fh.write(val_str)
 
 def fil_double_to_angle(angle):
-      """ Reads a little-endian double in ddmmss.s (or hhmmss.s) format and then
-      converts to Float degrees (or hours).  This is primarily used to read
-      src_raj and src_dej header values. """
+    """ Reads a little-endian double in ddmmss.s (or hhmmss.s) format and then
+    converts to Float degrees (or hours).  This is primarily used to read
+    src_raj and src_dej header values. """
 
-      negative = (angle < 0.0)
-      angle = np.abs(angle)
+    negative = (angle < 0.0)
+    angle = np.abs(angle)
 
-      dd = np.floor((angle / 10000))
-      angle -= 10000 * dd
-      mm = np.floor((angle / 100))
-      ss = angle - 100 * mm
-      dd += mm/60.0 + ss/3600.0
+    dd = np.floor((angle / 10000))
+    angle -= 10000 * dd
+    mm = np.floor((angle / 100))
+    ss = angle - 100 * mm
+    dd += mm/60.0 + ss/3600.0
 
-      if negative:
-          dd *= -1
+    if negative:
+        dd *= -1
 
-      return dd
+    return dd
 
 ###
 # sigproc writing functions
@@ -273,23 +269,21 @@ def to_sigproc_keyword(keyword, value=None):
         value_str (str): serialized string to write to file.
     """
     if value is None:
-        return np.int32(len(keyword)).tostring() + keyword.encode('ascii')
-    else:
-        dtype = header_keyword_types[keyword]
+        return np.int32(len(keyword)).tobytes() + keyword.encode('ascii')
+    dtype = header_keyword_types[keyword]
 
-        dtype_to_type = {'<l'  : np.int32,
-                         'str' : str,
-                         '<d'  : np.float64,
-                         'angle' : to_sigproc_angle}
+    dtype_to_type = {'<l'  : np.int32,
+                     'str' : str,
+                     '<d'  : np.float64,
+                     'angle' : to_sigproc_angle}
 
-        value_dtype = dtype_to_type[dtype]
+    value_dtype = dtype_to_type[dtype]
 
-        if isinstance(value, str):
-            value = value.encode('ascii')
-        if value_dtype is str:
-            return np.int32(len(keyword)).tostring() + keyword.encode('ascii') + np.int32(len(value)).tostring() + value
-        else:
-            return np.int32(len(keyword)).tostring() + keyword.encode('ascii') + value_dtype(value).tostring()
+    if isinstance(value, str):
+        value = value.encode('ascii')
+    if value_dtype is str:
+        return np.int32(len(keyword)).tobytes() + keyword.encode('ascii') + np.int32(len(value)).tobytes() + value
+    return np.int32(len(keyword)).tobytes() + keyword.encode('ascii') + value_dtype(value).tobytes()
 
 def generate_sigproc_header(f):
     """ Generate a serialzed sigproc header which can be written to disk.
@@ -309,8 +303,8 @@ def generate_sigproc_header(f):
             header_string += to_sigproc_keyword('src_raj')  + to_sigproc_angle(f.header['src_raj'])
         elif keyword == 'src_dej':
             header_string += to_sigproc_keyword('src_dej')  + to_sigproc_angle(f.header['src_dej'])
-        elif keyword == 'az_start' or keyword == 'za_start':
-            header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tostring()
+        elif keyword in ('az_start', 'za_start'):
+            header_string += to_sigproc_keyword(keyword)  + np.float64(f.header[keyword]).tobytes()
         elif keyword not in header_keyword_types.keys():
             pass
         else:
@@ -326,8 +320,8 @@ def to_sigproc_angle(angle_val):
 
     if '.' in x:
         if 'h' in x:
-                d, m, s, ss = int(x[0:x.index('h')]), int(x[x.index('h')+1:x.index('m')]), \
-                int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
+            d, m, s, ss = int(x[0:x.index('h')]), int(x[x.index('h')+1:x.index('m')]), \
+            int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
         if 'd' in x:
             d, m, s, ss = int(x[0:x.index('d')]), int(x[x.index('d')+1:x.index('m')]), \
             int(x[x.index('m')+1:x.index('.')]), float(x[x.index('.'):x.index('s')])
@@ -340,7 +334,7 @@ def to_sigproc_angle(angle_val):
             int(x[x.index('m')+1:x.index('s')])
         ss = 0
     num = str(d).zfill(2) + str(m).zfill(2) + str(s).zfill(2)+ '.' + str(ss).split(".")[-1]
-    return np.float64(num).tostring()
+    return np.float64(num).tobytes()
 
 
 def calc_n_ints_in_file(filename):
@@ -361,5 +355,8 @@ def calc_n_ints_in_file(filename):
         n_ints = int(4 * n_bytes_data / (n_chans * n_ifs))
     else:
         n_ints = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
+
+    # Give the FD back to the O/S.
+    f.close()
 
     return n_ints
