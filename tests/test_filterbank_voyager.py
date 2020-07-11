@@ -47,6 +47,7 @@ def test_plotting_doesnt_cause_exceptions():
     a.plot_spectrum_min_max()
     a.plot_waterfall()
     a.plot_time_series()
+    plt.clf() # Fix issue #140
 
     b.plot_all()
     b.plot_kurtosis()

@@ -166,6 +166,9 @@ class FilReader(Reader):
 
                 f.seek(int(self._n_bytes  * (n_chans - self.chan_stop_idx)), 1)  # Seek to start of next block
 
+        # Give the FD back to the O/S.
+        f.close()
+
     def _find_blob_start(self):
         """Find first blob from selection.
         """

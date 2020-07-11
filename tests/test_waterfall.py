@@ -53,4 +53,4 @@ def test_cmd_arguments():
 if __name__ == "__main__":
     test_info()
     test_cmdline()
-
+    test_cmd_arguments()
