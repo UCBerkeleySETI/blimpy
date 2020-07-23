@@ -1,6 +1,9 @@
-from .sigproc import *
+"""
+Procedures for writing to a Filterbank File
+"""
 import time
 import numpy as np
+from .sigproc import generate_sigproc_header
 
 
 def write_to_fil(wf, filename_out, *args, **kwargs):
