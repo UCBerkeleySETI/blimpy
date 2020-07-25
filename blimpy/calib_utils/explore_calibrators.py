@@ -7,26 +7,32 @@ data = ascii.read('calibrators.txt')
 
 
 def func_powerlaw(x,alph,c):
-    #Power-law function
+    """
+    Power-law function
+    """
     return c*x**alph
 
 def get_freqs(MHz=False):
-    #Return frequency array (default in MHz) in calibrators.txt
-    if MHz==True:
-        return np.array(data['Freq'])*10**3
-    else: return np.array(data['Freq'])
+    """
+    Return frequency array in calibrators.txt
+    If MHz is true, then units of values are in MHz;
+    Else the units are in GHz (default).
+    """
+    if MHz:
+        return np.array(data['Freq']) * 1000
+    return np.array(data['Freq'])
 
 def cal_fluxes(source):
-    #Return spectrum of a particular source (e.g. '3C295') in calibrators.txt
+    """
+    Return spectrum of a particular source (e.g. '3C295') in calibrators.txt
+    """
     return np.array(data[source])
 
 def errors():
-    #Get errors
+    """
+    Get errors in the data matrix.
+    """
     return np.array(data['Err'])
-
-def spec_in(S_hi,S_low,freq_hi,freq_low):
-    #NO LONGER USED. Two-point power-law calculation, using a curve fit instead
-    return np.log(S_hi/S_low)/np.log(freq_hi/freq_low)
 
 def source_power_law_fit(source,minfreq,maxfreq):
     """
@@ -37,9 +43,7 @@ def source_power_law_fit(source,minfreq,maxfreq):
     fluxes = cal_fluxes(source)
     freqs_cut = freqs[np.where(np.logical_and(freqs>=minfreq, freqs<=maxfreq))]
     fluxes_cut = fluxes[np.where(np.logical_and(freqs>=minfreq, freqs<=maxfreq))]
-    #alpha = spec_in(flux_hi,flux_low,maxfreq,minfreq)
-    popt,pcov = curve_fit(func_powerlaw,freqs_cut,fluxes_cut)
-    #const = flux_low/np.power(minfreq,alpha)
+    popt, dummy = curve_fit(func_powerlaw,freqs_cut,fluxes_cut)
     return popt
 
 def plot_flux_comp(source,name=None,custom_minfreq=None,custom_maxfreq=None):
