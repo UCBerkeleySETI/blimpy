@@ -1,9 +1,9 @@
 from blimpy import Waterfall
 import numpy as np
-import pylab as plt
-from scipy.integrate import trapz
 from astropy import units as u
-import matplotlib.pyplot as plt
+
+fwhm_to_sig = 1./(8*np.log(2))**0.5 # a constant
+
 
 def foldcal(data,tsamp, diode_p=0.04,numsamps=1000,switch=False,inds=False):
     '''
@@ -56,18 +56,16 @@ def foldcal(data,tsamp, diode_p=0.04,numsamps=1000,switch=False,inds=False):
             av_OFF.append(np.sum(data[i[0]:i[1],:,:],axis=0)/(i[1]-i[0]))
 
     #If switch=True, flip the return statement since ON is actually OFF
-    if switch==False:
-        if inds==False:
-            return np.squeeze(np.mean(av_ON,axis=0)), np.squeeze(np.mean(av_OFF,axis=0))
-        else:
-            return np.squeeze(np.mean(av_ON,axis=0)), np.squeeze(np.mean(av_OFF,axis=0)),ONints,OFFints
-    if switch==True:
-        if inds==False:
+    if switch:
+        if not inds:
             return np.squeeze(np.mean(av_OFF,axis=0)), np.squeeze(np.mean(av_ON,axis=0))
-        else:
-            return np.squeeze(np.mean(av_OFF,axis=0)), np.squeeze(np.mean(av_ON,axis=0)),OFFints,ONints
+        return np.squeeze(np.mean(av_OFF,axis=0)), np.squeeze(np.mean(av_ON,axis=0)),OFFints,ONints
 
-def integrate_chans(spec,freqs,chan_per_coarse):
+    if not inds:
+        return np.squeeze(np.mean(av_ON,axis=0)), np.squeeze(np.mean(av_OFF,axis=0))
+    return np.squeeze(np.mean(av_ON,axis=0)), np.squeeze(np.mean(av_OFF,axis=0)),ONints,OFFints
+
+def integrate_chans(spec, chan_per_coarse):
     '''
     Integrates over each core channel of a given spectrum.
     Important for calibrating data with frequency/time resolution different from noise diode data
@@ -76,8 +74,6 @@ def integrate_chans(spec,freqs,chan_per_coarse):
     ----------
     spec : 1D Array (float)
         Spectrum (any Stokes parameter) to be integrated
-    freqs : 1D Array (float)
-        Frequency values for each bin of the spectrum
     chan_per_coarse: int
         Number of frequency bins per coarse channel
     '''
@@ -86,7 +82,6 @@ def integrate_chans(spec,freqs,chan_per_coarse):
 
     #Rearrange spectrum by coarse channel
     spec_shaped = np.array(np.reshape(spec,(num_coarse,chan_per_coarse)))
-    freqs_shaped = np.array(np.reshape(freqs,(num_coarse,chan_per_coarse)))
 
     #Average over coarse channels
     return np.mean(spec_shaped[:,1:-1],axis=1)
@@ -117,17 +112,16 @@ def integrate_calib(name,chan_per_coarse,fullstokes=False,**kwargs):
     if fullstokes==True:
         data = data[:,0,:]
         data = np.expand_dims(data,axis=1)
+    # So, what should happen if fullstokes==False and data.shape[1]<=1 ???
 
     tsamp = obs.header['tsamp']
 
     #Calculate ON and OFF values
     OFF,ON = foldcal(data,tsamp,**kwargs)
 
-    freqs = obs.populate_freqs()
-
     #Find ON and OFF spectra by coarse channel
-    ON_int = integrate_chans(ON,freqs,chan_per_coarse)
-    OFF_int = integrate_chans(OFF,freqs,chan_per_coarse)
+    ON_int = integrate_chans(ON, chan_per_coarse)
+    OFF_int = integrate_chans(OFF, chan_per_coarse)
 
     #If "ON" is actually "OFF" switch them
     if np.sum(ON_int)<np.sum(OFF_int):
@@ -159,10 +153,9 @@ def get_calfluxes(calflux,calfreq,spec_in,centerfreqs,oneflux):
     '''
 
     const = calflux/np.power(calfreq,spec_in)
-    if oneflux==False:
-        return const*np.power(centerfreqs,spec_in)
-    else:
+    if oneflux:
         return const*np.power(np.mean(centerfreqs),spec_in)
+    return const*np.power(centerfreqs,spec_in)
 
 def get_centerfreqs(freqs,chan_per_coarse):
     '''
@@ -223,7 +216,7 @@ def diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=True,oneflux
     '''
     #Load frequencies and calculate number of channels per coarse channel
     obs = Waterfall(calON_obs,max_load=150)
-    freqs = obs.populate_freqs()
+    freqs = obs.container.populate_freqs()
     ncoarse = obs.calc_n_coarse_chan()
     nchans = obs.header['nchans']
     chan_per_coarse = nchans/ncoarse
@@ -239,12 +232,11 @@ def diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=True,oneflux
     Tsys = C_o/f_OFF
 
     #return coarse channel diode spectrum
-    if average==True:
+    if average:
         return np.mean(C_o),np.mean(Tsys)
-    else:
-        return C_o,Tsys
+    return C_o,Tsys
 
-def get_Tsys(calON_obs,calOFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs):
+def get_Tsys(calON_obs, calOFF_obs, calflux, calfreq, spec_in, **kwargs):
     '''
     Returns frequency dependent system temperature given observations on and off a calibrator source
 
@@ -255,14 +247,14 @@ def get_Tsys(calON_obs,calOFF_obs,calflux,calfreq,spec_in,oneflux=False,**kwargs
     obs = Waterfall(calON_obs,max_load=150)
     ncoarse = obs.calc_n_coarse_chan()
     chan_per_coarse = obs.header['nchans']/ncoarse
-    freqs = obs.populate_freqs()
+    freqs = obs.container.populate_freqs()
     cfreqs = get_centerfreqs(freqs,chan_per_coarse)
     S_sys = diode_spec(calON_obs,calOFF_obs,calflux,calfreq,spec_in,average=False,oneflux=False,**kwargs)[1]
 
     T_sys = Jy_to_Kelvin(S_sys,cfreqs)
     return T_sys,cfreqs
 
-def get_Tsys_nodiode(calON_obs_name,calOFF_obs_name,calflux,calfreq,spec_in,plot=False,**kwargs):
+def get_Tsys_nodiode(calON_obs_name, calOFF_obs_name, calflux, calfreq, spec_in):
     '''
     Calculates system temperature from two flux calibrator scans taken without noise diode flickering.
     CURRENTLY ONLY IMPLEMENTED FOR STOKES I DATA.
@@ -287,10 +279,10 @@ def get_Tsys_nodiode(calON_obs_name,calOFF_obs_name,calflux,calfreq,spec_in,plot
 
     ONobs_spec = np.squeeze(np.mean(calON_obs.data,axis=0))
     OFFobs_spec = np.squeeze(np.mean(calOFF_obs.data,axis=0))
-    freqs = calON_obs.populate_freqs()
+    freqs = calON_obs.container.populate_freqs()
 
-    ON_coarse_spec = integrate_chans(ONobs_spec,freqs,chan_per_coarse)
-    OFF_coarse_spec = integrate_chans(OFFobs_spec,freqs,chan_per_coarse)
+    ON_coarse_spec = integrate_chans(ONobs_spec, chan_per_coarse)
+    OFF_coarse_spec = integrate_chans(OFFobs_spec, chan_per_coarse)
     cfreqs = get_centerfreqs(freqs,chan_per_coarse)
     cal_fluxes = get_calfluxes(calflux,calfreq,spec_in,cfreqs,oneflux=False)
 
@@ -312,8 +304,7 @@ def Jy_to_Kelvin(flux,freqs):
     freqs : 1D Array (float)
         Frequencies (in MHz)
     '''
-    beam_FWHM = 755.0/(np.mean(freqs*10**(-3)))*u.arcsec
-    fwhm_to_sig = 1./(8*np.log(2))**0.5
+    beam_FWHM = 755.0/(np.mean(freqs*0.001))*u.arcsec
     beam_area = 2*np.pi*(beam_FWHM*fwhm_to_sig)**2
     freq_MHz = np.mean(freqs)*u.MHz
     equiv = u.brightness_temperature(beam_area,freq_MHz)
@@ -372,8 +363,5 @@ def calibrate_fluxes(main_obs_name,dio_name,dspec,Tsys,fullstokes=False,**kwargs
     #Write calibrated data to a new filterbank file with ".fluxcal" extension
 
     main_obs.data = main_dat
-    main_obs.write_to_filterbank(main_obs_name[:-4]+'.fluxcal.fil')
+    main_obs.write_to_fil(main_obs_name[:-4]+'.fluxcal.fil')
     print('Finished: calibrated product written to ' + main_obs_name[:-4]+'.fluxcal.fil')
-
-
-#end module
