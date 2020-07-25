@@ -1,6 +1,9 @@
-from .sigproc import *
+"""
+Procedures for writing to a Filterbank File
+"""
 import time
 import numpy as np
+from .sigproc import generate_sigproc_header
 
 
 def write_to_fil(wf, filename_out, *args, **kwargs):
@@ -26,7 +29,7 @@ def write_to_fil(wf, filename_out, *args, **kwargs):
     wf.logger.info('Conversion time: %2.2fsec' % (t1 - t0))
 
 
-def __write_to_fil_heavy(wf, filename_out, *args, **kwargs):
+def __write_to_fil_heavy(wf, filename_out):
     """ Write data to .fil file.
 
     Args:
@@ -38,29 +41,31 @@ def __write_to_fil_heavy(wf, filename_out, *args, **kwargs):
     blob_dim = wf._get_blob_dimensions(chunk_dim)
     n_blobs = wf.container.calc_n_blobs(blob_dim)
 
-    # Write header of .fil file
+    # Calculate number of bytes per data element
     n_bytes = wf.header['nbits'] / 8
-    with open(filename_out, "wb") as fileh:
-        fileh.write(generate_sigproc_header(wf))  # generate_sigproc_header comes from sigproc.py
 
     wf.logger.info('Using %i n_blobs to write the data.' % n_blobs)
-    for ii in range(0, n_blobs):
-        wf.logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+    with open(filename_out, "wb") as fileh:
 
-        bob = wf.container.read_blob(blob_dim, n_blob=ii)
+        # Write header of .fil file
+        fileh.write(generate_sigproc_header(wf))
 
-        # Write data of .fil file.
-        with open(filename_out, "a") as fileh:
-            j = bob
+        # For each blob
+        for ii in range(0, n_blobs):
+
+            wf.logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+            bob = wf.container.read_blob(blob_dim, n_blob=ii)
+
+            # Write data of .fil file.
             if n_bytes == 4:
-                np.float32(j.ravel()).tofile(fileh)
+                np.float32(bob.ravel()).tofile(fileh)
             elif n_bytes == 2:
-                np.int16(j.ravel()).tofile(fileh)
+                np.int16(bob.ravel()).tofile(fileh)
             elif n_bytes == 1:
-                np.int8(j.ravel()).tofile(fileh)
+                np.int8(bob.ravel()).tofile(fileh)
 
 
-def __write_to_fil_light(wf, filename_out, *args, **kwargs):
+def __write_to_fil_light(wf, filename_out):
     """ Write data to .fil file.
 
     Args:
@@ -69,11 +74,10 @@ def __write_to_fil_light(wf, filename_out, *args, **kwargs):
 
     n_bytes = wf.header['nbits'] / 8
     with open(filename_out, "wb") as fileh:
-        fileh.write(generate_sigproc_header(wf))  # generate_sigproc_header comes from sigproc.py
-        j = wf.data
+        fileh.write(generate_sigproc_header(wf))
         if n_bytes == 4:
-            np.float32(j.ravel()).tofile(fileh)
+            np.float32(wf.data.ravel()).tofile(fileh)
         elif n_bytes == 2:
-            np.int16(j.ravel()).tofile(fileh)
+            np.int16(wf.data.ravel()).tofile(fileh)
         elif n_bytes == 1:
-            np.int8(j.ravel()).tofile(fileh)
+            np.int8(wf.data.ravel()).tofile(fileh)
