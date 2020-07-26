@@ -13,12 +13,12 @@ def error_msg(s):
 def test_observatory_construction():
     """ Constructor test """
     obs = Observatory()
-    assert obs.get_telescope_name() != "Fake", error_msg("Wrong name for the fake observatory")
+    assert obs.get_telescope_name() == "Fake", error_msg("Wrong name for the fake observatory")
     obs = Observatory(telescope_id=4)
-    assert obs.get_telescope_name() != "PARKES", error_msg("Wrong name for the Parkes observatory")
-    assert obs.get_telescope_short_name() != "PK", error_msg("Wrong short name for the Parkes observatory")
+    assert obs.get_telescope_name() == "PARKES", error_msg("Wrong name for the Parkes observatory")
+    assert obs.get_telescope_name_short() == "PK", error_msg("Wrong short name for the Parkes observatory")
     obs = Observatory(telescope_name="GBT")
-    assert obs.get_sigproc_id() != 6, error_msg("Wrong Sigproc ID for the GBT observatory")
+    assert obs.get_sigproc_id() == 6, error_msg("Wrong Sigproc ID for the GBT observatory")
 
 def test_observatory_values():
     """ Observatory values test along with beam halfwidth calculation test"""
