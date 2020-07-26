@@ -1,6 +1,5 @@
 from blimpy import Waterfall
 import numpy as np
-from scipy.optimize import curve_fit
 from .fluxcal import foldcal
 
 def get_stokes(cross_dat, feedtype='l'):
@@ -98,9 +97,7 @@ def gain_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwargs
         Q_OFF,Q_ON = foldcal(Qdat,tsamp,**kwargs)
 
         #Calculate power in each feed for noise diode ON and OFF
-        XX_ON = (I_ON+Q_ON)/2
         XX_OFF = (I_OFF+Q_OFF)/2
-        YY_ON = (I_ON-Q_ON)/2
         YY_OFF = (I_OFF-Q_OFF)/2
 
         #Calculate gain offset (divided by 2) as defined in Heiles (2001)
@@ -112,15 +109,14 @@ def gain_offsets(Idat,Qdat,Udat,Vdat,tsamp,chan_per_coarse,feedtype='l',**kwargs
         V_OFF,V_ON = foldcal(Vdat,tsamp,**kwargs)
 
         #Calculate power in each feed for noise diode ON and OFF
-        RR_ON = (I_ON+V_ON)/2
         RR_OFF = (I_OFF+V_OFF)/2
-        LL_ON = (I_ON-V_ON)/2
         LL_OFF = (I_OFF-V_OFF)/2
 
         #Calculate gain offset (divided by 2) as defined in Heiles (2001)
         G = (RR_OFF-LL_OFF)/(RR_OFF+LL_OFF)
 
     return convert_to_coarse(G,chan_per_coarse)
+
 def apply_Mueller(I,Q,U,V, gain_offsets, phase_offsets, chan_per_coarse, feedtype='l'):
     '''
     Returns calibrated Stokes parameters for an observation given an array
@@ -236,7 +232,7 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**
     I,Q,U,V = apply_Mueller(I,Q,U,V,gams,psis,obs_chan_per_coarse,feedtype)
 
     #Use onefile (default) to produce one filterbank file containing all Stokes information
-    if onefile==True:
+    if onefile:
         cross_obs.data[:,0,:] = np.squeeze(I)
         cross_obs.data[:,1,:] = np.squeeze(Q)
         cross_obs.data[:,2,:] = np.squeeze(U)
@@ -245,8 +241,11 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**
         print('Calibrated Stokes parameters written to '+cross_pols[:-15]+'.SIQUV.polcal.fil')
         return
 
+    # If onefile=False and obsI=None, abort
+    assert obsI is not None
+
     #Write corrected Stokes parameters to four filterbank files if onefile==False
-    obs = Waterfall(obs_I,max_load=150)
+    obs = Waterfall(obsI,max_load=150)
     obs.data = I
     obs.write_to_fil(cross_pols[:-15]+'.SI.polcal.fil')   #assuming file is named *.cross_pols.fil
     print('Calibrated Stokes I written to '+cross_pols[:-15]+'.SI.polcal.fil')
@@ -264,51 +263,49 @@ def calibrate_pols(cross_pols,diode_cross,obsI=None,onefile=True,feedtype='l',**
     print('Calibrated Stokes V written to '+cross_pols[:-15]+'.V.polcal.fil')
 
 
-def fracpols(str, **kwargs):
+def fracpols(cross_dat, **kwargs):
     '''Output fractional linear and circular polarizations for a
     rawspec cross polarization .fil file. NOT STANDARD USE'''
 
-    I,Q,U,V,L=get_stokes(str, **kwargs)
+    I,Q,U,V,L=get_stokes(cross_dat, **kwargs)
     return L/I,V/I
 
-def write_stokefils(str, str_I, Ifil=False, Qfil=False, Ufil=False, Vfil=False, Lfil=False, **kwargs):
+def write_stokefils(cross_dat, str_I, Ifil=False, Qfil=False, Ufil=False, Vfil=False, Lfil=False, **kwargs):
     '''Writes up to 5 new filterbank files corresponding to each Stokes
     parameter (and total linear polarization L) for a given cross polarization .fil file'''
 
-    I,Q,U,V,L=get_stokes(str, **kwargs)
+    I,Q,U,V,L=get_stokes(cross_dat, **kwargs)
     obs = Waterfall(str_I, max_load=150) #Load filterbank file to write stokes data to
     if Ifil:
         obs.data = I
-        obs.write_to_fil(str[:-15]+'.I.fil')   #assuming file is named *.cross_pols.fil
+        obs.write_to_fil(cross_dat[:-15]+'.I.fil')   #assuming file is named *.cross_pols.fil
 
     if Qfil:
         obs.data = Q
-        obs.write_to_fil(str[:-15]+'.Q.fil')   #assuming file is named *.cross_pols.fil
+        obs.write_to_fil(cross_dat[:-15]+'.Q.fil')   #assuming file is named *.cross_pols.fil
 
     if Ufil:
         obs.data = U
-        obs.write_to_fil(str[:-15]+'.U.fil')   #assuming file is named *.cross_pols.fil
+        obs.write_to_fil(cross_dat[:-15]+'.U.fil')   #assuming file is named *.cross_pols.fil
 
     if Vfil:
         obs.data = V
-        obs.write_to_fil(str[:-15]+'.V.fil')   #assuming file is named *.cross_pols.fil
+        obs.write_to_fil(cross_dat[:-15]+'.V.fil')   #assuming file is named *.cross_pols.fil
 
     if Lfil:
         obs.data = L
-        obs.write_to_fil(str[:-15]+'.L.fil')   #assuming file is named *.cross_pols.fil
+        obs.write_to_fil(cross_dat[:-15]+'.L.fil')   #assuming file is named *.cross_pols.fil
 
 
-def write_polfils(str, str_I, **kwargs):
+def write_polfils(cross_dat, str_I, **kwargs):
     '''Writes two new filterbank files containing fractional linear and
     circular polarization data'''
 
-    lin,circ=fracpols(str, **kwargs)
+    lin,circ=fracpols(cross_dat, **kwargs)
     obs = Waterfall(str_I, max_load=150)
 
     obs.data = lin
-    obs.write_to_fil(str[:-15]+'.linpol.fil')   #assuming file is named *.cross_pols.fil
+    obs.write_to_fil(cross_dat[:-15]+'.linpol.fil')   #assuming file is named *.cross_pols.fil
 
     obs.data = circ
-    obs.write_to_fil(str[:-15]+'.circpol.fil')   #assuming file is named *.cross_pols.fil
-
-#end module
+    obs.write_to_fil(cross_dat[:-15]+'.circpol.fil')   #assuming file is named *.cross_pols.fil
