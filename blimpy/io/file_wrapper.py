@@ -50,4 +50,4 @@ def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load
         # Open FIL file
         return FilReader(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, load_data=load_data, max_load=max_load)
     else:
-        raise NotImplementedError('Cannot open this type of file with Waterfall')
+        raise NotImplementedError('Cannot open this type of file with Waterfall: {}'.format(filename))
