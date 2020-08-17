@@ -114,7 +114,7 @@ class Reader(object):
         elif self._n_bytes  == 1:
             return 'uint8'
         else:
-            errmsg = 'Reader._setup_dtype detected invalid data: _n_bytes={}, nbits={}'.format(self._n_bytes, self.header['nbits'])
+            errmsg = 'Reader._setup_dtype detected invalid/unsupported header data: _n_bytes={}, nbits={}'.format(self._n_bytes, self.header['nbits'])
             logger.error(errmsg)
             raise ValueError(errmsg)
 
