@@ -333,22 +333,18 @@ def calc_n_ints_in_file(filename):
     """ Calculate number of integrations in a given file """
     # Load binary data
     h = read_header(filename)
-    n_bytes  = int(h['nbits'] / 8)
-
     n_chans = h['nchans']
     n_ifs   = h['nifs']
     idx_data = len_header(filename)
-    f = open(filename, 'rb')
-    f.seek(idx_data)
     filesize = os.path.getsize(filename)
     n_bytes_data = filesize - idx_data
 
     if h['nbits'] == 2:
         n_ints = int(4 * n_bytes_data / (n_chans * n_ifs))
+    elif h['nbits'] == 4:
+        n_ints = int(2 * n_bytes_data / (n_chans * n_ifs))
     else:
+        n_bytes  = int(h['nbits'] / 8)
         n_ints = int(n_bytes_data / (n_bytes * n_chans * n_ifs))
-
-    # Give the FD back to the O/S.
-    f.close()
 
     return n_ints
