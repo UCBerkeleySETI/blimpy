@@ -392,7 +392,7 @@ def cmd_tool(args=None):
     parser.add_argument('-S', action='store_true', default=False, dest='save_only',
                        help='Turn off plotting of data and only save to file.')
     parser.add_argument('-D', action='store_false', default=False, dest='blank_dc',
-                       help='Use to not blank DC bin.')
+                       help='Use to blank DC bin.')
     parser.add_argument('-H', action='store_true', default=False, dest='to_hdf5',
                        help='Write file to hdf5 format.')
     parser.add_argument('-F', action='store_true', default=False, dest='to_fil',
