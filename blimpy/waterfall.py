@@ -63,7 +63,7 @@ class Waterfall(object):
     """ Class for loading and writing blimpy data (.fil, .h5) """
 
     """ Get the frequency array for this Waterfall object"""    
-    get_freqs = lambda arg_wf: np.arange(0, arg_wf.header['nchans'], 1, dtype=float) * arg_wf.header['foff'] + arg_wf.header['fch1']
+    get_freqs = lambda self: np.arange(0, self.header['nchans'], 1, dtype=float) * self.header['foff'] + self.header['fch1']
 
     def __repr__(self):
         return "Waterfall data: %s" % self.filename
