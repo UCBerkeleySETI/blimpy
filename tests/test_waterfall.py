@@ -1,6 +1,7 @@
-from tests.data import voyager_h5
-import blimpy as bl
 import os
+import numpy as np
+from tests.data import voyager_h5, voyager_fil
+import blimpy as bl
 
 import pytest
 
@@ -19,6 +20,20 @@ def test_info():
     # plenty of missed if suites
     a._get_blob_dimensions((300, 300, 300, 300))
     a._update_header()
+
+def test_get_freqs():
+    wf = bl.Waterfall(voyager_h5)
+    freqs = wf.container.populate_freqs()
+    sum1 = np.sum(freqs)
+    freqs = wf.get_freqs()
+    sum2 = np.sum(freqs)
+    assert sum1 == sum2
+    wf = bl.Waterfall(voyager_fil)
+    freqs = wf.container.populate_freqs()
+    sum1 = np.sum(freqs)
+    freqs = wf.get_freqs()
+    sum2 = np.sum(freqs)
+    assert sum1 == sum2
 
 def test_cmdline():
     from blimpy.waterfall import cmd_tool

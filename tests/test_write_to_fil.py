@@ -1,3 +1,6 @@
+"""
+Very small module with one test: test_write_to_fil()
+"""
 import blimpy as bl
 
 from tests.data import voyager_h5
