@@ -19,6 +19,8 @@ logging.basicConfig(format=lformat, stream=stream, level=level_log)
 # Max size of data array to load into memory (1GB in bytes)
 MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.0
 
+# Threshold size for high resolution data
+HIRES_THRESHOLD = 2**20
 
 
 class Reader(object):
