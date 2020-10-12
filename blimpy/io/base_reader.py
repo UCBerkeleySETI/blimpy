@@ -238,11 +238,13 @@ class Reader(object):
             bandwidth = abs(self.f_stop - self.f_start)
             n_coarse_chan = bandwidth / chan_bw
             return n_coarse_chan
-        elif nchans >= 2**20:
+
+        # High resolution data?
+        if nchans >= HIRES_THRESHOLD:
             # Does the common FFT length of 2^20 divide through without a remainder?
             # This should work for most GBT and all Parkes hires data
-            if nchans % 2**20 == 0:
-                n_coarse_chan = nchans / 2.**20
+            if nchans % HIRES_THRESHOLD == 0:
+                n_coarse_chan = nchans / float(HIRES_THRESHOLD)
                 return n_coarse_chan
             # Early GBT data has non-2^N FFT length, check if it is GBT data
             elif self.header['telescope_id'] == 6:
@@ -251,17 +253,23 @@ class Reader(object):
                 n_coarse_chan = bandwidth / coarse_chan_bw
                 return n_coarse_chan
             else:
-                logger.warning("Couldn't figure out n_coarse_chan")
-                return None
-        elif self.header['telescope_id'] == 6 and nchans < 2**20:
+                errmsg = "blimpy:io:base_reader:calc_n_coarse_chan: nchans >= 2**20. Couldn't figure out n_coarse_chan"
+                logger.error(errmsg)
+                raise ValueError(errmsg)
+                
+        # Not high resolution data.  GBT?
+        if self.header['telescope_id'] == 6:
             #For GBT non-hires data
             coarse_chan_bw = 2.9296875
             bandwidth = abs(self.f_stop - self.f_start)
             n_coarse_chan = bandwidth / coarse_chan_bw
             return n_coarse_chan
-        else:
-            logger.warning("This function currently only works for hires BL Parkes or GBT data.")
-            return None
+            
+        # Not high resolution data and Not GBT
+        else: 
+            errmsg = "blimpy:io:base_reader:calc_n_coarse_chan: nchans < 2**20.  Currently only works for hires BL Parkes or GBT data."
+            logger.error(errmsg)
+            raise ValueError(errmsg)
 
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
