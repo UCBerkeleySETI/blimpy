@@ -259,7 +259,7 @@ class Reader(object):
                 logger.error(errmsg1)
                 errmsg2 = "In turbo_seti, you can specify n_course_chan explicitly."
                 logger.error(errmsg2)
-                raise ValueError(errmsg)
+                raise ValueError(errmsg1)
                 
         # Not high resolution data.  GBT?
         if self.header['telescope_id'] == 6:
