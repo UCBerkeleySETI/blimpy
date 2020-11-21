@@ -13,22 +13,22 @@ as used in the [Breakthrough Listen](https://seti.berkeley.edu) search for intel
 
 ### Installation
 
-The latest release can be installed via pip:
+The latest release can be installed via pip directly from this repository:
 
 ```
-pip install blimpy
+python3 -m pip install -U https://github.com/UCBerkeleySETI/blimpy
 ```
 
 Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `python setup.py install` or `pip install .` (with sudo if required), or by using the following terminal command:
 
 ```
-pip install https://github.com/UCBerkeleySETI/blimpy/tarball/master
+python3 -m pip install -U https://github.com/UCBerkeleySETI/blimpy/tarball/master
 ```
 
 To install everything required to run the unit tests, run:
 
 ```
-pip install -e .[full]
+python3 -m pip install -e .[full]
 ```
 
 You will need `numpy`, `h5py`, `astropy`, `scipy`, and `matplotlib` as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately. 
@@ -37,7 +37,7 @@ To interact with compressed files, you'll need the `hdf5plugin` package too.
 Note that h5py generally needs to be installed in this way:
 
 ```
-$ pip install --no-binary=h5py h5py
+$ python3 -m pip install --no-binary=h5py h5py
 ```
 
 
@@ -46,7 +46,6 @@ $ pip install --no-binary=h5py h5py
 
 After installation, some command line utilities will be installed:
 * `watutil`, for reading/writing/plotting blimpy filterbank files (either .h5 or .fil format).
-* `filutil`, for reading/plotting blimpy filterbank files (.fil format).
 * `rawutil`, for plotting data in guppi raw files.
 * `fil2h5`, for converting .fil files into .h5 format.
 * `h52fil`, for converting .h5 files into .fil format.
