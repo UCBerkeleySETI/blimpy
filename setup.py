@@ -30,6 +30,7 @@ install_requires = [
         'astropy<3.0;python_version=="2.7"',
         'astropy;python_version>"2.7"',
         'numpy',
+        'numba',
         'cython',
         'h5py',
         'scipy',
