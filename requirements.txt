@@ -1,0 +1,11 @@
+astropy
+numpy
+numba
+six
+setuptools
+matplotlib
+cython
+h5py
+scipy
+hdf5plugin
+pandas
