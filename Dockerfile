@@ -26,7 +26,7 @@ RUN docker-apt-install libhdf5-serial-dev libhdf5-dev libhdf5-cpp-11
 # Pip installation of python packages
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install numpy==1.14.1
-RUN pip install pandas cython astropy matplotlib
+RUN pip install pandas cython astropy matplotlib numba
 RUN pip install --only-binary=scipy scipy
 
 ######
