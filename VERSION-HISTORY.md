@@ -1,4 +1,4 @@
-This file is a version history of turbo_seti amendments, beginning with version 2.0.0.  Entries appear in version descending order (newest first, oldest last).
+This file is a version history of turbo_seti amendments, beginning with version 2.0.2.  Entries appear in version descending order (newest first, oldest last).
 <br>
 <br>
 | Version | Contents |
