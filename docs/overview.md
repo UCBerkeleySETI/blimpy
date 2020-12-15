@@ -45,7 +45,6 @@ $ pip install --no-binary=h5py h5py
 
 After installation, some command line utilities will be installed:
 * `watutil`, for reading/writing/plotting blimpy filterbank files (either .h5 or .fil format).
-* `filutil`, for reading/plotting blimpy filterbank files (.fil format).
 * `rawutil`, for plotting data in guppi raw files.
 * `fil2h5`, for converting .fil files into .h5 format.
 * `h52fil`, for converting .h5 files into .fil format.
