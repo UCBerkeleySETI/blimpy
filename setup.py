@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '2.0.2'
+__version__ = '2.0.3'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -12,7 +12,6 @@ with open("README.md", "r") as fh:
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
 entry_points = {
     'console_scripts' : [
-        'filutil = blimpy.filterbank:cmd_tool',
         'watutil = blimpy.waterfall:cmd_tool',
         'rawutil = blimpy.guppi:cmd_tool',
         'fil2h5 = blimpy.fil2h5:cmd_tool',
@@ -24,11 +23,11 @@ entry_points = {
 }
 
 install_requires = [
-        'setuptools<40.0;python_version=="2.7"',
-        'matplotlib<3.0;python_version=="2.7"',
-        'matplotlib;python_version>"2.7"',
-        'astropy<3.0;python_version=="2.7"',
-        'astropy;python_version>"2.7"',
+        'setuptools<40.0;python_version=="3.5"',
+        'matplotlib<3.0;python_version=="3.5"',
+        'matplotlib;python_version>"3.5"',
+        'astropy<3.0;python_version=="3.5"',
+        'astropy;python_version>"3.5"',
         'numpy',
         'numba',
         'cython',
@@ -65,7 +64,7 @@ setup(name='blimpy',
           'Environment :: Console',
           'Natural Language :: English',
           'Operating System :: POSIX :: Linux',
-          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.5',
           'Intended Audience :: Science/Research',
           'License :: OSI Approved :: BSD License',
           'Topic :: Scientific/Engineering :: Astronomy',

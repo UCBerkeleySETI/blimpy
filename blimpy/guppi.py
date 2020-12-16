@@ -8,30 +8,24 @@ The guppi raw format consists of a FITS-like header, followed by a block of data
 and repeated over and over until the end of the file.
 """
 from __future__ import division
-
-import numpy as np
 import os
-import time
-from pprint import pprint
+import sys
+import numpy as np
 from astropy.coordinates import Angle
 
 from .utils import unpack, rebin
-import sys
 
 PYTHON3 = sys.version_info >= (3, 0)
 
 # Check if $DISPLAY is set (for handling plotting on remote machines with no X-forwarding)
 if 'DISPLAY' in os.environ.keys():
-
     try:
         import matplotlib
-        # matplotlib.use('Qt5Agg')
     except ImportError:
         pass
     import pylab as plt
 else:
     import matplotlib
-
     matplotlib.use('Agg')
     import pylab as plt
 
@@ -48,7 +42,7 @@ class EndOfFileError(Exception):
     pass
 
 
-class GuppiRaw(object):
+class GuppiRaw():
     """ Python class for reading Guppi raw files
 
     Args:
@@ -117,8 +111,6 @@ class GuppiRaw(object):
         header_dict = {}
         keep_reading = True
 
-        first_line = self.file_obj
-
         try:
             while keep_reading:
                 if start_idx + 80 > self.filesize:
@@ -131,19 +123,19 @@ class GuppiRaw(object):
                 if line.startswith('END'):
                     keep_reading = False
                     break
-                else:
-                    key, val = line.split('=')
-                    key, val = key.strip(), val.strip()
 
-                    if "'" in val:
-                        # Items in quotes are strings
-                        val = str(val.strip("'").strip())
-                    elif "." in val:
-                        # Items with periods are floats (if not a string)
-                        val = float(val)
-                    else:
-                        # Otherwise it's an integer
-                        val = int(val)
+                key, val = line.split('=')
+                key, val = key.strip(), val.strip()
+
+                if "'" in val:
+                    # Items in quotes are strings
+                    val = str(val.strip("'").strip())
+                elif "." in val:
+                    # Items with periods are floats (if not a string)
+                    val = float(val)
+                else:
+                    # Otherwise it's an integer
+                    val = int(val)
 
                 header_dict[key] = val
         except ValueError:
@@ -172,7 +164,7 @@ class GuppiRaw(object):
             header (dict): keyword:value pairs of header metadata
         """
         self.file_obj.seek(0)
-        header_dict, pos = self.read_header()
+        header_dict, unused_pos = self.read_header()
         self.file_obj.seek(0)
         return header_dict
 
@@ -188,8 +180,8 @@ class GuppiRaw(object):
         Returns:
             dshape (tuple) - shape of the corresponding data block
         """
-        if(header is None):
-            header, data_idx = self.read_header()
+        if header is None:
+            header, unused_data_idx = self.read_header()
         n_chan = int(header['OBSNCHAN'])
         n_pol = int(header['NPOL'])
         n_bit = int(header['NBITS'])
@@ -338,8 +330,6 @@ class GuppiRaw(object):
         header0, data_idx0 = self.read_header()
 
         self.file_obj.seek(data_idx0)
-        block_size = int(header0['BLOCSIZE'])
-        n_bits = int(header0['NBITS'])
         self.file_obj.seek(int(header0['BLOCSIZE']), 1)
         n_blocks = 1
         end_found = False
@@ -363,7 +353,7 @@ class GuppiRaw(object):
     def print_stats(self):
         """ Compute some basic stats on the next block of data """
 
-        header, data = self.read_next_data_block()
+        unused_header, data = self.read_next_data_block()
         data = data.view('float32')
 
         print("AVG: %2.3f" % data.mean())
@@ -371,7 +361,7 @@ class GuppiRaw(object):
         print("MAX: %2.3f" % data.max())
         print("MIN: %2.3f" % data.min())
 
-    def plot_histogram(self, filename=None):
+    def plot_histogram(self, filename=None, flag_show=True):
         """ Plot a histogram of data values
 
         Args:
@@ -379,16 +369,17 @@ class GuppiRaw(object):
 
         TODO: Move into plotting/
         """
-        header, data = self.read_next_data_block()
+        unused_header, data = self.read_next_data_block()
         data = data.view('float32')
 
         plt.figure("Histogram")
         plt.hist(data.flatten(), 65, facecolor='#cc0000')
         if filename:
             plt.savefig(filename)
-        plt.show()
+        if flag_show:
+            plt.show()
 
-    def plot_spectrum(self, filename=None, plot_db=True):
+    def plot_spectrum(self, filename=None, plot_db=True, flag_show=True):
         """ Do a (slow) numpy FFT and take power of data
 
         Args:
@@ -397,7 +388,7 @@ class GuppiRaw(object):
 
         TODO: Move into plotting/
         """
-        header, data = self.read_next_data_block()
+        unused_header, data = self.read_next_data_block()
 
         print("Computing FFT...")
         d_xx_fft = np.abs(np.fft.fft(data[..., 0]))
@@ -421,7 +412,8 @@ class GuppiRaw(object):
         plt.title(self.filename)
         if filename:
             plt.savefig(filename)
-        plt.show()
+        if flag_show:
+            plt.show()
 
     def generate_filterbank_header(self, nchans=1, ):
         """ Generate a blimpy header dictionary
