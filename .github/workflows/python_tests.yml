@@ -1,6 +1,6 @@
 name: Test Blimpy
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -24,12 +24,18 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
-          python3 -m pip install pytest pyslalib
+          python3 -m pip install pytest pytest-cov pyslalib
       - name: Download test files
         run: |
           cd tests
           bash download_data.sh
           cd ..
-      - name: Run Tests
+      - name: Run coverage test
         run: |
-          python3 setup.py test
+          export PATH=/home/runner/.local/bin:$PATH
+          pytest --cov=./ --cov-report=xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: blimpy-codecov-p${{ matrix.python-version }}
