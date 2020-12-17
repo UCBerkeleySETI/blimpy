@@ -18,7 +18,7 @@ Sometimes the `pip` installation can fail if a system dependency is not installe
 
 ##### Debian/Ubuntu
 ```
-curl https://raw.githubusercontent.com/UCBerkeleySETI/blimpy/master/dependencies.txt | xargs -n 1 apt install --no-install-recommends -y
+curl https://raw.githubusercontent.com/UCBerkeleySETI/blimpy/master/dependencies.txt | xargs -n 1 sudo apt install --no-install-recommends -y
 ```
 
 #### Manual Installation
