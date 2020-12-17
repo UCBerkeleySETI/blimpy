@@ -8,5 +8,4 @@ cython
 h5py
 scipy
 hdf5plugin
-bitshuffle
 pandas
