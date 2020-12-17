@@ -13,7 +13,7 @@ RUN apt-get install --no-install-recommends -y \
 COPY . /blimpy
 WORKDIR /blimpy
 
-#RUN cd tests && bash download_data.sh && cd ..
+RUN cd tests && bash download_data.sh && cd ..
 
 RUN python3 -m pip install -r requirements.txt
 RUN python3 -m pip install -e .[full]
