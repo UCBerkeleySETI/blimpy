@@ -2,13 +2,12 @@ language: python
 matrix:
   include:
   - env: DIST=py3_kern.docker
-  - env: DIST=py3_manual.docker
 services:
 - docker
 before_install:
 - true
 install:
-- docker build . -t ${DIST} -f docker/${DIST}
+- docker build . -t ${DIST}
 before_script:
 - true
 script:
