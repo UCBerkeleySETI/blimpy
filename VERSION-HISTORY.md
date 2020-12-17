@@ -7,5 +7,5 @@ This file is a version history of turbo_seti amendments, beginning with version 
 | | Removed references to nonexistent `filutil` command.
 | | Removed generated pop-up plot windows while running `pytest`; the figures are still saved. |
 | | Updated setuptools build requirements.
-| | Updated Docker files.
+| | Remove outdated Docker files.
 | 2.0.2  | Current as of 2020-12-15. |
