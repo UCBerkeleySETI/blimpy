@@ -30,11 +30,11 @@ def test_guppi():
 
 def test_spectrum():
     gr = bl.guppi.GuppiRaw(voyager_raw)
-    gr.plot_spectrum()
+    gr.plot_spectrum(flag_show=False)
 
 def test_histogram():
     gr = bl.guppi.GuppiRaw(voyager_raw)
-    gr.plot_histogram()
+    gr.plot_histogram(flag_show=False)
 
 def test_statistics():
     gr = bl.guppi.GuppiRaw(voyager_raw)

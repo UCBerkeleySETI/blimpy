@@ -3,7 +3,9 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 | Version | Contents |
 | :--: | -- |
-| 2.0.3 ** Coming soon** | Numba accelerated DC blocking (Waterfall.block_dc()). |
+| 2.0.3 | Numba accelerated DC blocking (Waterfall.block_dc()). |
 | | Removed references to nonexistent `filutil` command.
 | | Removed generated pop-up plot windows while running `pytest`; the figures are still saved. |
+| | Updated setuptools build requirements.
+| | Updated Docker files.
 | 2.0.2  | Current as of 2020-12-15. |
