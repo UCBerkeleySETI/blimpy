@@ -19,11 +19,11 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          cat dependencies.txt | sudo xargs -n 1 apt install -y
+          if cat dependencies.old.txt | sudo xargs -n 1 apt install -y
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.old.txt
+          python3 -m pip install -r requirements.txt
           python3 -m pip install -e .[full]
       - name: Download test files
         run: |
