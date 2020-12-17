@@ -14,11 +14,11 @@ as used in the [Breakthrough Listen](https://seti.berkeley.edu) search for intel
 ### Installation
 
 #### System Dependencies
-Blimpy has some non-Python dependencies that need to be installed via the package manager.
+Sometimes the `pip` installation can fail if a system dependency is not installed. To fix this, make sure you have `curl` and install the required system dependencies with the command bellow:
 
 ##### Debian/Ubuntu
 ```
-sudo apt install libhdf5-dev bitshuffle
+curl https://raw.githubusercontent.com/UCBerkeleySETI/blimpy/master/dependencies.txt | xargs -n 1 apt install --no-install-recommends -y
 ```
 
 #### Manual Installation
