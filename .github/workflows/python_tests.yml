@@ -19,7 +19,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          cat dependencies.old.txt | sudo xargs -n 1 apt install -y
+          cat dependencies.txt | sudo xargs -n 1 apt install -y
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
