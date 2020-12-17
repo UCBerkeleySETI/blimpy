@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '2.0.2'
+__version__ = '2.1.0'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -23,26 +23,13 @@ entry_points = {
      ]
 }
 
-install_requires = [
-        'setuptools<40.0;python_version=="2.7"',
-        'matplotlib<3.0;python_version=="2.7"',
-        'matplotlib;python_version>"2.7"',
-        'astropy<3.0;python_version=="2.7"',
-        'astropy;python_version>"2.7"',
-        'numpy',
-        'numba',
-        'cython',
-        'h5py',
-        'scipy',
-        'six',
-        'hdf5plugin',
-        'pandas'
-]
+with open("requirements.txt", "r") as fh:
+    install_requires = fh.readlines()
 
 extras_require = {
-        'full': [
-            'pyslalib',
-        ]
+      'full': [
+          'pyslalib',
+      ]
 }
 
 setup(name='blimpy',
@@ -52,7 +39,6 @@ setup(name='blimpy',
       long_description_content_type='text/markdown',
       license='BSD',
       install_requires=install_requires,
-      extras_require=extras_require,
       url='https://github.com/ucberkeleyseti/blimpy',
       author='Danny Price, Emilio Enriquez, Yuhong Chen, Mark Siebert, and BL contributors',
       author_email='dancpr@berkeley.edu',
@@ -71,6 +57,6 @@ setup(name='blimpy',
           'Topic :: Scientific/Engineering :: Astronomy',
       ],
       setup_requires=['pytest-runner'],
-      tests_require=['pytest', 'pySLALIB'],
+      tests_require=['pytest', 'pyslalib'],
       test_suite="blimpytests",
 )

@@ -1,5 +1,5 @@
 astropy
-numpy
+numpy>=1.19
 numba
 six
 setuptools
@@ -8,4 +8,5 @@ cython
 h5py
 scipy
 hdf5plugin
+bitshuffle
 pandas

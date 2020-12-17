@@ -1,21 +1,23 @@
-FROM kernsuite/base:dev
-RUN docker-apt-install \
-     python3-setuptools \
-     python3-astropy \
-     python3-scipy \
-     python3-matplotlib \
-     python3-bitshuffle \
-     python3-h5py \
-     python3-slalib \
-     python3-pytest-runner \
-     python3-pytest \
-     python3-pip \
-     git \
-     curl
-COPY . /code
-WORKDIR /code
-RUN cd tests && bash download_data.sh && cd ..
-RUN find blimpy tests -name "*.pyc" -delete
-RUN pip3 install ".[full]"
+FROM ubuntu:20.04
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update
+RUN apt-get install --no-install-recommends -y \
+    python3-pip \
+    python3-dev \
+    gfortran \
+    bitshuffle \
+    curl \
+    git
+
+COPY . /blimpy
+WORKDIR /blimpy
+
+#RUN cd tests && bash download_data.sh && cd ..
+
+RUN python3 -m pip install -r requirements.txt
+RUN python3 -m pip install -e .[full]
+RUN python3 setup.py install
 RUN python3 setup.py test
+
 WORKDIR /home
