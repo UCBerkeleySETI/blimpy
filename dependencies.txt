@@ -1,0 +1,7 @@
+python3-pip
+python3-dev
+libhdf5-dev
+gfortran
+bitshuffle
+curl
+git

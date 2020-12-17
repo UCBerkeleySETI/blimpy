@@ -2,16 +2,11 @@ FROM ubuntu:20.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
-RUN apt-get install --no-install-recommends -y \
-    python3-pip \
-    python3-dev \
-    gfortran \
-    bitshuffle \
-    curl \
-    git
 
 COPY . /blimpy
 WORKDIR /blimpy
+
+RUN cat dependencies.txt | xargs -n 1 apt install --no-install-recommends -y
 
 RUN cd tests && bash download_data.sh && cd ..
 
