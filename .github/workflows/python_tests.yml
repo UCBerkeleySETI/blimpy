@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.txt
+          python3 -m pip install -r requirements.old.txt
           python3 -m pip install -e .[full]
       - name: Download test files
         run: |
