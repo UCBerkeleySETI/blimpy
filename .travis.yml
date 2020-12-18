@@ -2,19 +2,18 @@ language: python
 matrix:
   include:
   - env: DIST=py3_kern.docker
-  - env: DIST=py3_manual.docker
 services:
 - docker
 before_install:
 - true
 install:
-- docker build . -t ${DIST} -f docker/${DIST}
+- docker build . -t ${DIST}
 before_script:
 - true
 script:
 - pwd
 - ls
-- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -e CODECOV_TOKEN=${CODECOV_TOKEN} -it ${DIST}:latest /bin/bash -c 'cd /code; /code/tests/run_tests.sh'
+- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" -e DIST=${DIST} -e CODECOV_TOKEN=${CODECOV_TOKEN} -it ${DIST}:latest /bin/bash -c 'cd /blimpy; /blimpy/tests/run_tests.sh'
 
 after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then echo "Not Pull Request, Pushing to Docker Hub"; docker/push_to_docker.sh; fi

@@ -13,6 +13,16 @@ as used in the [Breakthrough Listen](https://seti.berkeley.edu) search for intel
 
 ### Installation
 
+#### System Dependencies
+Sometimes the `pip` installation can fail if a system dependency is not installed. To fix this, make sure you have `curl` and install the required system dependencies with the command bellow:
+
+##### Debian/Ubuntu
+```
+curl https://raw.githubusercontent.com/UCBerkeleySETI/blimpy/master/dependencies.txt | xargs -n 1 sudo apt install --no-install-recommends -y
+```
+
+#### Manual Installation
+
 The latest release can be installed via pip directly from this repository:
 
 ```
@@ -31,7 +41,7 @@ To install everything required to run the unit tests, run:
 python3 -m pip install -e .[full]
 ```
 
-You will need `numpy`, `h5py`, `astropy`, `scipy`, and `matplotlib` as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately. 
+You will need `numpy`, `h5py`, `astropy`, `scipy`, and `matplotlib` as dependencies. A `pip install` should pull in numpy, h5py, and astropy, but you may still need to install scipy and matplotlib separately.
 To interact with compressed files, you'll need the `hdf5plugin` package too.
 
 Note that h5py generally needs to be installed in this way:
@@ -56,7 +66,7 @@ Use the `-h` flag to any of the above command line utilities to display their av
 
 ### Reading blimpy filterbank files in .fil or .h5 format
 
-The `blimpy.Waterfall`  provides a Python API for interacting with filterbank data. It supports all BL filterbank data products; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/blimpy/blob/master/examples/voyager.ipynb) for an overview. 
+The `blimpy.Waterfall`  provides a Python API for interacting with filterbank data. It supports all BL filterbank data products; see this [example Jupyter notebook](https://github.com/UCBerkeleySETI/blimpy/blob/master/examples/voyager.ipynb) for an overview.
 
 From the python, ipython or jupiter notebook environments.
 
@@ -94,13 +104,7 @@ Note: most users should start analysis with filterbank files, which are smaller 
 The blimpy images are pushed to a public repository after each successful build on Travis.
 If you have Docker installed, you can run the following commands to pull our images, which have the environment and dependencies set up for you.
 
-For python3, use:
-
 `docker pull fx196/blimpy:py3_kern_stable`
-
-For python2, use:
-
-`docker pull fx196/blimpy:py2_kern_stable`
 
 Here is a [more complete guide](./docker_guide.md) on using blimpy in Docker.
 

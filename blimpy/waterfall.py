@@ -32,6 +32,7 @@ from .plotting import *
 from astropy.time import Time
 from astropy import units as u
 
+from numba import jit
 
 #------
 # Logging set up
@@ -346,9 +347,13 @@ class Waterfall(object):
 
         mid_chan = int(n_chan_per_coarse / 2)
 
-        for ii in range(n_coarse_chan):
-            ss = ii*n_chan_per_coarse
-            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
+        @jit(nopython=True, fastmath=True, cache=True)
+        def parse(data, n_coarse_chan, n_chan_per_coarse, mid_chan):
+            for ii in range(n_coarse_chan):
+                ss = ii*n_chan_per_coarse
+                data[..., ss+mid_chan] = np.median(data[..., ss+mid_chan+5:ss+mid_chan+10])
+        
+        parse(self.data, n_coarse_chan, n_chan_per_coarse, mid_chan)
 
     def calibrate_band_pass_N1(self):
         """ One way to calibrate the band pass is to take the median value

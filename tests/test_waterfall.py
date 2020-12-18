@@ -38,7 +38,7 @@ def test_get_freqs():
 def test_cmdline():
     from blimpy.waterfall import cmd_tool
 
-    args = [voyager_h5, '-s', 'test.png']
+    args = [voyager_h5, '-S', '-s', 'test.png']
     cmd_tool(args)
 
     args = [voyager_h5, '-i']
