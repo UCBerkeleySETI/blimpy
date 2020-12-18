@@ -2,7 +2,6 @@
 test_bl_scrunch
 """
 
-import RUBBISH-NOT-FOUND
 import pytest
 
 import blimpy as bl
