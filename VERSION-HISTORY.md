@@ -3,6 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 | Version | Contents |
 | :--: | -- |
+| 2.0.5 | Ignore documentation files in CI. |
 | 2.0.4 | Deprecate Travis CI in favor of Github Actions (#164). |
 | 2.0.3 | Numba accelerated DC blocking (Waterfall.block_dc()). |
 | | Removed references to nonexistent `filutil` command.
