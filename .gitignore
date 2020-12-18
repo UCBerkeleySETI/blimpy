@@ -12,7 +12,9 @@
 .coverage
 .virtualenv*/
 .venv*/
+coverage.xml
 
+tests/test_data
 build/
 dist/
 docs/_build/

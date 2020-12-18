@@ -15,4 +15,7 @@ RUN python3 -m pip install pytest pyslalib
 RUN python3 setup.py install
 RUN python3 setup.py test
 
+RUN rm -fr tests/test_data
+RUN find . -path '*/__pycache__*' -delete
+
 WORKDIR /home
