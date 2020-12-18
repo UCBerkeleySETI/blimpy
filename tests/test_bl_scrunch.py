@@ -1,6 +1,7 @@
 """
 test_bl_scrunch
 """
+import RUBBISH_NOT_FOUND
 
 import os
 import pytest
