@@ -2,6 +2,8 @@ name: Push to Docker Hub
 
 on:
   push:
+    paths-ignore:
+      - '**.rst'
     branches:
       - master
 
