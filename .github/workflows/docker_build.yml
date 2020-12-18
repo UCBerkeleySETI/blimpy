@@ -1,6 +1,18 @@
 name: Test Dockerfile
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - '**.ipynb'
+      - '**.png'
+      - '**.rst'
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.ipynb'
+      - '**.png'
+      - '**.rst'
+      - '**.md'
 
 jobs:
   build:
