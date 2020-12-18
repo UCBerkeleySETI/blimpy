@@ -50,8 +50,6 @@ Note that h5py generally needs to be installed in this way:
 $ python3 -m pip install --no-binary=h5py h5py
 ```
 
-
-
 ### Command line utilities
 
 After installation, some command line utilities will be installed:
