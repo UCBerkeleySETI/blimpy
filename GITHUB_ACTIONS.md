@@ -14,6 +14,6 @@ Publish the image to Docker Hub after a commit to `master` branch.
 1. `push_docker.yml`: Build & publish the image on Docker Hub.
 
 ### Required Secrets
-- **DOCKER_USERNAME**: Docker Hub Username.
-- **DOCKER_PASSWORD**: Docker Hub Password.
+- **DOCKER_USER**: Docker Hub Username.
+- **DOCKER_PASS**: Docker Hub Password.
 - **CODECOV_TOKEN**: Codecov Blimpy Token.
