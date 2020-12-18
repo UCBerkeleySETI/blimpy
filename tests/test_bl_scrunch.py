@@ -2,6 +2,7 @@
 test_bl_scrunch
 """
 
+import os
 import pytest
 
 import blimpy as bl
