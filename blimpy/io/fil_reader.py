@@ -91,7 +91,7 @@ class FilReader(Reader):
                 else:
                     self.read_data()
             else:
-                logger.info("Skipping loading data ...")
+                logger.debug("Skipping loading data ...")
                 self._init_empty_selection()
         else:
             raise IOError("Need a file to open, please give me one!")
