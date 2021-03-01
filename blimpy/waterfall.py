@@ -287,19 +287,27 @@ class Waterfall(object):
             (freqs, data) (np.arrays): frequency axis in MHz and data subset
         """
 
+        if self.container.isheavy():
+            raise Exception("Waterfall.grab_data: Large data array was not loaded!  Try instantiating Waterfall with max_load.")
+
         try:
             self.freqs = self.container.populate_freqs()
-        except:
-            raise Exception("Waterfall.grab_data: Cannot allocate frequency array")
+        except Exception as ex:
+            raise Exception("Waterfall.grab_data: Cannot allocate frequency array") from ex
+
         try:
             self.timestamps = self.container.populate_timestamps()
-        except:
-            raise Exception("Waterfall.grab_data: Cannot allocate timestamps array")
+        except Exception as ex:
+            raise Exception("Waterfall.grab_data: Cannot allocate timestamps array!") from ex
 
         if f_start is None:
             f_start = self.freqs[0]
         if f_stop is None:
             f_stop = self.freqs[-1]
+        if t_start is None:
+            t_start = 0
+        if t_stop is None:
+            t_stop = -1
 
         try:
             i0 = np.argmin(np.abs(self.freqs - f_start))
@@ -311,8 +319,8 @@ class Waterfall(object):
             else:
                 plot_f    = self.freqs[i1:i0 + 1]
                 plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
-        except:
-            raise Exception("Waterfall.grab_data: Too much data requested")
+        except Exception as ex:
+            raise Exception("Waterfall.grab_data: Too much data requested!") from ex
 
         return plot_f, plot_data
 
