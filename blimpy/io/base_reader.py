@@ -163,8 +163,8 @@ class Reader(object):
             i_stop  = np.round((self.f_stop - f0)  / self.header['foff'])
 
         #calculate closest true index value
-        chan_start_idx = int(i_start)
-        chan_stop_idx  = int(i_stop)
+        chan_start_idx = np.int(i_start)
+        chan_stop_idx  = np.int(i_stop)
 
         if chan_stop_idx < chan_start_idx:
             chan_stop_idx, chan_start_idx = chan_start_idx,chan_stop_idx
