@@ -3,6 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-03-01 | 2.0.6 | Fix issue #171 - grab_data(). |
 | 2020-12-18 | 2.0.5 | Ignore documentation files in CI (PR #166). |
 | | | Slice and dice by time as well as frequencies in the `dice` command (PR #167).
 | 2020-12-18 | 2.0.4 | Deprecate Travis CI in favor of Github Actions (PR #164). |
