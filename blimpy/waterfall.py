@@ -287,6 +287,8 @@ class Waterfall(object):
             (freqs, data) (np.arrays): frequency axis in MHz and data subset
         """
 
+        if self.container.isheavy():
+            raise Exception("Waterfall.grab_data: Large data array was not loaded!  Try instantiating Waterfall with max_load.")
         try:
             self.freqs = self.container.populate_freqs()
         except:
