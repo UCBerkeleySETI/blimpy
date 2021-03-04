@@ -43,12 +43,12 @@ level_log = logging.INFO
 
 if level_log == logging.INFO:
     stream = sys.stdout
-    format = '%(name)-15s %(levelname)-8s %(message)s'
+    fmt = '%(name)-15s %(levelname)-8s %(message)s'
 else:
     stream =  sys.stderr
-    format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
+    fmt = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
 
-logging.basicConfig(format=format,stream=stream,level = level_log)
+logging.basicConfig(format=fmt, stream=stream, level=level_log)
 
 
 #import pdb #pdb.set_trace()
@@ -60,7 +60,7 @@ MAX_BLOB_MB = 1024
 # Main blimpy class
 ###
 
-class Waterfall(object):
+class Waterfall():
     """ Class for loading and writing blimpy data (.fil, .h5) """
 
     """ Get the frequency array for this Waterfall object"""    
@@ -134,6 +134,11 @@ class Waterfall(object):
         self.plot_time_series      = six.create_bound_method(plot_time_series, self)
         self.plot_all              = six.create_bound_method(plot_all, self)
         self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
+    
+    def __del__(self):
+        r""" Processing when the Waterfall object is deleted """
+        if hasattr(self.container, "h5"):
+            self.container.h5.close()
 
     def __load_data(self):
         """ Helper for loading data from a container. Should not be called manually. """
@@ -245,21 +250,22 @@ class Waterfall(object):
             logger.info('Detecting high frequency resolution data.')
             chunk_dim = (1,1,1048576) #1048576 is the number of channels in a coarse channel.
             return chunk_dim
+
         #Usually '.0001.' is in self.filename
-        elif np.abs(self.header['tsamp']) < 1e-3:
+        if np.abs(self.header['tsamp']) < 1e-3:
             logger.info('Detecting high time resolution data.')
             chunk_dim = (2048,1,512) #512 is the total number of channels per single band (ie. blc00)
             return chunk_dim
+
         #Usually '.0002.' is in self.filename
-        elif np.abs(self.header['foff']) < 1e-2 and np.abs(self.header['foff'])  >= 1e-5:
+        if np.abs(self.header['foff']) < 1e-2 and np.abs(self.header['foff'])  >= 1e-5:
             logger.info('Detecting intermediate frequency and time resolution data.')
             chunk_dim = (10,1,65536)  #65536 is the total number of channels per single band (ie. blc00)
-#            chunk_dim = (1,1,65536/4)
             return chunk_dim
-        else:
-            logger.warning('File format not known. Will use minimum chunking. NOT OPTIMAL.')
-            chunk_dim = (1,1,512)
-            return chunk_dim
+
+        logger.warning('File format not known. Will use minimum chunking. NOT OPTIMAL.')
+        chunk_dim = (1,1,512)
+        return chunk_dim
 
     def calc_n_coarse_chan(self, chan_bw=None):
         """ This makes an attempt to calculate the number of coarse channels in a given freq selection.
@@ -289,14 +295,16 @@ class Waterfall(object):
 
         if self.container.isheavy():
             raise Exception("Waterfall.grab_data: Large data array was not loaded!  Try instantiating Waterfall with max_load.")
+
         try:
             self.freqs = self.container.populate_freqs()
-        except:
-            raise Exception("Waterfall.grab_data: Cannot allocate frequency array")
+        except Exception as ex:
+            raise Exception("Waterfall.grab_data: Cannot allocate frequency array") from ex
+
         try:
             self.timestamps = self.container.populate_timestamps()
-        except:
-            raise Exception("Waterfall.grab_data: Cannot allocate timestamps array")
+        except Exception as ex:
+            raise Exception("Waterfall.grab_data: Cannot allocate timestamps array") from ex
 
         if f_start is None:
             f_start = self.freqs[0]
@@ -477,9 +485,9 @@ def cmd_tool(args=None):
             # If this is the last statement anyway,
             # and consequently, an output file is not generated,
             # why do we not raise an error?
-            raise Warning('Either provide to_hdf5 or to_fil, but not both.')
+            raise ValueError('Either provide to_hdf5 or to_fil, but not both.')
 
-        elif parse_args.to_hdf5:
+        if parse_args.to_hdf5:
             if not filename_out:
                 filename_out = fileroot + '.h5'
 

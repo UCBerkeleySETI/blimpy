@@ -13,6 +13,7 @@ try:
     from . import fil2h5
     from . import h52fil
     from . import bl_scrunch
+    from . import calcload
 except:
     print("Warning: Cannot import HDF5 utilities")
 
