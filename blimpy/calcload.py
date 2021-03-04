@@ -18,7 +18,6 @@ def calc_max_load(arg_path):
     data_size = float(wf.header['nchans'] * wf.n_ints_in_file * wf.header['nbits']) / 8.0
     ngbytes = (float(getsize(arg_path)) + data_size) / 1e9
     max_load = np.ceil(ngbytes)
-    print('plot_event calc_max_load: max_load={} is required for {}'.format(max_load, arg_path))
     return max_load
 
 
