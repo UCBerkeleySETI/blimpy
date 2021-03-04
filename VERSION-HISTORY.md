@@ -3,7 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
-| 2021-03-04 | 2.0.7 | Fix issue #177 - Amend waterfall.py by adding a __del__ function to ensure that HDF5 files are closed. |
+| 2021-03-04 | 2.0.7 | Fix issue #177 - Amend waterfall.py by adding a \_\_del\_\_ function to ensure that HDF5 files are closed. |
 | | | Fix issue #178 - Introduce a new utility (calcload) to calculate max_load for Waterfall. |
 | 2021-03-01 | 2.0.6 | Fix issue #171 - grab_data() needed a clear error message when "heavy" data had not been loaded. |
 | 2020-12-18 | 2.0.5 | Ignore documentation files in CI (PR #166). |
