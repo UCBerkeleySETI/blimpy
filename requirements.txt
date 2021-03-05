@@ -1,6 +1,5 @@
 astropy
 numpy>=1.19
-numba
 six
 setuptools
 matplotlib
