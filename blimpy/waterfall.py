@@ -135,11 +135,6 @@ class Waterfall():
         self.plot_all              = six.create_bound_method(plot_all, self)
         self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
     
-    def __del__(self):
-        r""" Processing when the Waterfall object is deleted """
-        if hasattr(self.container, "h5"):
-            self.container.h5.close()
-
     def __load_data(self):
         """ Helper for loading data from a container. Should not be called manually. """
 
