@@ -3,6 +3,8 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-03-08 | 2.0.9 | Implemented enhancement #182 - rawhdr utility (get header from raw files). |
+| | | Amended setup.cfg to enable hdf5plugin to be installed optimized by installation. |
 | 2021-03-05 | 2.0.8 | Yanked NUMBA from requirements.txt and waterfall.py due to observed instability in a large data array. |
 | 2021-03-04 | 2.0.7 | Fix issue #177 - Amend waterfall.py by adding a \_\_del\_\_ function to ensure that HDF5 files are closed. |
 | | | Fix issue #178 - Introduce a new utility (calcload) to calculate max_load for Waterfall. |
