@@ -1,15 +1,21 @@
+import os
 import numpy as np
 
 import blimpy as bl
 from tests.data import voyager_raw, voyager_block1
 
 def test_guppi():
+
     gr = bl.guppi.GuppiRaw(voyager_raw)
+    header, data_idx = gr.read_header()
+    nchans = header['OBSNCHAN']
+    assert (nchans == 64), 'test_guppi: OBSNCHAN should be 64 but observed to be {}'.format(nchans)
+
     h1, data_block_x1, data_block_y1 = gr.read_next_data_block_int8()
     h2, data_block_x2, data_block_y2 = gr.read_next_data_block_int8()
 
     assert not np.array_equal(data_block_x1, data_block_x2) and not np.array_equal(data_block_y1, data_block_y2) \
-        , "Data read from two blocks should not be equal"
+        , "test_guppi: Data read from two blocks should not be equal"
 
     gr = bl.guppi.GuppiRaw(voyager_raw)
     h1, data_block_1 = gr.read_next_data_block()
@@ -17,12 +23,12 @@ def test_guppi():
     data_block_reference_1 = np.load(voyager_block1)
 
     assert np.array_equal(data_block_1[:, :1000, :], data_block_reference_1) \
-        , "Data read should be consistent with previous versions"
+        , "test_guppi: Data read should be consistent with previous versions"
 
     data_block_casted_1 = np.append(data_block_x1, data_block_y1, axis=2).astype('float32').view('complex64')
 
     assert np.array_equal(data_block_1, data_block_casted_1) \
-        , "Reading as int8 then casting should be equal to reading directly as complex64"
+        , "test_guppi: Reading as int8 then casting should be equal to reading directly as complex64"
 
 # We have to keep instantiating objects because
 # the plotting routines read data in a manner
@@ -44,6 +50,17 @@ def test_fil_header():
     gr = bl.guppi.GuppiRaw(voyager_raw)
     gr.generate_filterbank_header()
 
+def test_rawhdr():
+    rc = os.system('rawhdr {}'.format(voyager_raw))
+    assert (rc == 0), 'test_rawhdr() FAILED!'
+
+def test_get_obsnchan():
+    nchans = bl.rawhdr.get_obsnchan(voyager_raw)
+    assert (nchans == 64), 'test_get_obsnchan: OBSNCHAN should be 64 but observed to be {}'.format(nchans)
+
 if __name__ == "__main__":
     test_guppi()
-    print("OK")
+    test_rawhdr()
+    test_get_obsnchan()
+
+
