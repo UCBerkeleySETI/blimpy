@@ -14,6 +14,7 @@ try:
     from . import h52fil
     from . import bl_scrunch
     from . import calcload
+    from . import rawhdr
 except:
     print("Warning: Cannot import HDF5 utilities")
 
