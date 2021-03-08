@@ -51,8 +51,9 @@ def test_fil_header():
     gr.generate_filterbank_header()
 
 def test_rawhdr():
-    rc = os.system('rawhdr {}'.format(voyager_raw))
-    assert (rc == 0), 'test_rawhdr() FAILED!'
+    from blimpy.rawhdr import cmd_tool
+    args = [voyager_raw]
+    cmd_tool(args)
 
 def test_get_obsnchan():
     nchans = bl.rawhdr.get_obsnchan(voyager_raw)
