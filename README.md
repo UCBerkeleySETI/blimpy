@@ -53,12 +53,14 @@ $ python3 -m pip install --no-binary=h5py h5py
 ### Command line utilities
 
 After installation, some command line utilities will be installed:
-* `watutil`, for reading/writing/plotting blimpy filterbank files (either .h5 or .fil format).
-* `rawutil`, for plotting data in guppi raw files.
-* `fil2h5`, for converting .fil files into .h5 format.
-* `h52fil`, for converting .h5 files into .fil format.
-* `bldice`, for dicing a smaller frequency region from (either from/to .h5 or .fil).
-* `matchfils`, for checking if two .fil files are the same.
+* `watutil`, Read/write/plot an .h5 file or a .fil file.
+* `rawutil`, Plot data in a guppi raw file.
+* `fil2h5`, Convert a .fil file into .h5 format.
+* `h52fil`, Convert an .h5 file into .fil format.
+* `bldice`, Dice a smaller frequency region from (either from/to .h5 or .fil).
+* `matchfils`, Check if two .fil files are the same.
+* `calcload`, Calculate the Waterfall max_load value needed to load the data array for a given file.
+* `rawhdr`, Display the header fields of a raw guppi file.
 
 Use the `-h` flag to any of the above command line utilities to display their available arguments.
 
