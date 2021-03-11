@@ -1,3 +1,5 @@
+r'''Reader for Filterbank files (.fil)'''
+
 import os
 
 import numpy as np
@@ -67,7 +69,7 @@ class FilReader(Reader):
             #Applying data size limit to load.
             if max_load is not None:
                 if max_load > 1.0:
-                    logger.warning('Setting data limit != 1GB, please handle with care!')
+                    logger.warning('Setting data limit = {} GB > 1 GB, please handle with care!'.format(max_load))
                 self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
                 self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT

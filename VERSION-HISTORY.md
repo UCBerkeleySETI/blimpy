@@ -3,6 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-03-11 | 2.0.10 | Reopened enhancement #178 - calcload utility - added a verbose parameter. |
 | 2021-03-08 | 2.0.9 | Implemented enhancement #182 - rawhdr utility (get header from raw files). |
 | | | Amended setup.cfg to enable hdf5plugin to be installed optimized by installation. |
 | 2021-03-05 | 2.0.8 | Yanked NUMBA from requirements.txt and waterfall.py due to observed instability in a large data array. |

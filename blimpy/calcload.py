@@ -1,36 +1,42 @@
 r''' calcload.py - Calculate the Waterfall max_load value needed to load the data array for a given file.'''
 
-from os.path import getsize
-import numpy as np
+import sys
 from argparse import ArgumentParser
+import numpy as np
 import blimpy as bl
 
 
-def calc_max_load(arg_path):
+def calc_max_load(arg_path, verbose=False):
     r''' Calculate the max_load parameter value for a subsequent Waterfall instantiation.
-    
+
     Algorithm:
-        * A = file size.
-        * B = data array size (blimpy currently makes a copy of the data array)
+        * A = minimum Waterfall object size.
+        * B = data array size
         * Return ceil(A + B in GB)
     '''
     wf = bl.Waterfall(arg_path, load_data=False)
+    min_size = float(sys.getsizeof(wf))
     data_size = float(wf.header['nchans'] * wf.n_ints_in_file * wf.header['nbits']) / 8.0
-    ngbytes = (float(getsize(arg_path)) + data_size) / 1e9
+    ngbytes = (min_size + data_size) / 1e9
     max_load = np.ceil(ngbytes)
+    if verbose:
+        print('calc_max_load: min_size={}, data_size={}, ngbytes={}'.format(min_size, data_size, ngbytes))
     return max_load
 
 
 def cmd_tool(args=None):
+    r'''Command line entrypoint for "calcload"'''
     p = ArgumentParser(description='Calculate the Waterfall max_load value needed to load the data array for a given file.')
     p.add_argument('filepath', type=str, help='Name of filepath to open (h5 or fil)')
-    
+    p.add_argument('-v', action='store_true', default=False, dest='verbose',
+                       help='verbose output if True.')
+
     if args is None:
         args = p.parse_args()
     else:
         args = p.parse_args(args)
 
-    gb = calc_max_load(args.filepath)
+    gb = calc_max_load(args.filepath, args.verbose)
     if gb > 1.0:
         print('Use Waterfall instantiation with a max_load={}'.format(gb))
     else:
