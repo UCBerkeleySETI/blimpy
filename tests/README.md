@@ -6,7 +6,7 @@ blimpy Regression Testing
 ### Introduction
 
 The purpose of the regression testing suite is to exercise and validate results from blimpy functional modules.  This is important in order to minimize potential inadvertent breakage when new development has occured. It is always best to catch bugs as soon as possible after they are introduced.
-<br>
+<br><br>
 The primary method of launching regression testing is through the use of the `pytest` executable.  This is invoked in the following ways:
 * Manually by a developer, on the command line in a terminal window.  This would follow downloading blimpy and setting up the development/testing environment (discussed later). 
 * Automatically as part of a Github Pull Request (PR) after finalizing a fork of blimpy.
