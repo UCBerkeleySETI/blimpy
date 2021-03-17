@@ -62,7 +62,7 @@ def test_cmd_arguments():
     from blimpy.waterfall import cmd_tool
     
     args = [voyager_h5, '-H', '-F', '-o', 'test.fil']
-    with pytest.raises(Warning):
+    with pytest.raises(ValueError):
         cmd_tool(args)
 
 if __name__ == "__main__":

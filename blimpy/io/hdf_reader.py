@@ -1,3 +1,4 @@
+r'''Reader for HDF5 files'''
 import os
 
 import h5py
@@ -66,7 +67,7 @@ class H5Reader(Reader):
             #Applying data size limit to load.
             if max_load is not None:
                 if max_load > 1.0:
-                    logger.warning('Setting data limit > 1GB, please handle with care!')
+                    logger.warning('Setting data limit = {} GB > 1 GB, please handle with care!'.format(max_load))
                 self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
             else:
                 self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
@@ -143,7 +144,7 @@ class H5Reader(Reader):
         if self.isheavy():
             logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
             self.data = np.array([0],dtype=self._d_type)
-            return None
+            return
 
         #Convert input frequencies into what their corresponding channel number would be.
         self._setup_chans()
