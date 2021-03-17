@@ -1,14 +1,65 @@
-### Test Data
 
-------
-To remove unwanted bulk from this repository,
-the test data will not be kept in the repo, but will be stored instead on a public server.
+blimpy Regression Testing
+=============================
 
-Currently, they are [here](http://blpd0.ssl.berkeley.edu/Voyager_data/).
 
-If more data needs to be added, please modify `download_data.sh`.
+### Introduction
 
-e.g.
-```bash
-curl --url "http://blpd0.ssl.berkeley.edu/Voyager_data/file_name" -o ./test_data/file_name
-```
+The purpose of the regression testing suite is to exercise and validate results from blimpy functional modules.  This is important in order to minimize potential inadvertent breakage when new development has occured. It is always best to catch bugs as soon as possible after they are introduced.
+<br>
+The primary method of launching regression testing is through the use of the `pytest` executable.  This is invoked in the following ways:
+* Manually by a developer, on the command line in a terminal window.  This would follow downloading blimpy and setting up the development/testing environment (discussed later). 
+* Automatically as part of a Github Pull Request (PR) after finalizing a fork of blimpy.
+* Automatically as part of a Github Merge after a PR is approved.
+<br>
+
+### Development/Test Preparation
+
+* The development of an amendment to `blimpy` begins with taking a fork from a github site, normally from `https://github.com/UCBerkeleySETI/blimpy`.
+* Also, from the same site, `blimpy` is downloaded to a local computer.  The download operations can be performed in a few different ways but the simplest might be to download the zip file by clicking on the `Code` button and selecting `Download ZIP`.  Once the the zip file is in a local directory, unzip it and move the blimpy directory tree to wherever is appropriate for testing.  The zip file can now be discarded.
+* Change directory into the `tests` directory (where this file is located) and execute `bash download_test_data.sh` which will perform all required regression testing initialization.
+* When the previous step has completed, change directory up one level to the top of the `blimpy` directory tree.
+* Then, install `pytest` and `pyslalib` from pypi.org: `python3 -m pip install pytest pyslalib`.
+
+### Regression Test Operations
+
+* Running the full suite of regression tests is invoked by executing `pytest` with no parameters specified.  It is possible to run a single regression test file by specifying it as an argument to `pytest`.  For example, if one wishes to only run the plotting tests, the following is the command line to use: `pytest tests/test_plotting.py`.
+* It is **highly encouraged** for developers to perform regression testing frequently in order to avoid surprises later on.
+* Once, development activity on the local machine is complete and the last regression test has run verifying the absence of negative side effects, then the new and/or modified blimpy files can be uploaded to the developer's fork github site.
+* At the fork github site, the developer can request a pull clicking on the `Pull request` button.  This automatically starts the PR process mentioned in the introduction section.
+
+### Testing Artifacts
+
+|    File    | Description |
+| :-- | :-- |
+| `download_test_data.py` | Initialization of regression testing by obtaining and producing files used in test suite execution. |
+| `README.md` | This file. |
+| `run_benchmark.sh` | A bash script used for measuring performance in the Seti BL data centre. |
+
+### Individual Test Source Files
+
+| Name |
+| :-- |
+
+| test_bl_scrunch.py
+| test_calcload.py
+| test_compare_voyager.py
+| test_dice.py
+| test_ephemeris.py
+| test_fil2h5.py
+| test_file_wrapper.py
+| test_filterbank_voyager.py
+| test_guppi.py
+| test_h52fil.py
+| test_h5py.py
+| test_heavy.py
+| test_match_fits.py
+| test_observatory.py
+| test_plotting.py
+| test_sigproc.py
+| test_unpack.py
+| test_utils.py
+| test_voyager_data_load.py
+| test_waterfall.py
+| test_write_to_fil.py
+
