@@ -27,39 +27,3 @@ The primary method of launching regression testing is through the use of the `py
 * It is **highly encouraged** for developers to perform regression testing frequently in order to avoid surprises later on.
 * Once, development activity on the local machine is complete and the last regression test has run verifying the absence of negative side effects, then the new and/or modified blimpy files can be uploaded to the developer's fork github site.
 * At the fork github site, the developer can request a pull clicking on the `Pull request` button.  This automatically starts the PR process mentioned in the introduction section.
-
-### Testing Artifacts
-
-|    File    | Description |
-| :-- | :-- |
-| `download_test_data.py` | Initialization of regression testing by obtaining and producing files used in test suite execution. |
-| `README.md` | This file. |
-| `run_benchmark.sh` | A bash script used for measuring performance in the Seti BL data centre. |
-
-### Individual Test Source Files
-
-| Name |
-| :-- |
-
-| test_bl_scrunch.py
-| test_calcload.py
-| test_compare_voyager.py
-| test_dice.py
-| test_ephemeris.py
-| test_fil2h5.py
-| test_file_wrapper.py
-| test_filterbank_voyager.py
-| test_guppi.py
-| test_h52fil.py
-| test_h5py.py
-| test_heavy.py
-| test_match_fits.py
-| test_observatory.py
-| test_plotting.py
-| test_sigproc.py
-| test_unpack.py
-| test_utils.py
-| test_voyager_data_load.py
-| test_waterfall.py
-| test_write_to_fil.py
-
