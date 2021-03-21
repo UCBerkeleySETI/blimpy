@@ -312,10 +312,10 @@ class Waterfall():
 
             if i0 < i1:
                 plot_f    = self.freqs[i0:i1 + 1]
-                plot_data = np.squeeze(self.data[t_start:t_stop, ..., i0:i1 + 1])
+                plot_data = np.squeeze(self.data[t_start:t_stop, if_id, i0:i1 + 1])
             else:
                 plot_f    = self.freqs[i1:i0 + 1]
-                plot_data = np.squeeze(self.data[t_start:t_stop, ..., i1:i0 + 1])
+                plot_data = np.squeeze(self.data[t_start:t_stop, if_id, i1:i0 + 1])
         except:
             raise Exception("Waterfall.grab_data: Too much data requested")
 
