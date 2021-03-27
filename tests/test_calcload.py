@@ -1,7 +1,6 @@
 """
 Test the calcload.py utility and function calc_max_load()
 """
-import blimpy as bl
 from tests.data import voyager_h5, voyager_fil
 from blimpy.calcload import cmd_tool, calc_max_load
 
@@ -19,3 +18,4 @@ def test_calc_max_load():
    
 if __name__ == "__main__":
     test_calcload()
+    test_calc_max_load()
