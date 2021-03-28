@@ -4,4 +4,5 @@ curl --url "http://blpd0.ssl.berkeley.edu/Voyager_data/Voyager1_block1.npy" -o .
 curl --url "http://blpd0.ssl.berkeley.edu/Voyager_data/blc3_2bit_guppi_57396_VOYAGER1_0006.0013.raw" -o ./test_data/blc3_2bit_guppi_57396_VOYAGER1_0006.0013.raw
 curl --url "http://blpd0.ssl.berkeley.edu/Voyager_data/Voyager1.single_coarse.fine_res.fil" -o ./test_data/Voyager1.single_coarse.fine_res.fil
 curl --url "http://blpd0.ssl.berkeley.edu/Voyager_data/Voyager1.single_coarse.fine_res.h5" -o ./test_data/Voyager1.single_coarse.fine_res.h5
+curl --url "http://blpd0.ssl.berkeley.edu/Voyager_data/test_ifs.fil" -o ./test_data/test_ifs.fil
 ls ./test_data
