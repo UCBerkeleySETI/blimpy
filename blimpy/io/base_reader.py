@@ -290,6 +290,11 @@ class Reader(object):
 
         return n_blobs
 
+    def warn_memory(self, name, size):
+        """ Warn that <name> is larger than our limit for loading things into memory.
+        """
+        logger.warning(f"{name} size is {size / GIGA:.2f} GB, which exceeds the memory usage limit of {self.max_data_array_size / GIGA} GB. Keeping data on disk.")
+    
     def isheavy(self):
         """ Check if the current selection is too large.
         """

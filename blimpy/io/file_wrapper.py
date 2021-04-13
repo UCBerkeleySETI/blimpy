@@ -15,7 +15,7 @@ import blimpy.io.sigproc
 from blimpy.io.fil_reader import FilReader
 from blimpy.io.hdf_reader import H5Reader
 
-def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=1.):
+def open_file(filename, f_start=None, f_stop=None,t_start=None, t_stop=None,load_data=True,max_load=None):
     """Open a HDF5 or filterbank file
 
     Returns instance of a Reader to read data from file.

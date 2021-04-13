@@ -43,7 +43,7 @@ def cmd_tool(args=None):
                             Output file format [.h5 or .fil].
       -o OUT_FNAME, --output_filename OUT_FNAME
                             Ouput file name to write (to HDF5 or FIL).
-      -l MAX_LOAD           Maximum data limit to load. Default:1GB
+      -l MAX_LOAD           Maximum data limit to load.
     """
 
     parser = argparse.ArgumentParser(description='Dices (extracts frequency range)  hdf5 or fil files and writes to hdf5 or fil.')
@@ -52,7 +52,7 @@ def cmd_tool(args=None):
     parser.add_argument('-e', action='store', default=None, dest='f_stop', type=float, help='Stop frequency in MHz')
     parser.add_argument('-x', '--output_file', action='store', default=None, dest='out_format', type=str, help='Output file format [.h5 or .fil].')
     parser.add_argument('-o', '--output_filename', action='store', default=None, dest='out_fname', type=str, help='Ouput file name to write (to HDF5 or FIL).')
-    parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1GB')
+    parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load.')
 
     if args is None:
         args = sys.argv[1:]

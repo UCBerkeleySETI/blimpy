@@ -12,7 +12,7 @@ class FilReader(Reader):
     """ This class handles .fil files.
     """
 
-    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=1.):
+    def __init__(self, filename,f_start=None, f_stop=None,t_start=None, t_stop=None, load_data=True, max_load=None):
         """ Constructor.
 
         Args:
@@ -21,6 +21,7 @@ class FilReader(Reader):
             f_stop (float): stop frequency, in MHz
             t_start (int): start time bin
             t_stop (int): stop time bin
+            max_load (float): memory limit in gigabytes
         """
         super(FilReader, self).__init__()
 
@@ -67,7 +68,7 @@ class FilReader(Reader):
 #            self.datastart=self.hdrraw.find('HEADER_END')+len('HEADER_END')+self.startsample*self.channels
 
             #Applying data size limit to load.
-            if max_load is not None:
+            if max_load is not None and max_load > 0:
                 self.max_data_array_size = max_load * GIGA
 
             if self.file_size_bytes > self.max_data_array_size:
@@ -79,12 +80,12 @@ class FilReader(Reader):
                 if self.large_file:
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
-                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / GIGA, self.max_data_array_size / GIGA))
+                            self.warn_memory("Selection", self._calc_selection_size())
                             self._init_empty_selection()
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes / GIGA, self.max_data_array_size / GIGA))
+                        self.warn_memory("File", self.file_size_bytes)
                         self._init_empty_selection()
                 else:
                     self.read_data()
@@ -124,9 +125,8 @@ class FilReader(Reader):
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, "
-                           "header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / GIGA, self.max_data_array_size / GIGA))
-            self.data = np.array([0],dtype=self._d_type)
+            self.warn_memory("Selection", self._calc_selection_size())
+            self.data = np.array([0], dtype=self._d_type)
             return None
 
         #Convert input frequencies into what their corresponding channel number would be.
