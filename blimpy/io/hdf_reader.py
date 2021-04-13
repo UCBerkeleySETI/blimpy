@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 from astropy.coordinates import Angle
 
-from blimpy.io.base_reader import Reader, logger, MAX_DATA_ARRAY_SIZE_UNIT
+from blimpy.io.base_reader import Reader, logger, GIGA
 
 
 class H5Reader(Reader):
@@ -66,28 +66,24 @@ class H5Reader(Reader):
 
             #Applying data size limit to load.
             if max_load is not None:
-                if max_load > 1.0:
-                    logger.warning('Setting data limit = {} GB > 1 GB, please handle with care!'.format(max_load))
-                self.MAX_DATA_ARRAY_SIZE = max_load * MAX_DATA_ARRAY_SIZE_UNIT
-            else:
-                self.MAX_DATA_ARRAY_SIZE = MAX_DATA_ARRAY_SIZE_UNIT
+                self.max_data_array_size = max_load * GIGA
 
-            if self.file_size_bytes > self.MAX_DATA_ARRAY_SIZE:
+            if self.file_size_bytes > self.max_data_array_size:
                 self.large_file = True
             else:
                 self.large_file = False
 
             if self.load_data:
                 if self.large_file:
-                    #Only checking the selection, if the file is too large.
+                    # Only checking the selection, if the file is too large.
                     if self.f_start or self.f_stop or self.t_start or self.t_stop:
                         if self.isheavy():
-                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
+                            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / GIGA, self.max_data_array_size / GIGA))
                             self._init_empty_selection()
                         else:
                             self.read_data()
                     else:
-                        logger.warning("The file is of size %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes/(1024.**3), self.MAX_DATA_ARRAY_SIZE/(1024.**3)))
+                        logger.warning("The file is of size %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded. You could try another (t,v) selection."%(self.file_size_bytes / GIGA, self.max_data_array_size / GIGA))
                         self._init_empty_selection()
                 else:
                     self.read_data()
@@ -142,8 +138,8 @@ class H5Reader(Reader):
 
         #check if selection is small enough.
         if self.isheavy():
-            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / (1024. ** 3), self.MAX_DATA_ARRAY_SIZE / (1024. ** 3)))
-            self.data = np.array([0],dtype=self._d_type)
+            logger.warning("Selection size of %.2f GB, exceeding our size limit %.2f GB. Instance created, header loaded, but data not loaded, please try another (t,v) selection." % (self._calc_selection_size() / GIGA, self.max_data_array_size / GIGA))
+            self.data = np.array([0], dtype=self._d_type)
             return
 
         #Convert input frequencies into what their corresponding channel number would be.

@@ -17,7 +17,7 @@ The primary method of launching regression testing is through the use of the `py
 
 * The development of an amendment to `blimpy` begins with taking a fork from a github site, normally from `https://github.com/UCBerkeleySETI/blimpy`.
 * Also, from the same site, `blimpy` is downloaded to a local computer.  The download operations can be performed in a few different ways but the simplest might be to download the zip file by clicking on the `Code` button and selecting `Download ZIP`.  Once the the zip file is in a local directory, unzip it and move the blimpy directory tree to wherever is appropriate for testing.  The zip file can now be discarded.
-* Change directory into the `tests` directory (where this file is located) and execute `bash download_test_data.sh` which will perform all required regression testing initialization.
+* Change directory into the `tests` directory (where this file is located) and execute `bash download_data.sh` which will perform all required regression testing initialization.
 * When the previous step has completed, change directory up one level to the top of the `blimpy` directory tree.
 * Then, install `pytest` and `pyslalib` from pypi.org: `python3 -m pip install pytest pyslalib`.
 
