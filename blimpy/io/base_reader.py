@@ -1,6 +1,7 @@
 import numpy as np
 
 import logging
+import psutil
 import sys
 
 logger = logging.getLogger(__name__)
@@ -16,8 +17,8 @@ else:
 
 logging.basicConfig(format=lformat, stream=stream, level=level_log)
 
-# Max size of data array to load into memory (1GB in bytes)
-MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.0
+# Convenient for memory calculations
+GIGA = 1024 ** 3
 
 # Threshold size for high resolution data
 HIRES_THRESHOLD = 2**20
@@ -30,6 +31,10 @@ class Reader(object):
 
         self.t_begin = 0
         self.t_end   = 0
+
+        # Calculate the max data array size from available memory
+        self.available_memory = psutil.virtual_memory().available
+        self.max_data_array_size = self.available_memory - GIGA
 
     def _setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None, init=False):
         """Making sure the selection if time and frequency are within the file limits.
@@ -285,13 +290,18 @@ class Reader(object):
 
         return n_blobs
 
+    def warn_memory(self, name, size):
+        """ Warn that <name> is larger than our limit for loading things into memory.
+        """
+        logger.warning(f"{name} size is {size / GIGA:.2f} GB, which exceeds the memory usage limit of {self.max_data_array_size / GIGA} GB. Keeping data on disk.")
+    
     def isheavy(self):
         """ Check if the current selection is too large.
         """
 
         selection_size_bytes = self._calc_selection_size()
 
-        if selection_size_bytes > self.MAX_DATA_ARRAY_SIZE:
+        if selection_size_bytes > self.max_data_array_size:
             return True
         else:
             return False

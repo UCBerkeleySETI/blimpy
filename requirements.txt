@@ -8,3 +8,4 @@ h5py
 scipy
 hdf5plugin
 pandas
+psutil

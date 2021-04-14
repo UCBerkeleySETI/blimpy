@@ -70,7 +70,7 @@ class Waterfall():
         return "Waterfall data: %s" % self.filename
 
     def __init__(self, filename=None, f_start=None, f_stop=None, t_start=None, t_stop=None,
-                 load_data=True, max_load=1., header_dict=None, data_array=None):
+                 load_data=True, max_load=None, header_dict=None, data_array=None):
         """ Class for loading and plotting blimpy data.
 
         This class parses the blimpy file and stores the header and data
@@ -86,8 +86,7 @@ class Waterfall():
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
-            max_load (float): maximum data to load in GB. Default: 1GB.
-                              e.g. 0.1 is 100 MB
+            max_load (float): maximum data to load in GB.
             header_dict (dict): Create blimpy from header dictionary + data array
             data_array (np.array): Create blimpy from header dict + data array
         """
