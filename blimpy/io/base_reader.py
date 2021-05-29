@@ -261,10 +261,10 @@ class Reader(object):
                 return n_coarse_chan
             else:
                 errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: hires nchans not divisible by 2^20 and not GBT"
-                logger.error(errmsg1)
-                errmsg2 = "In turbo_seti, you can specify n_course_chan explicitly."
-                logger.error(errmsg2)
-                raise ValueError(errmsg1)
+                logger.warning(errmsg1)
+                errmsg2 = "Setting a value of 1. In turbo_seti, you can specify n_course_chan explicitly."
+                logger.info(errmsg2)
+                return 1
                 
         # Not high resolution data.  GBT?
         if self.header['telescope_id'] == 6:
@@ -276,11 +276,11 @@ class Reader(object):
             
         # Not high resolution data and Not GBT
         else: 
-            errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: not hires and not GBT."
-            logger.error(errmsg1)
-            errmsg2 = "In turbo_seti, you can specify n_course_chan explicitly."
-            logger.error(errmsg2)
-            raise ValueError(errmsg1)
+            errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: not hires and not GBT. Setting a value of 1"
+            logger.warning(errmsg1)
+            errmsg2 = "Setting a value of 1. In turbo_seti, you can specify n_course_chan explicitly."
+            logger.info(errmsg2)
+            return 1
 
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
