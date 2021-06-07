@@ -164,7 +164,7 @@ class Waterfall():
         else:
             self.header['fch1'] = self.container.f_start
 
-        #Updating number of coarse channels.
+        #Updating number of fine channels.
         self.header['nchans'] = self.container.selection_shape[self.freq_axis]
 
         #Updating time stamp for first time bin from selection
