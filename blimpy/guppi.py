@@ -422,7 +422,7 @@ class GuppiRaw():
         can be saved into a filterbank file.
 
         Args:
-            nchans (int): Number of channels in filterbank header.
+            nchans (int): Number of fine channels in filterbank header.
 
         TODO: Deprecate or move to sigproc.py?
         """
@@ -430,12 +430,14 @@ class GuppiRaw():
         fb_head = {}
 
         telescope_str = gp_head.get("TELESCOP", "unknown")
+        if telescope_str == "unknown":
+            print("\n*** WARNING: Missing TELESCOP element in raw header.  Proceeding with a value of 'unknown' ***\n")
         if telescope_str.upper() in ('GBT', 'GREENBANK'):
             fb_head["telescope_id"] = 6
         elif telescope_str.upper() in ('PKS', 'PARKES'):
-            fb_head["telescop_id"] = 7
+            fb_head["telescope_id"] = 4
         else:
-            fb_head["telescop_id"] = 0
+            fb_head["telescope_id"] = 0
 
         # Using .get() method allows us to fill in default values if not present
         fb_head["source_name"] = gp_head.get("SRC_NAME", "unknown")
@@ -447,17 +449,17 @@ class GuppiRaw():
         fb_head["rawdatafile"] = self.filename
 
         # hardcoded
-        fb_head["machine_id"] = 20
+        fb_head["machine_id"] = 42
         fb_head["data_type"] = 1  # blio datatype
         fb_head["barycentric"] = 0
         fb_head["pulsarcentric"] = 0
-        fb_head["nbits"] = 32
+        fb_head["nbits"] = gp_head.get("NBITS", 32)
 
         # TODO - compute these values. Need to figure out the correct calcs
         fb_head["tstart"] = 0.0
         fb_head["tsamp"] = 1.0
         fb_head["fch1"] = 0.0
-        fb_head["foff"] = 187.5 / nchans
+        fb_head["foff"] = gp_head.get("OBSBW", 187.5) / nchans
 
         # Need to be updated based on output specs
         fb_head["nchans"] = nchans
