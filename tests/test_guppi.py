@@ -48,7 +48,8 @@ def test_statistics():
 
 def test_fil_header():
     gr = bl.guppi.GuppiRaw(voyager_raw)
-    gr.generate_filterbank_header()
+    header = gr.generate_filterbank_header()
+    print("Generated header:\n", header)
 
 def test_rawhdr():
     from blimpy.rawhdr import cmd_tool
@@ -61,7 +62,10 @@ def test_get_obsnchan():
 
 if __name__ == "__main__":
     test_guppi()
+    test_spectrum()
+    test_histogram()
+    test_statistics()
+    test_fil_header()
     test_rawhdr()
     test_get_obsnchan()
-
 
