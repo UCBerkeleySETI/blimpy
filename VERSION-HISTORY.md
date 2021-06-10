@@ -3,6 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-06-10 | 2.0.13 | Fix issue #205 - Define MeerKAT in the list of observatories |
 | 2021-05-29 | 2.0.12 | Fix issue #203 - calc_n_coarse_chan default to 1 |
 | 2021-04-14 | 2.0.11 | Fix issue #196 - automate memory requirements |
 | 2021-03-11 | 2.0.10 | Reopened enhancement #178 - calcload utility - added a verbose parameter. |
