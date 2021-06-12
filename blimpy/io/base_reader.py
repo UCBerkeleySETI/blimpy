@@ -34,7 +34,14 @@ class Reader(object):
 
         # Calculate the max data array size from available memory
         self.available_memory = psutil.virtual_memory().available
-        self.max_data_array_size = self.available_memory - GIGA
+        logger.debug("Reader __init__ available_memory={}".format(self.available_memory))
+        if self.available_memory > GIGA:
+            self.max_data_array_size = self.available_memory - GIGA
+        else:
+            self.max_data_array_size = self.available_memory
+            logger.warning("Very low on memory, only {:.2f} MB available for use."
+                           .format(float(self.available_memory) / 1e6))
+        logger.debug("Reader __init__ max_data_array_size={}".format(self.max_data_array_size))
 
     def _setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None, init=False):
         """Making sure the selection if time and frequency are within the file limits.
