@@ -39,7 +39,8 @@ class Reader(object):
             self.max_data_array_size = self.available_memory - GIGA
         else:
             self.max_data_array_size = self.available_memory
-            logger.warning("Very low on memory, only {} available for use.".format(self.available_memory))
+            logger.warning("Very low on memory, only {:.2f} MB available for use."
+                           .format(float(self.available_memory) / 1e6))
         logger.debug("Reader __init__ max_data_array_size={}".format(self.max_data_array_size))
 
     def _setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None, init=False):
