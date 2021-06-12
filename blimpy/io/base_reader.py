@@ -35,7 +35,7 @@ class Reader(object):
         # Calculate the max data array size from available memory
         self.available_memory = psutil.virtual_memory().available
         logger.debug("Reader __init__ available_memory={}".format(self.available_memory))
-        if self.available_memory >= GIGA:
+        if self.available_memory > GIGA:
             self.max_data_array_size = self.available_memory - GIGA
         else:
             self.max_data_array_size = self.available_memory
