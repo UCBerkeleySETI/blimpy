@@ -3,7 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
-| 2021-06-12 | 2.0.14 | Fix issue #208 - Miscalculated max_data_array_size available RAM < 1 GB  |
+| 2021-06-12 | 2.0.14 | Fix issue #208 - Miscalculated max_data_array_size when available RAM < 1 GB  |
 | 2021-06-10 | 2.0.13 | Fix issue #205 - Define MeerKAT in the list of observatories |
 | | | Fix issue #207 guppi.py generate_filterban_header()
 | 2021-05-29 | 2.0.12 | Fix issue #203 - calc_n_coarse_chan default to 1 |
