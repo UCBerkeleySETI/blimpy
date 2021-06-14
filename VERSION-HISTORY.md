@@ -3,6 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-06-14 | 2.0.15 | Fix issue #210 - Guard against unusual Filterbank headers created by setigen apps  |
 | 2021-06-12 | 2.0.14 | Fix issue #208 - Miscalculated max_data_array_size when available RAM < 1 GB  |
 | 2021-06-10 | 2.0.13 | Fix issue #205 - Define MeerKAT in the list of observatories |
 | | | Fix issue #207 guppi.py generate_filterban_header()

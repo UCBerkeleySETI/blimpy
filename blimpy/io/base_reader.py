@@ -236,6 +236,19 @@ class Reader(object):
 
         return freqs
 
+    def adjust_n_coarse_chan(self, n_coarse_chan, nchans):
+        r"""Don't let the calculated n_coarse_chan be < 1
+            nor exceed the number of fine channels."""
+        if n_coarse_chan < 1:
+            errmsg = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan < 1. Replacing that with a value of 1."
+            logger.warning(errmsg)
+            return 1
+        if n_coarse_chan > nchans: # exceeds the number of fine channels?
+            errmsg = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan > nchans. Replacing that with the value of nchans."
+            logger.warning(errmsg)
+            return nchans
+        return n_coarse_chan
+
     def calc_n_coarse_chan(self, chan_bw=None):
         """ This makes an attempt to calculate the number of coarse channels in a given file.
 
@@ -251,7 +264,7 @@ class Reader(object):
         if chan_bw is not None:
             bandwidth = abs(self.f_stop - self.f_start)
             n_coarse_chan = bandwidth / chan_bw
-            return n_coarse_chan
+            return self.adjust_n_coarse_chan(n_coarse_chan, nchans)
 
         # High resolution data?
         if nchans >= HIRES_THRESHOLD:
@@ -259,13 +272,13 @@ class Reader(object):
             # This should work for most GBT and all Parkes hires data
             if nchans % HIRES_THRESHOLD == 0:
                 n_coarse_chan = nchans / float(HIRES_THRESHOLD)
-                return n_coarse_chan
+                return self.adjust_n_coarse_chan(n_coarse_chan, nchans)
             # Early GBT data has non-2^N FFT length, check if it is GBT data
             elif self.header['telescope_id'] == 6:
                 coarse_chan_bw = 2.9296875
                 bandwidth = abs(self.f_stop - self.f_start)
                 n_coarse_chan = bandwidth / coarse_chan_bw
-                return n_coarse_chan
+                return self.adjust_n_coarse_chan(n_coarse_chan, nchans)
             else:
                 errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: hires nchans not divisible by 2^20 and not GBT"
                 logger.warning(errmsg1)
@@ -279,7 +292,7 @@ class Reader(object):
             coarse_chan_bw = 2.9296875
             bandwidth = abs(self.f_stop - self.f_start)
             n_coarse_chan = bandwidth / coarse_chan_bw
-            return n_coarse_chan
+            return self.adjust_n_coarse_chan(n_coarse_chan, nchans)
             
         # Not high resolution data and Not GBT
         else: 
@@ -312,3 +325,4 @@ class Reader(object):
             return True
         else:
             return False
+
