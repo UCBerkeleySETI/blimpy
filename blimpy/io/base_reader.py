@@ -247,6 +247,7 @@ class Reader(object):
             errmsg = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan > nchans. Replacing that with the value of nchans."
             logger.warning(errmsg)
             return nchans
+        return n_coarse_chan
 
     def calc_n_coarse_chan(self, chan_bw=None):
         """ This makes an attempt to calculate the number of coarse channels in a given file.
