@@ -50,6 +50,13 @@ class Reader(object):
             init (bool): If call during __init__
         """
 
+
+        def _dump_parms():
+            wstr = "f_start={}, f_stop={}, t_start={}, t_stop={}, init={}" \
+                  .format(f_start, f_stop, t_start, t_stop, init)
+            logger.warning(wstr)
+
+
         # This avoids resetting values
         if init is True:
             if t_start is None:
@@ -84,6 +91,7 @@ class Reader(object):
         else:
             if init is False or t_start != None:
                 logger.warning('Setting t_start = %f, since t_start not given or not valid.'%self.t_begin)
+                _dump_parms()
             self.t_start = self.t_begin
 
         if t_stop <= self.t_end  and t_stop > self.t_begin:
@@ -91,6 +99,7 @@ class Reader(object):
         else:
             if init is False or t_stop:
                 logger.warning('Setting t_stop = %f, since t_stop not given or not valid.'%self.t_end)
+                _dump_parms()
             self.t_stop = self.t_end
 
         if f_start >= self.f_begin and f_start < self.f_end:
@@ -98,6 +107,7 @@ class Reader(object):
         else:
             if init is False or f_start:
                 logger.warning('Setting f_start = %f, since f_start not given or not valid.'%self.f_begin)
+                _dump_parms()
             self.f_start = self.f_begin
 
         if f_stop <= self.f_end and f_stop > self.f_begin:
@@ -105,6 +115,7 @@ class Reader(object):
         else:
             if init is False or f_stop:
                 logger.warning('Setting f_stop = %f, since f_stop not given or not valid.'%self.f_end)
+                _dump_parms()
             self.f_stop = self.f_end
 
         # Now we have setup bounds, we can calculate shape of selection
@@ -240,12 +251,18 @@ class Reader(object):
         r"""Don't let the calculated n_coarse_chan be < 1
             nor exceed the number of fine channels."""
         if n_coarse_chan < 1:
-            errmsg = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan < 1. Replacing that with a value of 1."
-            logger.warning(errmsg)
-            return 1
+            errmsg1 = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan={}, nchans={}" \
+                      .format(n_coarse_chan, nchans)
+            logger.warning(errmsg1)
+            errmsg2 = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan < 1. Replacing that with a value of 64 (SWAG)."
+            logger.warning(errmsg2)
+            return 64
         if n_coarse_chan > nchans: # exceeds the number of fine channels?
-            errmsg = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan > nchans. Replacing that with the value of nchans."
-            logger.warning(errmsg)
+            errmsg1 = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan={}, nchans={}" \
+                      .format(n_coarse_chan, nchans)
+            logger.warning(errmsg1)
+            errmsg2 = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan > nchans. Replacing that with the value of nchans (SWAG)."
+            logger.warning(errmsg2)
             return nchans
         return n_coarse_chan
 
@@ -282,9 +299,9 @@ class Reader(object):
             else:
                 errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: hires nchans not divisible by 2^20 and not GBT"
                 logger.warning(errmsg1)
-                errmsg2 = "Setting a value of 1. In turbo_seti, you can specify n_course_chan explicitly."
+                errmsg2 = "Setting a value of 64 (SWAG). In turbo_seti, you can specify n_course_chan explicitly."
                 logger.info(errmsg2)
-                return 1
+                return 64
                 
         # Not high resolution data.  GBT?
         if self.header['telescope_id'] == 6:
@@ -298,9 +315,9 @@ class Reader(object):
         else: 
             errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: not hires and not GBT. Setting a value of 1"
             logger.warning(errmsg1)
-            errmsg2 = "Setting a value of 1. In turbo_seti, you can specify n_course_chan explicitly."
+            errmsg2 = "Setting a value of 64 (SWAG). In turbo_seti, you can specify n_course_chan explicitly."
             logger.info(errmsg2)
-            return 1
+            return 64
 
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
@@ -325,4 +342,3 @@ class Reader(object):
             return True
         else:
             return False
-
