@@ -20,7 +20,8 @@ entry_points = {
         'matchfils = blimpy.match_fils:cmd_tool',
         'bldice = blimpy.dice:cmd_tool',
         'calcload = blimpy.calcload:cmd_tool',
-        'rawhdr = blimpy.rawhdr:cmd_tool'
+        'rawhdr = blimpy.rawhdr:cmd_tool',
+        'stax = blimpy.stax:cmd_line'
      ]
 }
 
