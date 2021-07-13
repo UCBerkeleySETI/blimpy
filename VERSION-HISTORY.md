@@ -3,6 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-07-13 | 2.0.17 | New utility: stax.  |
 | 2021-07-08 | 2.0.16 | Increase test coverage of calc_n_coarse_chan().  |
 | | | Improve messaging when calc_n_coarse_chan() emits warnings. |
 | 2021-06-14 | 2.0.15 | Fix issue #210 - Guard against unusual Filterbank headers created by setigen apps.  |
