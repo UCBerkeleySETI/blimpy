@@ -115,6 +115,13 @@ def plot_waterfall(wf, f_start=None, f_stop=None, **kwargs):
     return this_plot
 
 
+def sort2(x, y):
+    r""" Return lowest value, highest value"""
+    if y < x:
+        return y, x
+    return x, y
+
+
 def make_waterfall_plots(file_list, plot_dir, f_start=None, f_stop=None, **kwargs):
     r"""
     Make waterfall plots of a file set, view from top to bottom.
@@ -162,14 +169,10 @@ def make_waterfall_plots(file_list, plot_dir, f_start=None, f_stop=None, **kwarg
         f_start = freqs[0]
     if f_stop is None:
         f_stop = freqs[-1]
-    if f_stop < f_start:
-        temp = f_stop
-        f_stop = f_start
-        f_start = temp
-
-    plot_f1, plot_data1 = wf1.grab_data(f_start=f_start, f_stop=f_stop)
+    the_lowest, the_highest = sort2(f_start, f_stop)
 
     # rebin data to plot correctly with fewer points
+    plot_f1, plot_data1 = wf1.grab_data(f_start=the_lowest, f_stop=the_highest)
     dec_fac_x, dec_fac_y = 1, 1
     if plot_data1.shape[0] > MAX_IMSHOW_POINTS[0]:
         dec_fac_x = plot_data1.shape[0] / MAX_IMSHOW_POINTS[0]
@@ -177,17 +180,16 @@ def make_waterfall_plots(file_list, plot_dir, f_start=None, f_stop=None, **kwarg
         dec_fac_y =  int(np.ceil(plot_data1.shape[1] /  MAX_IMSHOW_POINTS[1]))
     plot_data1 = rebin(plot_data1, dec_fac_x, dec_fac_y)
 
-    # define more plot parameters
-    # never used: delta_f = 0.000250
-    mid_f = np.abs(f_start + f_stop) / 2.
+    # Compute the midpoint.
+    the_midpoint = np.abs(the_lowest + the_highest) / 2.
 
-    subplots = []
+    # Protect RAM utilisation.
     del wf1, freqs, plot_f1, plot_data1
     gc.collect()
 
     # Fill in each subplot for the full plot
+    subplots = []
     for ii, filename in enumerate(file_list):
-        logger.info("Processing: {}".format(filename))
         logger.debug("make_waterfall_plots: file {} in list: {}".format(ii, filename))
         # identify panel
         subplot = plt.subplot(n_plots, 1, ii + 1)
@@ -195,53 +197,62 @@ def make_waterfall_plots(file_list, plot_dir, f_start=None, f_stop=None, **kwarg
 
         # read in data
         max_load = bl.calcload.calc_max_load(filename)
-        #print("plot_event make_waterfall_plots: max_load={} is required for {}".format(max_load, filename))
-        wf = bl.Waterfall(filename, f_start=f_start, f_stop=f_stop, max_load=max_load)
+        wf = bl.Waterfall(filename, max_load=max_load)
+
+        # Validate frequency range.
+        freqs = wf.container.populate_freqs()
+        ii_lowest, ii_highest = sort2(freqs[0], freqs[-1])
+        logger.info("Processing: {}, freq lowest={}, highest={}".format(filename, ii_lowest, ii_highest))
+        if the_lowest < ii_lowest or the_highest > ii_highest:
+            logger.warning("Frequency range not compatible!  Ignoring this file.")
+            # Protect RAM utilisation.
+            del wf, freqs
+            gc.collect()
+            continue # Skip this file.
+
         # make plot with plot_waterfall
         source_name = wf.header["source_name"]
         this_plot = plot_waterfall(wf,
-                                   f_start=f_start,
-                                   f_stop=f_stop,
+                                   f_start=the_lowest,
+                                   f_stop=the_highest,
                                    **kwargs)
 
-        # Title the full plot
+        # Title the full plot if processing the first file.
         if ii == 0:
             plot_title = "%s \n MJD:%5.5f (first file)" % (source_name, t0)
             plt.title(plot_title)
-        # Format full plot
-        if ii < len(file_list)-1:
-            plt.xticks(np.linspace(f_start, f_stop, num=4), ["","","",""])
 
-        del wf
+        # Format full plot.
+        if ii < len(file_list)-1:
+            plt.xticks(np.linspace(the_lowest, the_highest, num=4), ["","","",""])
+
+        # Protect RAM utilisation.
+        del wf, freqs
         gc.collect()
 
-
-    # More overall plot formatting, axis labelling
+    # More overall plot formatting, axis labelling.
     factor = 1e6
     units = "Hz"
-
-    #ax = plt.gca()
-    #ax.get_xaxis().get_major_formatter().set_useOffset(False)
-    xloc = np.linspace(f_start, f_stop, 5)
-    xticks = [round(loc_freq) for loc_freq in (xloc - mid_f)*factor]
+    xloc = np.linspace(the_lowest, the_highest, 5)
+    xticks = [round(loc_freq) for loc_freq in (xloc - the_midpoint) * factor]
     if np.max(xticks) > 1000:
-        xticks = [xt/1000 for xt in xticks]
+        xticks = [xt / 1000 for xt in xticks]
         units = "kHz"
     plt.xticks(xloc, xticks)
-    plt.xlabel("Relative Frequency [%s] from %f MHz"%(units,mid_f),fontdict=font)
+    plt.xlabel("Relative Frequency [%s] from %f MHz" % (units, the_midpoint), fontdict=font)
 
-    # Add colorbar
+    # Add colorbar.
     cax = fig[0].add_axes([0.94, 0.11, 0.03, 0.77])
-    fig[0].colorbar(this_plot,cax=cax,label="Normalized Power (Arbitrary Units)")
+    fig[0].colorbar(this_plot, cax=cax, label="Normalized Power (Arbitrary Units)")
 
     # Adjust plots
     plt.subplots_adjust(hspace=0,wspace=0)
 
-    # save the figures
+    # Save the figures.
     path_png = dirpath + source_name + "_fstart_{:0.6f}".format(f_start) \
                 + "_fstop_{:0.6f}".format(f_stop) + ".png"
     plt.savefig(path_png, bbox_inches="tight")
-    logger.debug("make_waterfall_plots: Saved file {}".format(path_png))
+    logger.info("Saved plot: {}".format(path_png))
 
     # show figure before closing if this is an interactive context
     mplbe = matplotlib.get_backend()
