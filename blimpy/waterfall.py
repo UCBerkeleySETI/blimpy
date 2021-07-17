@@ -347,15 +347,20 @@ class Waterfall():
         n_coarse_chan = int(n_coarse_chan)
 
         n_chan = self.data.shape[-1]
-        n_chan_per_coarse = int(n_chan / n_coarse_chan)
+        n_chan_per_coarse = int(n_chan / n_coarse_chan) # ratio of fine channels to coarse channels
 
         mid_chan = int(n_chan_per_coarse / 2)
 
-        # YANKED 2021-03-05: @jit(nopython=True, fastmath=True, cache=True)
         def parse(data, n_coarse_chan, n_chan_per_coarse, mid_chan):
             for ii in range(n_coarse_chan):
                 ss = ii*n_chan_per_coarse
-                data[..., ss+mid_chan] = np.median(data[..., ss+mid_chan+5:ss+mid_chan+10])
+                w_slice = data[..., ss+mid_chan+5:ss+mid_chan+10]
+                chtest = w_slice.shape[-1]
+                # If we are nearing the end of the fine channel frequency array,
+                # do not do anymore.  See issue #212.
+                if chtest < 5:
+                    break
+                data[..., ss+mid_chan] = np.median(w_slice)
         
         parse(self.data, n_coarse_chan, n_chan_per_coarse, mid_chan)
 
