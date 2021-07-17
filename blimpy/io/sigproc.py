@@ -76,18 +76,19 @@ def len_header(filename):
     Returns:
         idx_end (int): length of header, in bytes
     """
+    GULP = 4096
     with open(filename, 'rb') as f:
         header_sub_count = 0
         eoh_found = False
         while not eoh_found:
-            header_sub = f.read(512)
+            header_sub = f.read(GULP)
             header_sub_count += 1
             if b'HEADER_END' in header_sub:
                 idx_end = header_sub.index(b'HEADER_END') + len(b'HEADER_END')
                 eoh_found = True
                 break
 
-        idx_end = (header_sub_count -1) * 512 + idx_end
+        idx_end = (header_sub_count -1) * GULP + idx_end
     return idx_end
 
 

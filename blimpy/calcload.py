@@ -11,16 +11,17 @@ def calc_max_load(arg_path, verbose=False):
 
     Algorithm:
         * A = minimum Waterfall object size.
-        * B = data array size
+        * B = data array size within one polarisation.
         * Return ceil(A + B in GB)
     '''
     wf = bl.Waterfall(arg_path, load_data=False)
-    min_size = float(sys.getsizeof(wf))
+    min_size = float(sys.getsizeof(wf.header)) + float(sys.getsizeof(wf))
     data_size = float(wf.header['nchans'] * wf.n_ints_in_file * wf.header['nbits']) / 8.0
     ngbytes = (min_size + data_size) / 1e9
     max_load = np.ceil(ngbytes)
     if verbose:
-        print('calc_max_load: min_size={}, data_size={}, ngbytes={}'.format(min_size, data_size, ngbytes))
+        print('calc_max_load: Waterfall object size excluding data = {}, data array size = {}, total GBs = {:.1f}'
+              .format(min_size, data_size, ngbytes))
     return max_load
 
 

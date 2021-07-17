@@ -1,6 +1,7 @@
 import numpy as np
 
 import logging
+import psutil
 import sys
 
 logger = logging.getLogger(__name__)
@@ -16,8 +17,8 @@ else:
 
 logging.basicConfig(format=lformat, stream=stream, level=level_log)
 
-# Max size of data array to load into memory (1GB in bytes)
-MAX_DATA_ARRAY_SIZE_UNIT = 1024 * 1024 * 1024.0
+# Convenient for memory calculations
+GIGA = 1024 ** 3
 
 # Threshold size for high resolution data
 HIRES_THRESHOLD = 2**20
@@ -31,12 +32,30 @@ class Reader(object):
         self.t_begin = 0
         self.t_end   = 0
 
+        # Calculate the max data array size from available memory
+        self.available_memory = psutil.virtual_memory().available
+        logger.debug("Reader __init__ available_memory={}".format(self.available_memory))
+        if self.available_memory > GIGA:
+            self.max_data_array_size = self.available_memory - GIGA
+        else:
+            self.max_data_array_size = self.available_memory
+            logger.warning("Very low on memory, only {:.2f} MB available for use."
+                           .format(float(self.available_memory) / 1e6))
+        logger.debug("Reader __init__ max_data_array_size={}".format(self.max_data_array_size))
+
     def _setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None, init=False):
         """Making sure the selection if time and frequency are within the file limits.
 
         Args:
             init (bool): If call during __init__
         """
+
+
+        def _dump_parms():
+            wstr = "f_start={}, f_stop={}, t_start={}, t_stop={}, init={}" \
+                  .format(f_start, f_stop, t_start, t_stop, init)
+            logger.warning(wstr)
+
 
         # This avoids resetting values
         if init is True:
@@ -72,6 +91,7 @@ class Reader(object):
         else:
             if init is False or t_start != None:
                 logger.warning('Setting t_start = %f, since t_start not given or not valid.'%self.t_begin)
+                _dump_parms()
             self.t_start = self.t_begin
 
         if t_stop <= self.t_end  and t_stop > self.t_begin:
@@ -79,6 +99,7 @@ class Reader(object):
         else:
             if init is False or t_stop:
                 logger.warning('Setting t_stop = %f, since t_stop not given or not valid.'%self.t_end)
+                _dump_parms()
             self.t_stop = self.t_end
 
         if f_start >= self.f_begin and f_start < self.f_end:
@@ -86,6 +107,7 @@ class Reader(object):
         else:
             if init is False or f_start:
                 logger.warning('Setting f_start = %f, since f_start not given or not valid.'%self.f_begin)
+                _dump_parms()
             self.f_start = self.f_begin
 
         if f_stop <= self.f_end and f_stop > self.f_begin:
@@ -93,6 +115,7 @@ class Reader(object):
         else:
             if init is False or f_stop:
                 logger.warning('Setting f_stop = %f, since f_stop not given or not valid.'%self.f_end)
+                _dump_parms()
             self.f_stop = self.f_end
 
         # Now we have setup bounds, we can calculate shape of selection
@@ -224,6 +247,25 @@ class Reader(object):
 
         return freqs
 
+    def adjust_n_coarse_chan(self, n_coarse_chan, nchans):
+        r"""Don't let the calculated n_coarse_chan be < 1
+            nor exceed the number of fine channels."""
+        if n_coarse_chan < 1:
+            errmsg1 = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan={}, nchans={}" \
+                      .format(n_coarse_chan, nchans)
+            logger.warning(errmsg1)
+            errmsg2 = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan < 1. Replacing that with a value of 64 (SWAG)."
+            logger.warning(errmsg2)
+            return 64
+        if n_coarse_chan > nchans: # exceeds the number of fine channels?
+            errmsg1 = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan={}, nchans={}" \
+                      .format(n_coarse_chan, nchans)
+            logger.warning(errmsg1)
+            errmsg2 = "blimpy:io:base_reader:adjust_n_coarse_chan: n_coarse_chan > nchans. Replacing that with the value of nchans (SWAG)."
+            logger.warning(errmsg2)
+            return nchans
+        return n_coarse_chan
+
     def calc_n_coarse_chan(self, chan_bw=None):
         """ This makes an attempt to calculate the number of coarse channels in a given file.
 
@@ -239,7 +281,7 @@ class Reader(object):
         if chan_bw is not None:
             bandwidth = abs(self.f_stop - self.f_start)
             n_coarse_chan = bandwidth / chan_bw
-            return n_coarse_chan
+            return self.adjust_n_coarse_chan(n_coarse_chan, nchans)
 
         # High resolution data?
         if nchans >= HIRES_THRESHOLD:
@@ -247,19 +289,19 @@ class Reader(object):
             # This should work for most GBT and all Parkes hires data
             if nchans % HIRES_THRESHOLD == 0:
                 n_coarse_chan = nchans / float(HIRES_THRESHOLD)
-                return n_coarse_chan
+                return self.adjust_n_coarse_chan(n_coarse_chan, nchans)
             # Early GBT data has non-2^N FFT length, check if it is GBT data
             elif self.header['telescope_id'] == 6:
                 coarse_chan_bw = 2.9296875
                 bandwidth = abs(self.f_stop - self.f_start)
                 n_coarse_chan = bandwidth / coarse_chan_bw
-                return n_coarse_chan
+                return self.adjust_n_coarse_chan(n_coarse_chan, nchans)
             else:
                 errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: hires nchans not divisible by 2^20 and not GBT"
-                logger.error(errmsg1)
-                errmsg2 = "In turbo_seti, you can specify n_course_chan explicitly."
-                logger.error(errmsg2)
-                raise ValueError(errmsg1)
+                logger.warning(errmsg1)
+                errmsg2 = "Setting a value of 64 (SWAG). In turbo_seti, you can specify n_course_chan explicitly."
+                logger.info(errmsg2)
+                return 64
                 
         # Not high resolution data.  GBT?
         if self.header['telescope_id'] == 6:
@@ -267,15 +309,15 @@ class Reader(object):
             coarse_chan_bw = 2.9296875
             bandwidth = abs(self.f_stop - self.f_start)
             n_coarse_chan = bandwidth / coarse_chan_bw
-            return n_coarse_chan
+            return self.adjust_n_coarse_chan(n_coarse_chan, nchans)
             
         # Not high resolution data and Not GBT
         else: 
-            errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: not hires and not GBT."
-            logger.error(errmsg1)
-            errmsg2 = "In turbo_seti, you can specify n_course_chan explicitly."
-            logger.error(errmsg2)
-            raise ValueError(errmsg1)
+            errmsg1 = "blimpy:io:base_reader:calc_n_coarse_chan: not hires and not GBT. Setting a value of 1"
+            logger.warning(errmsg1)
+            errmsg2 = "Setting a value of 64 (SWAG). In turbo_seti, you can specify n_course_chan explicitly."
+            logger.info(errmsg2)
+            return 64
 
     def calc_n_blobs(self, blob_dim):
         """ Given the blob dimensions, calculate how many fit in the data selection.
@@ -285,13 +327,18 @@ class Reader(object):
 
         return n_blobs
 
+    def warn_memory(self, name, size):
+        """ Warn that <name> is larger than our limit for loading things into memory.
+        """
+        logger.warning(f"{name} size is {size / GIGA:.2f} GB, which exceeds the memory usage limit of {self.max_data_array_size / GIGA} GB. Keeping data on disk.")
+    
     def isheavy(self):
         """ Check if the current selection is too large.
         """
 
         selection_size_bytes = self._calc_selection_size()
 
-        if selection_size_bytes > self.MAX_DATA_ARRAY_SIZE:
+        if selection_size_bytes > self.max_data_array_size:
             return True
         else:
             return False
