@@ -3,6 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-07-17 | 2.0.18 | Get rid of numpy "RuntimeWarning: Mean of empty slice" messages (Issue #212).  |
 | 2021-07-13 | 2.0.17 | New utility: stax.  |
 | 2021-07-08 | 2.0.16 | Increase test coverage of calc_n_coarse_chan().  |
 | | | Improve messaging when calc_n_coarse_chan() emits warnings. |
