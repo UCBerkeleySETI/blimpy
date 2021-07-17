@@ -61,6 +61,7 @@ After installation, some command line utilities will be installed:
 * `matchfils`, Check if two .fil files are the same.
 * `calcload`, Calculate the Waterfall max_load value needed to load the data array for a given file.
 * `rawhdr`, Display the header fields of a raw guppi file.
+* `stax`, For a collection of .h5 or .fil files, create a stack of waterfall plots as a PNG file.
 
 Use the `-h` flag to any of the above command line utilities to display their available arguments.
 
