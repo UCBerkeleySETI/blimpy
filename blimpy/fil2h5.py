@@ -9,7 +9,7 @@
 
 import sys
 import os
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 # Logging set up
 import logging
@@ -30,8 +30,7 @@ from blimpy import Waterfall
 from blimpy.io.hdf_writer import __write_to_hdf5_heavy as write_to_h5
 
 
-def make_h5_file(filename,out_dir='./', new_filename=None, max_load=None,
-                 t_start=None, t_stop=None):
+def make_h5_file(filename, out_dir='./', new_filename=None, t_start=None, t_stop=None):
     """ Converts file to HDF5 (.h5) format. Default saves output in current dir.
 
     Args:
@@ -43,8 +42,7 @@ def make_h5_file(filename,out_dir='./', new_filename=None, max_load=None,
         t_stop (int): Stop integration ID to be extracted from file
     """
 
-    wf = Waterfall(filename, max_load = max_load,
-            t_start=t_start, t_stop=t_stop)
+    wf = Waterfall(filename, load_data=False, t_start=t_start, t_stop=t_stop)
     if not new_filename:
         new_filename = out_dir+filename.replace('.fil', '.h5').split('/')[-1]
 
@@ -54,7 +52,7 @@ def make_h5_file(filename,out_dir='./', new_filename=None, max_load=None,
     write_to_h5(wf, new_filename)
 
 
-def cmd_tool(flags=None):
+def cmd_tool(args=None):
     """ Command line utility for converting Sigproc filterbank (.fil) to  HDF5 (.h5) format
 
     Usage:
@@ -70,32 +68,28 @@ def cmd_tool(flags=None):
       -l MAX_LOAD           Maximum data limit to load. Default:1GB
     """
 
-    p = OptionParser()
-    p.set_usage('Command line utility for converting Sigproc filterbank (.fil) to  HDF5 (.h5) format  \n >>fil2h5 <FULL_PATH_TO_FIL_FILE> [options]')
-    p.add_option('-o', '--out_dir', dest='out_dir', type='str', default='./', help='Location for output files. Default: local dir. ')
-    p.add_option('-n', '--new_filename', dest='new_filename', type='str', default='', help='New name. Default: replaces extention to .h5')
-    p.add_option('-d', '--delete_input', dest='delete_input', action='store_true', default=False, help='This option deletes the input file after conversion.')
-    p.add_option('-s', '--start_id', dest='t_start', type='int', default=None, help='start integration ID')
-    p.add_option('-t', '--stop_id', dest='t_stop', type='int', default=None, help='stop integration ID')
-    p.add_option('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1GB')
+    parser = ArgumentParser(description="Command line utility for converting Sigproc filterbank (.fil) to  HDF5 (.h5) format  \n >>fil2h5 <FULL_PATH_TO_FIL_FILE> [options]")
+    parser.add_argument("filepath_in", type=str, help="Path of input Filterbank file")
+    parser.add_argument('-o', '--out_dir', dest='out_dir', type=str, default='./', help='Location for output files. Default: local dir. ')
+    parser.add_argument('-n', '--new_filename', dest='new_filename', type=str, default='', help='New name. Default: replaces extention to .h5')
+    parser.add_argument('-d', '--delete_input', dest='delete_input', action='store_true', default=False, help='This option deletes the input file after conversion.')
+    parser.add_argument('-s', '--start_id', dest='t_start', type=int, default=None, help='start integration ID')
+    parser.add_argument('-t', '--stop_id', dest='t_stop', type=int, default=None, help='stop integration ID')
 
-    if flags is None:
-        opts, args = p.parse_args(sys.argv[1:])
+    if args is None:
+        args = parser.parse_args()
     else:
-        opts, args = p.parse_args(flags)
+        args = parser.parse_args(args)
 
-    if len(args)!=1:
-        logger.info('Please specify a file name \nExiting.')
-        sys.exit()
-    else:
-        filename = args[0]
+    make_h5_file(args.filepath_in,
+                 out_dir = args.out_dir,
+                 new_filename = args.new_filename,
+                 t_start=args.t_start,
+                 t_stop=args.t_stop)
 
-    make_h5_file(filename, out_dir = opts.out_dir, new_filename = opts.new_filename, max_load = opts.max_load,
-            t_start=opts.t_start, t_stop=opts.t_stop)
-
-    if opts.delete_input:
-        logger.info("'Deleting input file: %s"%(filename))
-        os.remove(filename)
+    if args.delete_input:
+        logger.info("'Deleting input file: {}".format(args.filename_in))
+        os.remove(args.filename_in)
 
 
 if __name__ == "__main__":
