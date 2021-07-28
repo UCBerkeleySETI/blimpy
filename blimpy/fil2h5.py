@@ -7,18 +7,10 @@
     July 28th 2017
 """
 
-try:
-    from .waterfall import Waterfall
-except:
-    from waterfall import Waterfall
-
-from blimpy.io.hdf_writer import __write_to_hdf5_heavy as write_to_h5
-
-from optparse import OptionParser
 import sys
 import os
+from optparse import OptionParser
 
-#------
 # Logging set up
 import logging
 logger = logging.getLogger(__name__)
@@ -27,16 +19,19 @@ level_log = logging.INFO
 
 if level_log == logging.INFO:
     stream = sys.stdout
-    format = '%(name)-15s %(levelname)-8s %(message)s'
+    fmt = '%(name)-15s %(levelname)-8s %(message)s'
 else:
     stream =  sys.stderr
-    format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
-
-logging.basicConfig(format=format,stream=stream,level = level_log)
-#------
+    fmt = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
+logging.basicConfig(format=fmt,stream=stream,level = level_log)
 
 
-def make_h5_file(filename,out_dir='./', new_filename=None, load_data=False, t_start=None, t_stop=None):
+from blimpy import Waterfall
+from blimpy.io.hdf_writer import __write_to_hdf5_heavy as write_to_h5
+
+
+def make_h5_file(filename,out_dir='./', new_filename=None, max_load=None,
+                 t_start=None, t_stop=None):
     """ Converts file to HDF5 (.h5) format. Default saves output in current dir.
 
     Args:
@@ -48,7 +43,8 @@ def make_h5_file(filename,out_dir='./', new_filename=None, load_data=False, t_st
         t_stop (int): Stop integration ID to be extracted from file
     """
 
-    wf = Waterfall(filename, load_data=load_data, t_start=t_start, t_stop=t_stop)
+    wf = Waterfall(filename, max_load = max_load,
+            t_start=t_start, t_stop=t_stop)
     if not new_filename:
         new_filename = out_dir+filename.replace('.fil', '.h5').split('/')[-1]
 
@@ -56,6 +52,7 @@ def make_h5_file(filename,out_dir='./', new_filename=None, load_data=False, t_st
         new_filename = new_filename+'.h5'
 
     write_to_h5(wf, new_filename)
+
 
 def cmd_tool(flags=None):
     """ Command line utility for converting Sigproc filterbank (.fil) to  HDF5 (.h5) format
@@ -80,6 +77,7 @@ def cmd_tool(flags=None):
     p.add_option('-d', '--delete_input', dest='delete_input', action='store_true', default=False, help='This option deletes the input file after conversion.')
     p.add_option('-s', '--start_id', dest='t_start', type='int', default=None, help='start integration ID')
     p.add_option('-t', '--stop_id', dest='t_stop', type='int', default=None, help='stop integration ID')
+    p.add_option('-l', action='store', default=None, dest='max_load', type=float,help='Maximum data limit to load. Default:1GB')
 
     if flags is None:
         opts, args = p.parse_args(sys.argv[1:])
@@ -92,7 +90,7 @@ def cmd_tool(flags=None):
     else:
         filename = args[0]
 
-    make_h5_file(filename, out_dir = opts.out_dir, new_filename = opts.new_filename, load_data = False,
+    make_h5_file(filename, out_dir = opts.out_dir, new_filename = opts.new_filename, max_load = opts.max_load,
             t_start=opts.t_start, t_stop=opts.t_stop)
 
     if opts.delete_input:
