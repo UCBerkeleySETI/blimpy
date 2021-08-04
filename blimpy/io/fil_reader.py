@@ -5,6 +5,7 @@ import os
 import numpy as np
 
 from blimpy.io import sigproc
+from blimpy.io.waterfall_blob import WaterfallBlob
 from blimpy.io.base_reader import Reader, logger, GIGA
 
 
@@ -164,6 +165,8 @@ class FilReader(Reader):
 
                 f.seek(int(self._n_bytes  * (n_chans - self.chan_stop_idx)), 1)  # Seek to start of next block
 
+        self.data = WaterfallBlob(self.data, self.header)
+
         # Give the FD back to the O/S.
         f.close()
 
@@ -233,6 +236,7 @@ class FilReader(Reader):
 #         if self.header['foff'] < 0:
 #             blob = blob[:,:,::-1]
 
+        blob = WaterfallBlob(blob, self.header)
         return blob
 
     def read_all(self,reverse=True):
