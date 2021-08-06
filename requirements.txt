@@ -8,5 +8,5 @@ h5py
 scipy
 hdf5plugin
 pandas
-PIL
+Pillow
 psutil
