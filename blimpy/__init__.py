@@ -11,6 +11,7 @@ try:
     from . import calcload
     from . import rawhdr
     from . import stax
+    from . import stix
     from . import match_fils
     from blimpy.io import file_wrapper
 except:
