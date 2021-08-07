@@ -3,7 +3,7 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
-| 2021-08-07 | 2.0.21 | New signal_processing source file, "dedoppler.py" (PR #220).  |
+| 2021-08-07 | 2.0.21 | New signal_processing source file, "dedoppler.py" (discussion in PR #220).  |
 | 2021-08-06 | 2.0.20 | New utility, "stix" (Issue #221).  |
 | 2021-07-28 | 2.0.19 | Update fil2h5 to handle YUGE data matrixes.  |
 | 2021-07-17 | 2.0.18 | Get rid of numpy "RuntimeWarning: Mean of empty slice" messages (Issue #212).  |
