@@ -10,3 +10,4 @@ hdf5plugin
 pandas
 Pillow
 psutil
+setigen
