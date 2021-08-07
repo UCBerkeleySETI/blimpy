@@ -9,6 +9,9 @@ import blimpy as bl
 from tests.data import voyager_fil
 
 
+OUTDIR = os.path.dirname(voyager_fil) + "/"
+
+
 def test_fil2h5_conversion():
     """ Tests the conversion of fil files into h5 in both light and heavy modes.
     """
@@ -27,15 +30,18 @@ def test_cmd_tool():
     This is the same test file, but now through the cmd tool.
     """
     #with pytest.raises(SystemExit):
-    bl.fil2h5.cmd_tool([voyager_fil, '-n', 'cmd.h5'])
+    args = [voyager_fil, '-n', OUTDIR + 'cmd.h5']
+    bl.fil2h5.cmd_tool(args=args)
 
 def test_no_args():
     """
     The cmd tool needs to exit, mandating a file name.
     """
     with pytest.raises(SystemExit):
-        bl.fil2h5.cmd_tool()
+        bl.fil2h5.cmd_tool("")
 
 
 if __name__ == "__main__":
     test_fil2h5_conversion()
+    test_cmd_tool()
+    test_no_args()
