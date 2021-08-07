@@ -5,6 +5,8 @@ import blimpy as bl
 
 import pytest
 
+OUTDIR = os.path.dirname(voyager_h5) + "/"
+
 def test_info():
     a = bl.Waterfall(voyager_h5)
     print(a)
@@ -38,30 +40,30 @@ def test_get_freqs():
 def test_cmdline():
     from blimpy.waterfall import cmd_tool
 
-    args = [voyager_h5, '-S', '-s', 'test.png']
+    args = [voyager_h5, '-S', '-s', OUTDIR + 'test.png']
     cmd_tool(args)
 
     args = [voyager_h5, '-i']
     cmd_tool(args)
 
-    if os.path.exists('test.h5'):
-        os.remove('test.h5')
-        args = [voyager_h5, '-H', '-o', 'test.h5']
+    if os.path.exists(OUTDIR + 'test.h5'):
+        os.remove(OUTDIR + 'test.h5')
+        args = [voyager_h5, '-H', '-o', OUTDIR + 'test.h5']
         cmd_tool(args)
-        assert os.path.exists('test.h5')
-        os.remove('test.h5')
+        assert os.path.exists(OUTDIR + 'test.h5')
+        os.remove(OUTDIR + 'test.h5')
 
-    if os.path.exists('test.fil'):
-        os.remove('test.fil')
-        args = [voyager_h5, '-F', '-o', 'test.fil']
+    if os.path.exists(OUTDIR + 'test.fil'):
+        os.remove(OUTDIR + 'test.fil')
+        args = [voyager_h5, '-F', '-o', OUTDIR + 'test.fil']
         cmd_tool(args)
-        assert os.path.exists('test.fil')
-        os.remove('test.fil')
+        assert os.path.exists(OUTDIR + 'test.fil')
+        os.remove(OUTDIR + 'test.fil')
 
 def test_cmd_arguments():
     from blimpy.waterfall import cmd_tool
     
-    args = [voyager_h5, '-H', '-F', '-o', 'test.fil']
+    args = [voyager_h5, '-H', '-F', '-o', OUTDIR + 'test.fil']
     with pytest.raises(ValueError):
         cmd_tool(args)
 
