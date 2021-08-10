@@ -16,6 +16,7 @@ entry_points = {
         'rawutil = blimpy.guppi:cmd_tool',
         'fil2h5 = blimpy.fil2h5:cmd_tool',
         'h52fil = blimpy.h52fil:cmd_tool',
+        'h5diag = blimpy.h5diag:cmd_tool',
         'bl_scrunch = blimpy.bl_scrunch:cmd_tool',
         'matchfils = blimpy.match_fils:cmd_tool',
         'bldice = blimpy.dice:cmd_tool',
