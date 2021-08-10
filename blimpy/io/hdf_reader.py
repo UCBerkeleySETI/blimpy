@@ -25,74 +25,88 @@ class H5Reader(Reader):
         """
         super(H5Reader, self).__init__()
 
-        if filename and os.path.isfile(filename) and h5py.is_hdf5(filename):
+        if not os.path.isfile(filename):
+            raise IOError("Not a file: {}".format(filename))
+        if not h5py.is_hdf5(filename):
+            raise IOError("Not an HDF5 file: {}".format(filename))
 
-            #These values may be modified once code for multi_beam and multi_stokes observations are possible.
-            self.freq_axis = 2
-            self.time_axis = 0
-            self.beam_axis = 1  # Place holder
-            self.stokes_axis = 4  # Place holder
+        #These values may be modified once code for multi_beam and multi_stokes observations are possible.
+        self.freq_axis = 2
+        self.time_axis = 0
+        self.beam_axis = 1  # Place holder
+        self.stokes_axis = 4  # Place holder
 
-            self.filename = filename
-            self.filestat = os.stat(filename)
-            self.filesize = self.filestat.st_size/(1024.0**2)
-            self.load_data = load_data
-            self.h5 = h5py.File(self.filename, mode='r')
-            self.read_header()
-            self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
-            self.n_ints_in_file = self.h5["data"].shape[self.time_axis] #
-            self.n_channels_in_file = self.h5["data"].shape[self.freq_axis] #
-            self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
-            self.n_pols_in_file = 1 #Placeholder for future development.
-            self._n_bytes = int(self.header['nbits'] / 8)  #number of bytes per digit.
-            self._d_type = self._setup_dtype()
-            self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
-
-            if self.header['foff'] < 0:
-                self.f_end = self.header['fch1']
-                self.f_begin = self.f_end + self.n_channels_in_file*self.header['foff']
-            else:
-                self.f_begin = self.header['fch1']
-                self.f_end = self.f_begin + self.n_channels_in_file*self.header['foff']
-
-            self.t_begin = 0
-            self.t_end = self.n_ints_in_file
-
-            #Taking care all the frequencies are assigned correctly.
-            self._setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, init=True)
-            #Convert input frequencies into what their corresponding channel number would be.
-            self._setup_chans()
-            #Update frequencies ranges from channel number.
-            self._setup_freqs()
-
-            #Applying data size limit to load.
-            if max_load is not None and max_load > 0:
-                self.max_data_array_size = max_load * GIGA
-
-            if self.file_size_bytes > self.max_data_array_size:
-                self.large_file = True
-            else:
-                self.large_file = False
-
-            if self.load_data:
-                if self.large_file:
-                    # Only checking the selection, if the file is too large.
-                    if self.f_start or self.f_stop or self.t_start or self.t_stop:
-                        if self.isheavy():
-                            self.warn_memory("Selection", self._calc_selection_size())
-                            self._init_empty_selection()
-                        else:
-                            self.read_data()
-                    else:
-                        self.warn_memory("File", self.file_size_bytes)
-                        self._init_empty_selection()
-                else:
-                    self.read_data()
-            else:
-                logger.debug("Skipping loading data ...")
-                self._init_empty_selection()
+        self.filename = filename
+        self.filestat = os.stat(filename)
+        self.filesize = self.filestat.st_size/(1024.0**2)
+        self.load_data = load_data
+        self.h5 = h5py.File(self.filename, mode='r')
+        if "CLASS" in self.h5.attrs:
+            classstr = self.h5.attrs["CLASS"]
         else:
-            raise IOError("Need a file to open, please give me one!")
+            raise ValueError("CLASS attribute missing")
+        if classstr != "FILTERBANK":
+            raise ValueError("Expected CLASS attribute to be 'FILTERBANK' but saw '{}'".format(classstr))
+        if not "VERSION" in self.h5.attrs:
+            raise ValueError("VERSION attribute missing")
+        if not "data" in self.h5:
+            raise ValueError("data attribute missing")
+        if self.h5["data"].ndim != 3:
+            raise ValueError("Expected data.ndim to be 3 but saw '{}'".format(self.h5["data"].ndim))
+        self.read_header()
+        self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
+        self.n_ints_in_file = self.h5["data"].shape[self.time_axis] #
+        self.n_channels_in_file = self.h5["data"].shape[self.freq_axis] #
+        self.n_beams_in_file = self.header['nifs'] #Placeholder for future development.
+        self.n_pols_in_file = 1 #Placeholder for future development.
+        self._n_bytes = int(self.header['nbits'] / 8)  #number of bytes per digit.
+        self._d_type = self._setup_dtype()
+        self.file_shape = (self.n_ints_in_file,self.n_beams_in_file,self.n_channels_in_file)
+
+        if self.header['foff'] < 0:
+            self.f_end = self.header['fch1']
+            self.f_begin = self.f_end + self.n_channels_in_file*self.header['foff']
+        else:
+            self.f_begin = self.header['fch1']
+            self.f_end = self.f_begin + self.n_channels_in_file*self.header['foff']
+
+        self.t_begin = 0
+        self.t_end = self.n_ints_in_file
+
+        #Taking care all the frequencies are assigned correctly.
+        self._setup_selection_range(f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop, init=True)
+        #Convert input frequencies into what their corresponding channel number would be.
+        self._setup_chans()
+        #Update frequencies ranges from channel number.
+        self._setup_freqs()
+
+        #Applying data size limit to load.
+        if max_load is not None and max_load > 0:
+            self.max_data_array_size = max_load * GIGA
+
+        if self.file_size_bytes > self.max_data_array_size:
+            self.large_file = True
+        else:
+            self.large_file = False
+
+        if self.load_data:
+            if self.large_file:
+                # Only checking the selection, if the file is too large.
+                if self.f_start or self.f_stop or self.t_start or self.t_stop:
+                    if self.isheavy():
+                        self.warn_memory("Selection", self._calc_selection_size())
+                        self._init_empty_selection()
+                    else:
+                        self.read_data()
+                else:
+                    self.warn_memory("File", self.file_size_bytes)
+                    self._init_empty_selection()
+            else:
+                self.read_data()
+        else:
+            logger.debug("Skipping loading data ...")
+            self._init_empty_selection()
+
 
     def read_header(self):
         """ Read header and return a Python dictionary of key:value pairs
