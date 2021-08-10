@@ -16,7 +16,7 @@ class H5Reader(Reader):
         """ Constructor.
 
         Args:
-            filename (str): filename of blimpy file.
+            filename (str): file path of HDF5 file.
             f_start (float): start frequency, in MHz
             f_stop (float): stop frequency, in MHz
             t_start (int): start time bin
