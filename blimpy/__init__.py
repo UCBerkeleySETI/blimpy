@@ -7,6 +7,7 @@ try:
     from . import utils
     from . import fil2h5
     from . import h52fil
+    from . import h5diag
     from . import bl_scrunch
     from . import calcload
     from . import rawhdr
