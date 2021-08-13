@@ -5,6 +5,7 @@ import sys
 from argparse import ArgumentParser
 import h5py
 from astropy.coordinates import Angle
+from blimpy.io.hdf_reader import examine_h5
 
 
 def oops(msg):
@@ -36,23 +37,7 @@ def read_header(h5):
 def examine(filename):
     r""" Diagnose the given HDF5 file"""
     h5 = h5py.File(filename, mode="r")
-    if "CLASS" in h5.attrs:
-        classstr = h5.attrs["CLASS"]
-    else:
-        oops("CLASS attribute missing")
-    if classstr != "FILTERBANK":
-        oops("Expected CLASS attribute to be 'FILTERBANK' but saw '{}'".format(classstr))
-    if "VERSION" in h5.attrs:
-        versionstr = h5.attrs["VERSION"]
-    else:
-        oops("VERSION attribute missing")
-    print("VERSION is ", versionstr)
-    header = read_header(h5)
-    print("Header:", header)
-    if not "data" in h5:
-        oops("data attribute missing")
-    if h5["data"].ndim != 3:
-        oops("Expected data.ndim to be 3 but saw '{}'".format(h5["data"].ndim))
+    examine_h5(h5)
     print("h5diag: data shape:", h5["data"].shape)
 
 
