@@ -1,5 +1,6 @@
 r'''Reader for HDF5 files'''
 import os
+import sys
 
 import h5py
 import numpy as np
@@ -8,32 +9,37 @@ from astropy.coordinates import Angle
 from blimpy.io.base_reader import Reader, logger, GIGA
 
 
+def oops(msg):
+    print("\n*** Oops, hdf_reader: {} ***\n".format(msg))
+    sys.exit(86)
+
+
 def examine_h5(h5):
     """ Examine an HDF5 file for missing/corrupted components. """
     if "CLASS" in h5.attrs:
         classstr = h5.attrs["CLASS"]
     else:
-        raise ValueError("HDF5 CLASS attribute missing")
+        oops("HDF5 CLASS attribute missing")
     if not classstr in ["FILTERBANK", b"FILTERBANK"]:
-        raise ValueError("Expected HDF5 CLASS attribute to be 'FILTERBANK' but saw '{}'".format(classstr))
+        oops("Expected HDF5 CLASS attribute to be 'FILTERBANK' but saw '{}'".format(classstr))
     if not "VERSION" in h5.attrs:
-        raise ValueError("HDF5 VERSION attribute missing")
+        oops("HDF5 VERSION attribute missing")
     if not "data" in h5:
-        raise ValueError("HDF5 data matrix missing")
+        oops("HDF5 data matrix missing")
     if h5["data"].ndim != 3:
-        raise ValueError("Expected HDF5 data.ndim to be 3 but saw '{}'".format(h5["data"].ndim))
+        oops("Expected HDF5 data.ndim to be 3 but saw '{}'".format(h5["data"].ndim))
     try:
         xx = h5["data"][-1][0][0]
     except:
-        raise ValueError("examine_h5: HDF5 Time-dimension data corruption")
+        oops("examine_h5: HDF5 Time-dimension data corruption")
     try:
         xx = h5["data"][0][0][-1]
-    except:
-        raise ValueError("examine_h5: HDF5 Frequency-dimension data corruption")
+    except OSError:
+        oops("examine_h5: HDF5 Frequency-dimension data corruption")
     try:
         xx = h5["data"][-1][0][-1]
     except:
-        raise ValueError("examine_h5: HDF5 End-diagonal data corruption")
+        oops("examine_h5: HDF5 End-diagonal data corruption")
 
 
 class H5Reader(Reader):
