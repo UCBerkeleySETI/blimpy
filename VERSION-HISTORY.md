@@ -3,7 +3,8 @@ This file is a version history of turbo_seti amendments, beginning with version 
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
-| 2021-08-13 | 2.0.23 | A betterfix to issue #226.  |
+| 2021-08-13 | 2.0.24 | Check the data B-tree in issue #226.  |
+| 2021-08-13 | 2.0.23 | A better fix to issue #226.  |
 | 2021-08-10 | 2.0.22 | Non/broken HDF5 input files need better diagnosis (Issue #226).  |
 | 2021-08-07 | 2.0.21 | New signal_processing source file, "dedoppler.py" (discussion in PR #220).  |
 | 2021-08-06 | 2.0.20 | New utility, "stix" (Issue #221).  |
