@@ -38,6 +38,7 @@ def examine(filename):
     r""" Diagnose the given HDF5 file"""
     h5 = h5py.File(filename, mode="r")
     examine_h5(h5)
+    print("h5diag: header:", read_header(h5))
     print("h5diag: data shape:", h5["data"].shape)
 
 
