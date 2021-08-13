@@ -9,6 +9,7 @@ from blimpy.io.base_reader import Reader, logger, GIGA
 
 
 def examine_h5(h5):
+    """ Examine an HDF5 file for missing/corrupted components. """
     if "CLASS" in h5.attrs:
         classstr = h5.attrs["CLASS"]
     else:
@@ -21,6 +22,18 @@ def examine_h5(h5):
         raise ValueError("HDF5 data matrix missing")
     if h5["data"].ndim != 3:
         raise ValueError("Expected HDF5 data.ndim to be 3 but saw '{}'".format(h5["data"].ndim))
+    try:
+        xx = h5["data"][-1][0][0]
+    except:
+        raise ValueError("examine_h5: HDF5 Time-dimension data corruption")
+    try:
+        xx = h5["data"][0][0][-1]
+    except:
+        raise ValueError("examine_h5: HDF5 Frequency-dimension data corruption")
+    try:
+        xx = h5["data"][-1][0][-1]
+    except:
+        raise ValueError("examine_h5: HDF5 End-diagonal data corruption")
 
 
 class H5Reader(Reader):
