@@ -4,3 +4,5 @@ libhdf5-dev
 gfortran
 curl
 git
+g++
+build-essential
