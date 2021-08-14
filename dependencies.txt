@@ -5,3 +5,4 @@ gfortran
 curl
 git
 g++
+build-essential
