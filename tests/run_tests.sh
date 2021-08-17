@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-echo "------ Running Coverage Tests! ------"
-python3 setup.py install; cd tests
-pip3 install coverage codecov pyyaml
-apt-get install git
-cd ..
 coverage run --source=blimpy -m pytest
 EXITCODE=$?
 if [ $EXITCODE -ne 0 ]; then
@@ -12,7 +7,7 @@ if [ $EXITCODE -ne 0 ]; then
     echo
     exit $EXITCODE
 fi
-coverage report
+coverage html -d coverage_html
 EXITCODE=$?
 if [ $EXITCODE -ne 0 ]; then
     echo
@@ -20,4 +15,4 @@ if [ $EXITCODE -ne 0 ]; then
     echo
     exit $EXITCODE
 fi
-codecov
+

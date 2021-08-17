@@ -2,6 +2,7 @@ import os
 import numpy as np
 from tests.data import voyager_h5, voyager_fil
 import blimpy as bl
+from blimpy.waterfall import cmd_tool
 
 import pytest
 
@@ -22,6 +23,7 @@ def test_info():
     # plenty of missed if suites
     a._get_blob_dimensions((300, 300, 300, 300))
     a._update_header()
+    del a
 
 def test_get_freqs():
     wf = bl.Waterfall(voyager_h5)
@@ -38,10 +40,43 @@ def test_get_freqs():
     assert sum1 == sum2
 
 def test_cmdline():
-    from blimpy.waterfall import cmd_tool
-
-    args = [voyager_h5, '-S', '-s', OUTDIR + 'test.png']
+    # Plots
+    
+    args = [voyager_h5, '-S', '-p', 'w', '-s', OUTDIR + 'test.png']
     cmd_tool(args)
+
+    args = [voyager_h5, '-S', '-p', 's', '-s', OUTDIR + 'test.png']
+    cmd_tool(args)
+
+    args = [voyager_h5, '-S', '-p', 'mm', '-s', OUTDIR + 'test.png']
+    cmd_tool(args)
+
+    args = [voyager_h5, '-S', '-p', 'k', '-s', OUTDIR + 'test.png']
+    cmd_tool(args)
+
+    args = [voyager_h5, '-S', '-p', 't', '-s', OUTDIR + 'test.png']
+    cmd_tool(args)
+
+    args = [voyager_h5, '-S', '-p', 'a', '-s', OUTDIR + 'test.png']
+    cmd_tool(args)
+
+    args = [voyager_h5, '-S', '-p', 'ank', '-s', OUTDIR + 'test.png']
+    cmd_tool(args)
+    
+    args = [voyager_h5, '-S', '-p', 'ank', '-s', OUTDIR + 'test.png']
+    cmd_tool(args)
+    
+    # Blank DC to .h5
+
+    args = [voyager_h5, '-D', '-H', '-o', OUTDIR + 'test.h5']
+    cmd_tool(args)
+
+    # Blank DC to .fil
+
+    args = [voyager_h5, '-D', '-F', '-o', OUTDIR + 'test.fil']
+    cmd_tool(args)
+    
+    # info with foff negative
 
     args = [voyager_h5, '-i']
     cmd_tool(args)
@@ -61,13 +96,51 @@ def test_cmdline():
         os.remove(OUTDIR + 'test.fil')
 
 def test_cmd_arguments():
-    from blimpy.waterfall import cmd_tool
-    
     args = [voyager_h5, '-H', '-F', '-o', OUTDIR + 'test.fil']
     with pytest.raises(ValueError):
         cmd_tool(args)
 
-if __name__ == "__main__":
-    test_info()
-    test_cmdline()
-    test_cmd_arguments()
+def test_neg_blank_dc():
+    wf = bl.Waterfall(voyager_h5)
+    wf.blank_dc(0)
+    wf.blank_dc(1.1)
+    del wf
+
+def test_get_chunk_dimensions():
+    wf = bl.Waterfall(voyager_h5)
+    
+    wf.header['foff'] = 0.99e-5
+    assert wf._get_chunk_dimensions() == (1, 1, 1048576)
+    wf.header['foff'] = 1.1e-5
+    
+    wf.header['tsamp'] = 0.99e-3
+    assert wf._get_chunk_dimensions() == (2048, 1, 512)
+    wf.header['tsamp'] = 1.1e-3
+    
+    wf.header['foff'] = 0.99e-2
+    assert wf._get_chunk_dimensions() == (10, 1, 65536)
+    
+    wf.header['foff'] = 1e-1
+    assert wf._get_chunk_dimensions() == (1, 1, 512)
+    
+    del wf
+
+def test_neg_info_foff():
+    wf = bl.Waterfall(voyager_h5)
+    wf.header['foff'] = -1
+    wf.info()
+    del wf
+
+def test_no_filename():
+    header = { "banana": "is a fruit" }
+    data = np.arange(1, 11)
+    class Puddle(bl.Waterfall):
+        def _setup_freqs(self):
+            print("Hello from function _setup_freqs")
+    puddle = Puddle(header_dict=header, data_array=data)
+    puddle = Puddle(header_dict=header)
+    del puddle
+
+test_cmdline()
+
+

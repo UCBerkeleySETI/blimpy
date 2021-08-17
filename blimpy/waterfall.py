@@ -385,7 +385,8 @@ def cmd_tool(args=None):
 
     parser.add_argument('filename', type=str,
                         help='Name of file to read')
-    parser.add_argument('-p', action='store',  default='a', dest='what_to_plot', type=str,
+    parser.add_argument('-p', action='store', dest='what_to_plot', type=str,
+                        choices=['w', 's', 't', 'k', 'mm', 'a', 'ank'],
                         help='Show: "w" waterfall (freq vs. time) plot; "s" integrated spectrum plot; \
                         "t" for time series; "mm" for spectrum including min max; "k" for kurtosis; \
                         "a" for all available plots and information; and "ank" for all but kurtosis.')
@@ -445,10 +446,7 @@ def cmd_tool(args=None):
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
 
-        if parse_args.what_to_plot == "w":
-            plt.figure("waterfall", figsize=(8, 6))
-            fil.plot_waterfall(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
-        elif parse_args.what_to_plot == "s":
+        if parse_args.what_to_plot == "s":
             plt.figure("Spectrum", figsize=(8, 6))
             fil.plot_spectrum(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
         elif parse_args.what_to_plot == "mm":
@@ -466,6 +464,9 @@ def cmd_tool(args=None):
         elif parse_args.what_to_plot == "ank":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
             fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all',kutosis=False)
+        else: # parse_args.what_to_plot = "w"
+            plt.figure("waterfall", figsize=(8, 6))
+            fil.plot_waterfall(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
 
         if parse_args.plt_filename != '':
             plt.savefig(parse_args.plt_filename)
