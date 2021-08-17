@@ -6,13 +6,12 @@ from tests.data import voyager_fil, voyager_h5
 from blimpy.plotting.config import plt
 
 
-def compare_filterbank_fil_to_h5():
+def test_comparison_filterbank_fil_to_h5():
     """ Load Voyager dataset and test that both fil and hdf5 readers return same headers and data """
 
     print("Loading FIL and HDF5 data with Waterfall()..."),
     a = bl.Waterfall(voyager_h5)
     b = bl.Waterfall(voyager_fil)
-    print("OK")
 
     print("Reading headers..")
     print("\nHDF5 file header:")
@@ -24,16 +23,13 @@ def compare_filterbank_fil_to_h5():
     print("\nChecking header values match..."),
     for key in b.header.keys():
         assert b.header[key] == a.header[key]
-    print("OK")
-
+ 
     print("Checking datatype matches..."),
     assert a.data.dtype == b.data.dtype
-    print("OK")
 
     print("Checking data matches..."),
     assert np.allclose(a.data, b.data)
     assert a.data.dtype == b.data.dtype
-    print("OK")
 
 
 def test_plotting_doesnt_cause_exceptions():
@@ -62,9 +58,3 @@ def test_cmdtool():
     with pytest.raises(SystemExit):
         bl.waterfall.cmd_tool(args=[])
 
-
-if __name__ == "__main__":
-    compare_filterbank_fil_to_h5()
-    test_plotting_doesnt_cause_exceptions()
-
-    test_cmdtool()
