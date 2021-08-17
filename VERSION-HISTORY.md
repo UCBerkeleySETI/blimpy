@@ -3,6 +3,7 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-08-17 | 2.0.27 | Fix problems in various regression tests.  |
 | 2021-08-17 | 2.0.26 | Implement requirements_test.txt (Issue #234).  |
 | 2021-08-16 | 2.0.25 | Try to remove HDF5 files that cannot be fully written due to an exception (Issue #232).  |
 | 2021-08-13 | 2.0.24 | Check the data B-tree in issue #226.  |
