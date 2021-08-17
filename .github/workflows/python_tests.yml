@@ -36,7 +36,8 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
-          python3 -m pip install pytest pytest-cov pyslalib
+          python3 setup.py install
+          python3 -m pip install -r requirements_test.txt
       - name: Download test files
         run: |
           cd tests
