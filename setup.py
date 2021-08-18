@@ -22,7 +22,8 @@ entry_points = {
         'bldice = blimpy.dice:cmd_tool',
         'calcload = blimpy.calcload:cmd_tool',
         'rawhdr = blimpy.rawhdr:cmd_tool',
-        'stax = blimpy.stax:cmd_line'
+        'stax = blimpy.stax:cmd_tool',
+        'stix = blimpy.stix:cmd_tool',
      ]
 }
 
