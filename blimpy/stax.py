@@ -1,5 +1,5 @@
 r"""
-Make waterfall plots of a large file.
+Make waterfall plots of s set of files.
 """
 
 import os
