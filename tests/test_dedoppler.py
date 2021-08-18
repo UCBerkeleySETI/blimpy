@@ -5,7 +5,6 @@ import setigen as stg
 import matplotlib.pyplot as plt
 from blimpy.signal_processing.dedoppler import dedoppler_1
 from blimpy import Waterfall
-from blimpy.stax import plot_waterfall, sort2
 from tests.data import voyager_fil
 
 
@@ -18,6 +17,13 @@ PNG_FILE = PLOT_DIR + "/test_dedoppler.png"
 fontsize = 16
 font_dict = {"family" : "DejaVu Sans", "size" : fontsize}
 N_PLOTS = 6
+
+
+def sort2(x, y):
+    r""" Return lowest value, highest value"""
+    if y < x:
+        return y, x
+    return x, y
 
 
 def plotter(counter, drift_rate):
