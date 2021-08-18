@@ -264,7 +264,7 @@ def make_waterfall_plots(file_list, plot_dir, f_start=None, f_stop=None, **kwarg
     plt.close("all")
 
 
-def cmd_line(args=None):
+def cmd_tool(args=None):
     r"""Coomand line parser"""
     parser = ArgumentParser(description='Make waterfall plots from a set of files, viewed from top to bottom.')
     parser.add_argument('file_list', type=str, nargs='+', help='List of files to plot')
@@ -288,4 +288,4 @@ def cmd_line(args=None):
 
 
 if __name__ == "__main__":
-    cmd_line()
+    cmd_tool()
