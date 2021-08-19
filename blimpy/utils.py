@@ -3,6 +3,7 @@
 useful helper functions for common data manipulation tasks
 """
 import numpy as np
+import math
 
 
 def db(x, offset=0):
@@ -32,9 +33,18 @@ def rebin(d, n_x=None, n_y=None, n_z=None):
     Returns:
     d: rebinned data with shape (n_x, n_y)
     """
-    n_x = 1 if n_x is None else n_x
-    n_y = 1 if n_y is None else n_y
-    n_z = 1 if n_z is None else n_z
+    if n_x is None:
+        n_x = 1
+    else:
+        n_x = math.ceil(n_x)
+    if n_y is None:
+        n_y = 1
+    else:
+        n_y = math.ceil(n_y)
+    if n_z is None:
+        n_z = 1
+    else:
+        n_z = math.ceil(n_z)
 
     if d.ndim == 3:
         d = d[:int(d.shape[0] // n_x) * n_x, :int(d.shape[1] // n_y) * n_y, :int(d.shape[2] // n_z) * n_z]

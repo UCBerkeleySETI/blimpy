@@ -195,6 +195,7 @@ def make_waterfall_plots(file_list, plot_dir, plot_dpi, height_ratios, f_start=N
 
     # Fill in each subplot for the full plot
     subplots = []
+    count = 0
     for ii, filename in enumerate(file_list):
         logger.debug("make_waterfall_plots: file {} in list: {}".format(ii, filename))
 
@@ -203,7 +204,7 @@ def make_waterfall_plots(file_list, plot_dir, plot_dpi, height_ratios, f_start=N
         subplots.append(subplot)
 
         # Read file header and data.
-        wf = bl.Waterfall(filename, f_start=f_start, f_stop=f_stop)
+        wf = bl.Waterfall(filename, f_start=the_lowest, f_stop=the_highest)
 
         # Validate frequency range.
         freqs = wf.container.populate_freqs()
@@ -225,6 +226,7 @@ def make_waterfall_plots(file_list, plot_dir, plot_dpi, height_ratios, f_start=N
                                    f_start=the_lowest,
                                    f_stop=the_highest,
                                    **kwargs)
+        count += 1
 
         # Title the full plot if processing the first file.
         if ii == 0:
@@ -238,6 +240,11 @@ def make_waterfall_plots(file_list, plot_dir, plot_dpi, height_ratios, f_start=N
         # Protect RAM utilisation.
         del wf, freqs
         gc.collect()
+
+    # Any plots performed?
+    if count < 1:
+        logger.error("No plots performed!")
+        sys.exit(86)
 
     # More overall plot formatting, axis labelling.
     factor = 1e6
@@ -303,9 +310,9 @@ def cmd_tool(args=None):
     height_ratios = []
     for file in args.file_list:
         wf = bl.Waterfall(file, max_load=1)
-        _, data = wf.grab_data(f_start=0, f_stop=0)
-        nints = data.shape[0]
+        nints = wf.data.shape[0]
         height_ratios.append((nints - 1) * wf.header["tsamp"])
+        del wf
 
     # Make the plots.
     logger.info("Begin")
