@@ -118,6 +118,22 @@ def sort2(x, y):
     return x, y
 
 
+def ck_lt_bdry(x, bdry):
+    if np.isclose(x, bdry, atol=1e-6):
+        return False # assumed equal
+    if x < bdry:
+        return True # below lower boundary
+    return False # above lower boundary
+
+
+def ck_gt_bdry(x, bdry):
+    if np.isclose(x, bdry, atol=1e-6):
+        return False # assumed equal
+    if x > bdry:
+        return True # above upper boundary
+    return False # below upper boundary
+
+
 def make_waterfall_plots(file_list, plot_dir, plot_dpi, height_ratios, f_start=None, f_stop=None, **kwargs):
     r"""
     Make waterfall plots of a file set, view from top to bottom.
@@ -187,13 +203,17 @@ def make_waterfall_plots(file_list, plot_dir, plot_dpi, height_ratios, f_start=N
         subplots.append(subplot)
 
         # Read file header and data.
-        wf = bl.Waterfall(filename)
+        wf = bl.Waterfall(filename, f_start=f_start, f_stop=f_stop)
 
         # Validate frequency range.
         freqs = wf.container.populate_freqs()
         ii_lowest, ii_highest = sort2(freqs[0], freqs[-1])
         logger.info("Processing: {}, freq lowest={}, highest={}".format(filename, ii_lowest, ii_highest))
-        if the_lowest < ii_lowest or the_highest > ii_highest:
+        if ck_lt_bdry(ii_lowest, the_lowest) or ck_gt_bdry(ii_highest, the_highest):
+            logger.warning("Frequency range not compatible!  the_lowest={}, ii_lowest={}."
+                           .format(the_lowest, ii_lowest))
+            logger.warning("Frequency range not compatible!  the_highest={}, ii_highest={}."
+                           .format(the_highest, ii_highest))
             logger.warning("Frequency range not compatible!  Ignoring this file.")
             # Protect RAM utilisation.
             del wf, freqs
@@ -214,6 +234,10 @@ def make_waterfall_plots(file_list, plot_dir, plot_dpi, height_ratios, f_start=N
         # Format full plot.
         if ii < len(file_list)-1:
             plt.xticks(np.linspace(the_lowest, the_highest, num=4), ["","","",""])
+
+        # Protect RAM utilisation.
+        del wf, freqs
+        gc.collect()
 
     # More overall plot formatting, axis labelling.
     factor = 1e6
