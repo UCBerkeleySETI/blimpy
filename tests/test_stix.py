@@ -1,4 +1,5 @@
 from os.path import dirname
+import pytest
 from blimpy.stix import cmd_tool
 from tests.data import voyager_fil
 
@@ -28,6 +29,26 @@ def test_stix():
 
     args = [voyager_fil, "4", "-p",  PLOT_DIR, "-s", "n", "-d", "100", "-w", "8", "-t", "6"]
     execute_command(args)
+
+    with pytest.raises(SystemExit):
+        args = []
+        execute_command(args)
+
+    with pytest.raises(SystemExit):
+        args = [voyager_fil, "0", "-p",  PLOT_DIR, "-s", "n", "-d", "50", "-w", "8", "-t", "6"]
+        execute_command(args)
+
+    with pytest.raises(SystemExit):
+        args = [voyager_fil, "4", "-p",  PLOT_DIR, "-s", "n", "-d", "42", "-w", "8", "-t", "6"]
+        execute_command(args)
+
+    with pytest.raises(SystemExit):
+        args = [voyager_fil, "4", "-p",  PLOT_DIR, "-s", "n", "-d", "50", "-w", "5.9", "-t", "6"]
+        execute_command(args)
+
+    with pytest.raises(SystemExit):
+        args = [voyager_fil, "4", "-p",  PLOT_DIR, "-s", "n", "-d", "50", "-w", "8", "-t", "4.9"]
+        execute_command(args)
 
 
 if __name__ == "__main__":
