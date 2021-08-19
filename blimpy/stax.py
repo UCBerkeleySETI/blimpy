@@ -278,7 +278,7 @@ def cmd_tool(args=None):
     # Compute the array of height ratios.
     height_ratios = []
     for file in args.file_list:
-        wf = bl.Waterfall(file, max_load=1000)
+        wf = bl.Waterfall(file, max_load=1)
         _, data = wf.grab_data(f_start=0, f_stop=0)
         nints = data.shape[0]
         height_ratios.append((nints - 1) * wf.header["tsamp"])
