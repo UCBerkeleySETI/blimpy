@@ -5,7 +5,7 @@ import setigen as stg
 import matplotlib.pyplot as plt
 from blimpy.signal_processing.dedoppler import dedoppler_1
 from blimpy import Waterfall
-from blimpy.stax import plot_waterfall, sort2
+from blimpy.plotting import plot_waterfall
 from tests.data import voyager_fil
 
 
@@ -20,6 +20,13 @@ font_dict = {"family" : "DejaVu Sans", "size" : fontsize}
 N_PLOTS = 6
 
 
+def sort2(x, y):
+    r""" Return lowest value, highest value"""
+    if y < x:
+        return y, x
+    return x, y
+
+
 def plotter(counter, drift_rate):
     wf = Waterfall(FIL_FILE)
     dedoppler_1(wf, drift_rate)
@@ -29,7 +36,7 @@ def plotter(counter, drift_rate):
 
 
 def test_dedoppler_1():
-    
+
     # Generate the Filterbank file.
     print("test_dedoppler_1: Creating Filterbank file {}".format(FIL_FILE))
     frame = stg.Frame(fchans=1024*u.pixel,
@@ -43,9 +50,9 @@ def test_dedoppler_1():
                                        drift_rate=2*u.Hz/u.s),
                                        stg.constant_t_profile(level=frame.get_intensity(snr=30)),
                                        stg.gaussian_f_profile(width=40*u.Hz),
-                                       stg.constant_bp_profile(level=1))    
+                                       stg.constant_bp_profile(level=1))
     frame.save_fil(FIL_FILE)
-    
+
     # Load Filterban file.
     print("test_dedoppler_1: Loading Filterbank file {}".format(FIL_FILE))
     wf = Waterfall(FIL_FILE)
@@ -55,28 +62,28 @@ def test_dedoppler_1():
 
     # Initialise plotting.
     print("test_dedoppler_1: Plotting to file {}".format(PNG_FILE))
-    fig = plt.subplots(N_PLOTS, sharex=True, sharey=True, figsize=(10, 2 * N_PLOTS))
+    plt.subplots(N_PLOTS, sharex=True, sharey=True, figsize=(10, 2 * N_PLOTS))
     wf.header["source_name"] = "Initial Data"
 
     # Plot 1.
     plt.subplot(N_PLOTS, 1, 1)
-    this_plot = plot_waterfall(wf)
-    
+    plot_waterfall(wf)
+
     # Plot #2.
-    this_plot = plotter(2, 1.0)
-    
+    plotter(2, 1.0)
+
     # Plot #3.
-    this_plot = plotter(3, 1.5)
-    
+    plotter(3, 1.5)
+
     # Plot #4.
-    this_plot = plotter(4, 2.2)
-    
+    plotter(4, 2.2)
+
     # Plot #5.
-    this_plot = plotter(5, 2.7)
-    
+    plotter(5, 2.7)
+
     # Plot #6.
-    this_plot = plotter(6, 3.6)
-    
+    plotter(6, 3.6)
+
     # Finish up plots.
     plt.xticks(np.linspace(the_lowest, the_highest, num=4), ["","","",""])
     factor = 1e6
@@ -88,8 +95,6 @@ def test_dedoppler_1():
         units = "kHz"
     plt.xticks(xloc, xticks)
     plt.xlabel("Relative Frequency [%s] from %f MHz" % (units, the_midpoint), fontdict=font_dict)
-    cax = fig[0].add_axes([0.94, 0.11, 0.03, 0.77])
-    fig[0].colorbar(this_plot, cax=cax, label="Normalized Power (Arbitrary Units)")
     plt.subplots_adjust(hspace=0, wspace=0)
 
     plt.savefig(PNG_FILE, dpi=200, bbox_inches="tight")

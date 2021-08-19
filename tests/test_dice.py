@@ -14,37 +14,31 @@ def test_no_args():
     with pytest.raises(SystemExit):
         dice.cmd_tool()
 
-def test_no_in_file():
-    """
-    This test does not actually increase coverage,
-    which causes me to doubt the effectiveness
-    of this approach to testing for errors...
-    """
+def test_no_input_file():
     with pytest.raises(SystemExit):
-        args = ['-b 8419.24', '-e 8419.35', '-x', 'h5', '-otest_dice.h5']
-        dice.cmd_tool()
+        args = ['-b', '8419.24', '-e', '8419.35', '-x', 'h5', '-o', 'test_dice.h5']
+        dice.cmd_tool(args)
+
+def test_missing_format_type():
     with pytest.raises(SystemExit):
-        args = ['-f%s' % voyager_h5, '-b 8419.24', '-e 8419.35', '-x']
-        dice.cmd_tool()
+        args = ['-f', voyager_h5, '-b', '8419.24', '-e', '8419.35', '-x']
+        dice.cmd_tool(args)
 
 # This section makes sure that the tool can handle various
 # file formats without exception.
 
 def test_h5():
-    args = ['-f%s' % voyager_h5, '-b 8419.24', '-e 8419.35', '-x', 'h5', '-otest_dice.h5']
+    args = ['-f', voyager_h5, '-b', '8419.24', '-e', '8419.35', '-x', 'h5', '-o', 'test_dice.h5']
     dice.cmd_tool(args)
 
 def test_h5_no_out_file():
-    args = ['-f%s' % voyager_h5, '-b 8419.24', '-e 8419.35', '-x', 'h5']
+    args = ['-f', voyager_h5, '-b', '8419.24', '-e', '8419.35', '-x', 'h5']
     dice.cmd_tool(args)
 
 def test_fil():
-    args = ['-f%s' % voyager_fil, '-b 8419.24', '-e 8419.35', '-x', 'fil', '-otest_dice.fil']
+    args = ['-f', voyager_fil, '-b', '8419.24', '-e', '8419.35', '-x', 'fil', '-o', 'test_dice.fil']
     dice.cmd_tool(args)
 
 def test_fil_no_out_file():
-    args = ['-f%s' % voyager_fil, '-b 8419.24', '-e 8419.35', '-x', 'fil']
+    args = ['-f', voyager_fil, '-b', '8419.24', '-e', '8419.35', '-x', 'fil']
     dice.cmd_tool(args)
-
-if __name__ == "__main__":
-    test_dice()
