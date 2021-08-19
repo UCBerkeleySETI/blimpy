@@ -41,8 +41,6 @@ def plot_waterfall(wf, f_start=None, f_stop=None, **kwargs):
     ----------
     wf : blimpy.Waterfall object
         Waterfall object of an H5 or Filterbank file containing the dynamic spectrum data.
-    filename : str
-        Name of the file being plotted.
     f_start : float
         Start frequency, in MHz.
     f_stop : float
@@ -132,6 +130,9 @@ def make_waterfall_plots(file_list, plot_dir, plot_dpi, height_ratios, f_start=N
         Path of where to store the output plot file (png).
     plot_dpi : int
         Number of dots per inch for the plots.
+    height_ratios : list
+        A list whose elements are the observation length for each file in order
+        indicated by parameter file_list.
     f_start : float
         Start frequency, in MHz.
     f_stop : float
