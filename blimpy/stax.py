@@ -310,7 +310,7 @@ def cmd_tool(args=None):
     height_ratios = []
     for file in args.file_list:
         wf = bl.Waterfall(file, max_load=1)
-        nints = wf.data.shape[0]
+        nints = wf.file_shape[0]
         height_ratios.append((nints - 1) * wf.header["tsamp"])
         del wf
 
