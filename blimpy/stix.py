@@ -24,7 +24,19 @@ from blimpy.plotting import plot_waterfall
 
 
 def image_stitch(orientation, chunk_count, png_collection, path_saved_png):
-    r""" Stitch together multiple PNGs into one"""
+    r""" Stitch together multiple PNGs into one
+    
+    Parameters
+    ----------
+    orientation : str
+        Assembling images horizontally (h) or vertically (v)?
+    chunk_count : int
+        Number of chunks in the file.
+    png_collection : list
+        The set of PNG file paths whose images are to be stitched together.
+    path_saved_png : str
+        The path of where to save the final PNG file.
+    """
 
     logger.info("Stitching together the images, orientation is {}".format(orientation))
 
@@ -101,6 +113,14 @@ def make_waterfall_plots(input_file, chunk_count, plot_dir, width, height, dpi, 
         The number of chunks to divide the entire bandwidth into.
     plot_dir : str
         Directory for storing the PNG files.
+    width : float
+        Plot width in inches.
+    height : float
+        Plot height in inches.
+    dpi : int
+        Plot dots per inch.
+    source_name : str
+        Source name from the file header.
     """
 
     # Get directory path for storing PNG file
