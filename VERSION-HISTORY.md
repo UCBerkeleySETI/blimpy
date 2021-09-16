@@ -3,6 +3,7 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-08-18 | 2.0.29 | Clean up messages when writing files (Issue #241).  |
 | 2021-08-18 | 2.0.28 | Fix utility stax difficulties with the time-axis (Issue #238).  |
 | | | More fixes to the regression tests. |
 | 2021-08-18 | 2.0.27.1 | Fix problems with stix and stax.  |
