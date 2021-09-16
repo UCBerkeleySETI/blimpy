@@ -9,6 +9,7 @@
 
 import sys
 import os
+import time
 from argparse import ArgumentParser
 
 # Logging set up
@@ -49,7 +50,9 @@ def make_h5_file(filename, out_dir='./', new_filename=None, t_start=None, t_stop
     if '.h5' not in new_filename:
         new_filename = new_filename+'.h5'
 
+    t0 = time.time()
     write_to_h5(wf, new_filename)
+    wf.logger.info('Conversion time: %2.2fsec' % (time.time()- t0))
 
 
 def cmd_tool(args=None):

@@ -6,12 +6,14 @@ import numpy as np
 from .sigproc import generate_sigproc_header
 
 
-def write_to_fil(wf, filename_out, *args, **kwargs):
+def write_to_fil(wf, filename_out):
     """ Write data to .fil file.
-        It check the file size then decides how to write the file.
+        It checks the file size then decides how to write the file.
 
     Args:
-        filename_out (str): Name of output file
+        wf : Waterfall object
+        filename_out : str
+            Name of output file
     """
 
     # For timing how long it takes to write a file.
@@ -33,7 +35,9 @@ def __write_to_fil_heavy(wf, filename_out):
     """ Write data to .fil file.
 
     Args:
-        filename_out (str): Name of output file
+        wf : Waterfall object
+        filename_out : str
+            Name of output file
     """
 
     # Note that a chunk is not a blob!!
@@ -44,7 +48,9 @@ def __write_to_fil_heavy(wf, filename_out):
     # Calculate number of bytes per data element
     n_bytes = wf.header['nbits'] / 8
 
-    wf.logger.info('Using %i n_blobs to write the data.' % n_blobs)
+    wf.logger.info("__write_to_fil_heavy: For {}, chunk_dim={}, blob_dim={}, n_blobs={}"
+                   .format(filename_out, chunk_dim, blob_dim, n_blobs))
+
     with open(filename_out, "wb") as fileh:
 
         # Write header of .fil file
@@ -53,7 +59,7 @@ def __write_to_fil_heavy(wf, filename_out):
         # For each blob
         for ii in range(0, n_blobs):
 
-            wf.logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+            wf.logger.info('__write_to_fil_heavy: Processing %i of %i' % (ii + 1, n_blobs))
             bob = wf.container.read_blob(blob_dim, n_blob=ii)
 
             # Write data of .fil file.
@@ -69,9 +75,13 @@ def __write_to_fil_light(wf, filename_out):
     """ Write data to .fil file.
 
     Args:
-        filename_out (str): Name of output file
+        wf : Waterfall object
+        filename_out : str
+            Name of output file
     """
 
+    wf.logger.info("__write_to_fil_light: Writing the spectra matrix for {} in one go."
+                   .format(filename_out))
     n_bytes = wf.header['nbits'] / 8
     with open(filename_out, "wb") as fileh:
         fileh.write(generate_sigproc_header(wf))
