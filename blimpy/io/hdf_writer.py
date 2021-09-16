@@ -48,6 +48,8 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
     chunk_dim = tuple(chunk_list)
     blob_dim  = wf._get_blob_dimensions(chunk_dim)
     n_blobs   = wf.container.calc_n_blobs(blob_dim)
+    wf.logger.info("__write_to_hdf5_heavy: For {}, chunk_dim={}, blob_dim={}, n_blobs={}"
+                   .format(filename_out, chunk_dim, blob_dim, n_blobs))
 
     # ===============================
     # Attempt to write the HDF5 file.
@@ -103,9 +105,8 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
     
             if blob_dim[wf.freq_axis] < wf.selection_shape[wf.freq_axis]:
     
-                wf.logger.info('Using %i n_blobs to write the data.'% n_blobs)
                 for ii in range(0, n_blobs):
-                    wf.logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+                    wf.logger.info('__write_to_hdf5_heavy: Processing blob %i of %i' % (ii + 1, n_blobs))
     
                     bob = wf.container.read_blob(blob_dim, n_blob=ii)
     
@@ -129,9 +130,8 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
     
             else:
     
-                wf.logger.info('Using %i n_blobs to write the data.'% n_blobs)
                 for ii in range(0, n_blobs):
-                    wf.logger.info('Reading %i of %i' % (ii + 1, n_blobs))
+                    wf.logger.info('__write_to_hdf5_heavy: Processing blob %i of %i' % (ii + 1, n_blobs))
     
                     bob = wf.container.read_blob(blob_dim, n_blob=ii)
                     t_start = wf.container.t_start + ii * blob_dim[wf.time_axis]
@@ -152,18 +152,18 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
         # =================================
 
     except Exception as ex1: # Something went wrong!
-        wf.logger.error("blimpy __write_to_hdf5_heavy: Writing the output HDF5 file {} failed!"
+        wf.logger.error("__write_to_hdf5_heavy: Writing the output HDF5 file {} failed!"
                        .format(filename_out))
         print(repr(ex1))
         try:
             if os.path.exists(filename_out):
                 os.remove(filename_out) # scrap a potentially corrupted HDF5 file.
                 # Removal succeeded.  Exit to the O/S with a nonzero exit code.
-                wf.logger.info("blimpy __write_to_hdf5_heavy: Removal of partial HDF5 file {} succeeded."
+                wf.logger.info("__write_to_hdf5_heavy: Removal of partial HDF5 file {} succeeded."
                                .format(filename_out))
             sys.exit(86)
         except Exception as ex2:
-            wf.logger.error("blimpy __write_to_hdf5_heavy: Removal of partial HDF5 file {} failed!"
+            wf.logger.error("__write_to_hdf5_heavy: Removal of partial HDF5 file {} failed!"
                            .format(filename_out))
             print(repr(ex2))
             sys.exit(86)
@@ -177,6 +177,8 @@ def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
         f_scrunch (int or None): Average (scrunch) N channels together
     """
 
+    wf.logger.info("__write_to_hdf5_light: Writing the spectra matrix for {} in one go."
+                   .format(filename_out))
     try:
         os.remove(filename_out)  # Try to pre-remove output .h5 file.
     except:
