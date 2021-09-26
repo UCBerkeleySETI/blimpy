@@ -11,6 +11,14 @@ Subpackages
 Submodules
 ----------
 
+blimpy.calcload module
+----------------------
+
+.. automodule:: blimpy.calcload
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 blimpy.dice module
 ------------------
 
@@ -27,34 +35,18 @@ blimpy.fil2h5 module
     :undoc-members:
     :show-inheritance:
 
-blimpy.file\_wrapper module
----------------------------
-
-.. automodule:: blimpy.file_wrapper
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-blimpy.filterbank module
-------------------------
-
-.. automodule:: blimpy.filterbank
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-blimpy.gup2hdf module
----------------------
-
-.. automodule:: blimpy.gup2hdf
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 blimpy.guppi module
 -------------------
 
 .. automodule:: blimpy.guppi
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+blimpy.h5diag module
+--------------------
+
+.. automodule:: blimpy.h5diag
     :members:
     :undoc-members:
     :show-inheritance:
@@ -75,10 +67,26 @@ blimpy.match\_fils module
     :undoc-members:
     :show-inheritance:
 
-blimpy.sigproc module
----------------------
+blimpy.rawhdr module
+--------------------
 
-.. automodule:: blimpy.sigproc
+.. automodule:: blimpy.rawhdr
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+blimpy.stax module
+--------------------
+
+.. automodule:: blimpy.stax
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+blimpy.stix module
+--------------------
+
+.. automodule:: blimpy.stix
     :members:
     :undoc-members:
     :show-inheritance:
@@ -95,6 +103,14 @@ blimpy.waterfall module
 -----------------------
 
 .. automodule:: blimpy.waterfall
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+blimpy.io.sigproc module
+------------------------
+
+.. automodule:: blimpy.io.sigproc
     :members:
     :undoc-members:
     :show-inheritance:

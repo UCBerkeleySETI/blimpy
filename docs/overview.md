@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/UCBerkeleySETI/blimpy.svg?branch=master)](https://travis-ci.org/UCBerkeleySETI/blimpy)
 [![Documentation Status](https://readthedocs.org/projects/blimpy/badge/?version=latest)](https://blimpy.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/UCBerkeleySETI/blimpy/branch/master/graph/badge.svg)](https://codecov.io/gh/UCBerkeleySETI/blimpy)
  [![JOSS status](http://joss.theoj.org/papers/e58ef21f0a924041bf9438fd75f8aed0/status.svg)](http://joss.theoj.org/papers/e58ef21f0a924041bf9438fd75f8aed0)
@@ -7,7 +6,7 @@
 
 ### Filterbank + Raw file readers
 
-This repository contains Python 2 readers for interacting with [Sigproc filterbank](http://sigproc.sourceforge.net/sigproc.pdf) (.fil), HDF5 (.h5) and [guppi raw](https://baseband.readthedocs.io/en/stable/guppi/) (.raw) files,
+This repository contains Python readers for interacting with [Sigproc filterbank](http://sigproc.sourceforge.net/sigproc.pdf) (.fil), HDF5 (.h5) and [guppi raw](https://baseband.readthedocs.io/en/stable/guppi/) (.raw) files,
 as used in the [Breakthrough Listen](https://seti.berkeley.edu) search for intelligent life.
 
 
@@ -44,12 +43,16 @@ $ pip install --no-binary=h5py h5py
 ### Command line utilities
 
 After installation, some command line utilities will be installed:
-* `watutil`, for reading/writing/plotting blimpy filterbank files (either .h5 or .fil format).
-* `rawutil`, for plotting data in guppi raw files.
-* `fil2h5`, for converting .fil files into .h5 format.
-* `h52fil`, for converting .h5 files into .fil format.
-* `bldice`, for dicing a smaller frequency region from (either from/to .h5 or .fil).
-* `matchfils`, for checking if two .fil files are the same.
+* `watutil`, Read/write/plot an .h5 file or a .fil file.
+* `rawutil`, Plot data in a guppi raw file.
+* `fil2h5`, Convert a .fil file into .h5 format.
+* `h52fil`, Convert an .h5 file into .fil format.
+* `bldice`, Dice a smaller frequency region from (either from/to .h5 or .fil).
+* `matchfils`, Check if two .fil files are the same.
+* `calcload`, Calculate the Waterfall max_load value needed to load the data array for a given file.
+* `rawhdr`, Display the header fields of a raw guppi file.
+* `stax`, For a collection of .h5 or .fil files sharing the same frequency range, create a vertical stack of waterfall plots as a single PNG file.
+* `stix`, For a single very large .h5 or .fil file, create a horizontal or vertical stack of waterfall plots as a single PNG file.
 
 Use the `-h` flag to any of the above command line utilities to display their available arguments.
 
@@ -87,10 +90,11 @@ for header, data_x, data_y in gr.get_data():
     # process data
 ```
 
-Note: most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.
+Note: Most users should start analysis with filterbank files, which are smaller in size and have been generated from the guppi raw files.
 
 ### Further reading
 
 A detailed overview of the data formats used in Breakthrough Listen can be found in our [data format paper](https://ui.adsabs.harvard.edu/abs/2019arXiv190607391L/abstract). An archive of data files from the Breakthrough Listen program is provided at [seti.berkeley.edu/opendata](http://seti.berkeley.edu/opendata).
 
 ### If you have any requests or questions, please lets us know!
+
