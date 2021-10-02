@@ -7,8 +7,8 @@ from blimpy import utils
 
 
 def write_to_hdf5(wf, filename_out, f_scrunch=None, *args, **kwargs):
-    """ Copy the selected SIGPROC Filterbank (.fil) header & data to the output HDF5 file.
-        Checks the heavy flag and then decides how to write the file - light or heavy.
+    """ Copy the header and the selected data matrix subset from the input file to the output HDF5 file.
+        Check the heavy flag to decide how to write the file - light or heavy.
 
     Args:
         wf : Waterfall object
@@ -32,7 +32,7 @@ def write_to_hdf5(wf, filename_out, f_scrunch=None, *args, **kwargs):
 
 
 def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
-    """ Copy the selected SIGPROC Filterbank (.fil) header & data to the output HDF5 file, blob by blob.
+    """ Copy the header and the selected data matrix subset from the input file to the output HDF5 file, blob by blob.
 
     Args:
         wf : Waterfall object
@@ -114,7 +114,7 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
                 for ii in range(0, n_blobs):
                     wf.logger.info('__write_to_hdf5_heavy: Processing blob %i of %i' % (ii + 1, n_blobs))
     
-                    # Read next data matrix blob from the input SIGPROC Filterbank file (.fil).
+                    # Read next data matrix blob from the input file.
                     bob = wf.container.read_blob(blob_dim, n_blob=ii)
     
                     # Using channel index values for c_start and c_stop.
@@ -142,7 +142,7 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
                 for ii in range(0, n_blobs):
                     wf.logger.info('__write_to_hdf5_heavy: Processing blob %i of %i' % (ii + 1, n_blobs))
     
-                    # Read next data matrix blob from the input SIGPROC Filterbank file (.fil).
+                    # Read next data matrix blob from the input file.
                     bob = wf.container.read_blob(blob_dim, n_blob=ii)
                     
                     # Compute start time.
@@ -190,7 +190,7 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
 
 
 def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
-    """ Copy the selected SIGPROC Filterbank (.fil) header & data to the output HDF5 file in one go.
+    """ Copy the header and the selected data matrix subset from the input file to the output HDF5 file in one go.
 
     Args:
         wf : Waterfall object
