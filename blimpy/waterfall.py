@@ -16,9 +16,6 @@ This provides a class, Waterfall(), which can be used to read a blimpy file (.fi
     fil.plot_spectrum(t=0)
     plt.show()
 
-
-TODO: check the file seek logic works correctly for multiple IFs
-
 """
 
 import sys
@@ -32,9 +29,6 @@ from .plotting import *
 from astropy.time import Time
 from astropy import units as u
 
-# YANKED 2021-03-05: from numba import jit
-
-#------
 # Logging set up
 import logging
 logger = logging.getLogger(__name__)
@@ -49,9 +43,6 @@ else:
     fmt = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
 
 logging.basicConfig(format=fmt, stream=stream, level=level_log)
-
-
-#import pdb #pdb.set_trace()
 
 MAX_BLOB_MB = 1024
 
@@ -90,8 +81,6 @@ class Waterfall():
             header_dict (dict): Create blimpy from header dictionary + data array
             data_array (np.array): Create blimpy from header dict + data array
         """
-
-##EE        super(Waterfall, self).__init__()
 
         if filename:
             self.filename = filename
@@ -202,7 +191,7 @@ class Waterfall():
 
 
     def _get_blob_dimensions(self, chunk_dim):
-        """ Sets the blob dimensions, trying to read around 1024 MiB at a time.
+        """ Computes the blob dimensions, trying to read around 1024 MiB at a time.
             This is assuming a chunk is about 1 MiB.
 
             Notes:
@@ -213,17 +202,14 @@ class Waterfall():
             Args:
                 chunk_dim (array of ints): Shape of chunk, e.g. (1024, 1, 768)
 
-            Returns size of blob (array of ints).
+            Returns blob dimensions (shape = array of ints).
         """
 
         #Taking the size into consideration, but avoiding having multiple blobs within a single time bin.
-        if self.selection_shape[self.freq_axis] > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
-            freq_axis_size = self.selection_shape[self.freq_axis]
-#             while freq_axis_size > chunk_dim[self.freq_axis]*MAX_BLOB_MB:
-#                 freq_axis_size /= 2
+        freq_axis_size = self.selection_shape[self.freq_axis]
+        if self.selection_shape[self.freq_axis] > chunk_dim[self.freq_axis] * MAX_BLOB_MB:
             time_axis_size = 1
         else:
-            freq_axis_size = self.selection_shape[self.freq_axis]
             time_axis_size = np.min([chunk_dim[self.time_axis] * MAX_BLOB_MB * chunk_dim[self.freq_axis] / freq_axis_size, self.selection_shape[self.time_axis]])
 
         blob_dim = (int(time_axis_size), 1, freq_axis_size)
@@ -236,7 +222,7 @@ class Waterfall():
             Notes: A 'chunk' is a HDF5 concept to do with efficient read access, see
             https://portal.hdfgroup.org/display/HDF5/Chunking+in+HDF5
 
-            Returns chunk dimensions, e.g. (2048, 1, 512)
+            Returns chunk dimensions (shape), e.g. (2048, 1, 512)
         """
 
         #Usually '.0000.' is in self.filename
