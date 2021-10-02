@@ -7,10 +7,11 @@ from blimpy import utils
 
 
 def write_to_hdf5(wf, filename_out, f_scrunch=None, *args, **kwargs):
-    """ Write data to HDF5 file.
-        It check the file size then decides how to write the file.
+    """ Copy the selected SIGPROC Filterbank (.fil) header & data to the output HDF5 file.
+        Checks the heavy flag and then decides how to write the file - light or heavy.
 
     Args:
+        wf : Waterfall object
         filename_out (str): Name of output file
         f_scrunch (int or None): Average (scrunch) N channels together
     """
@@ -31,9 +32,10 @@ def write_to_hdf5(wf, filename_out, f_scrunch=None, *args, **kwargs):
 
 
 def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
-    """ Write data to HDF5 file.
+    """ Copy the selected SIGPROC Filterbank (.fil) header & data to the output HDF5 file, blob by blob.
 
     Args:
+        wf : Waterfall object
         filename_out (str): Name of output file
         f_scrunch (int or None): Average (scrunch) N channels together
     """
@@ -99,57 +101,75 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
             dset_mask.dims[1].label = b"feed_id"
             dset_mask.dims[0].label = b"time"
     
-            # Copy over header information as attributes
+            # Copy over header information (Filterbank metadata) as HDF5 attributes
             for key, value in wf.header.items():
                 dset.attrs[key] = value
     
+            # Compare blob_dim along frequency axis
+            # to the same of the data matrix selection.
             if blob_dim[wf.freq_axis] < wf.selection_shape[wf.freq_axis]:
+                
+                # Blob frequency axis is SHORTER THAN that of the data matrix selection.
     
                 for ii in range(0, n_blobs):
                     wf.logger.info('__write_to_hdf5_heavy: Processing blob %i of %i' % (ii + 1, n_blobs))
     
+                    # Read next data matrix blob from the input SIGPROC Filterbank file (.fil).
                     bob = wf.container.read_blob(blob_dim, n_blob=ii)
     
-                    #-----
-                    #Using channels instead of frequency.
+                    # Using channel index values for c_start and c_stop.
                     c_start = wf.container.chan_start_idx + ii * blob_dim[wf.freq_axis]
                     t_start = wf.container.t_start + (c_start / wf.selection_shape[wf.freq_axis]) * blob_dim[wf.time_axis]
-                    t_stop = t_start + blob_dim[wf.time_axis]
-    
+                    t_stop = t_start + blob_dim[wf.time_axis]  
                     c_start = (c_start) % wf.selection_shape[wf.freq_axis]
                     c_stop = c_start + blob_dim[wf.freq_axis]
-                    #-----
-    
+
+                    # Frequency scrunching?    
                     if f_scrunch is not None:
                         c_start //= f_scrunch
                         c_stop  //= f_scrunch
                         bob = utils.rebin(bob, n_z=f_scrunch)
     
-                    wf.logger.debug(t_start,t_stop,c_start,c_stop)
-                    dset[t_start:t_stop,0,c_start:c_stop] = bob[:]
+                    # Store blob in the output data.    
+                    dset[t_start:t_stop, 0, c_start:c_stop] = bob[:]
+                    wf.logger.debug('__write_to_hdf5_heavy t_start={}, t_stop={}, c_start={}, c_stop={}'
+                                    .format(t_start, t_stop, c_start, c_stop))
     
             else:
+                
+                # Blob frequency axis is LONGER THAN or EQUAL TO that of the data matrix selection.
     
                 for ii in range(0, n_blobs):
                     wf.logger.info('__write_to_hdf5_heavy: Processing blob %i of %i' % (ii + 1, n_blobs))
     
+                    # Read next data matrix blob from the input SIGPROC Filterbank file (.fil).
                     bob = wf.container.read_blob(blob_dim, n_blob=ii)
+                    
+                    # Compute start time.
                     t_start = wf.container.t_start + ii * blob_dim[wf.time_axis]
     
-                    #This prevents issues when the last blob is smaller than the others in time
-                    if (ii+1)*blob_dim[wf.time_axis] > wf.n_ints_in_file:
+                    # Compute stop time.
+                    if (ii + 1) * blob_dim[wf.time_axis] > wf.n_ints_in_file:
+                        # Last blob: smaller than the others in the time dimension.
                         t_stop = wf.n_ints_in_file
                     else:
-                        t_stop = (ii+1)*blob_dim[wf.time_axis]
+                        # All but the last blob: Full-sized blob in the time dimension.
+                        t_stop = (ii + 1) * blob_dim[wf.time_axis]
     
+                    # Frequency scrunching?    
                     if f_scrunch is not None:
                         bob = utils.rebin(bob, n_z=f_scrunch)
-    
-                    dset[t_start:t_stop] = bob[:]
 
-        # =================================
-        # Success!  The .h5 file is closed.
-        # =================================
+                    # Store blob in the output data.
+                    # Note that the entire selected frequency dimension is used
+                    # instead of the blob frequency dimension.
+                    dset[t_start:t_stop] = bob[:]
+                    wf.logger.debug('__write_to_hdf5_heavy t_start={}, t_stop={}'
+                                    .format(t_start, t_stop))
+
+        # =============================================
+        # Success!  The .h5 file is written and closed.
+        # =============================================
 
     except Exception as ex1: # Something went wrong!
         wf.logger.error("__write_to_hdf5_heavy: Writing the output HDF5 file {} failed!"
@@ -170,14 +190,15 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
 
 
 def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
-    """ Write data to HDF5 file in one go.
+    """ Copy the selected SIGPROC Filterbank (.fil) header & data to the output HDF5 file in one go.
 
     Args:
+        wf : Waterfall object
         filename_out (str): Name of output file
         f_scrunch (int or None): Average (scrunch) N channels together
     """
 
-    wf.logger.info("__write_to_hdf5_light: Writing the spectra matrix for {} in one go."
+    wf.logger.info("__write_to_hdf5_light: Writing the spectra matrix for {} without blobbing."
                    .format(filename_out))
     try:
         os.remove(filename_out)  # Try to pre-remove output .h5 file.
@@ -192,8 +213,9 @@ def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
         bs_compression = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression']
         bs_compression_opts = hdf5plugin.Bitshuffle(nelems=0, lz4=True)['compression_opts']
 
+        # Frequency scrunching?
         if f_scrunch is None:
-            data_out = wf.data
+            data_out = wf.data # No, just copy as-is from SIGPROC Filterbank (.fil) selection
         else:
             wf.logger.info('Frequency scrunching by %i' % f_scrunch)
             data_out = utils.rebin(wf.data, n_z=f_scrunch)
@@ -218,7 +240,6 @@ def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
         dset_mask.dims[1].label = b"feed_id"
         dset_mask.dims[0].label = b"time"
 
-        # Copy over header information as attributes
+        # Copy over header information (Filterbank metadata) as HDF5 attributes
         for key, value in wf.header.items():
             dset.attrs[key] = value
-
