@@ -4,7 +4,6 @@ Print the entire header.
 Highlight the number of observation channels.
 '''
 
-import sys
 import blimpy
 from argparse import ArgumentParser
 
