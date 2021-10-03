@@ -56,10 +56,7 @@ class GuppiRaw():
 
     def __init__(self, filename, n_blocks=None):
         self.filename = filename
-        if PYTHON3:
-            self.file_obj = open(filename, 'rb')
-        else:
-            self.file_obj = open(filename, 'rb')
+        self.file_obj = open(filename, 'rb')
         self.filesize = os.path.getsize(filename)
 
         if not n_blocks:
@@ -112,14 +109,12 @@ class GuppiRaw():
         keep_reading = True
 
         try:
+            line = None
             while keep_reading:
                 if start_idx + 80 > self.filesize:
                     keep_reading = False
                     raise EndOfFileError("End Of Data File")
-                line = self.file_obj.read(80)
-                if PYTHON3:
-                    line = line.decode("utf-8")
-                # print line
+                line = self.file_obj.read(80).decode("utf-8").strip()
                 if line.startswith('END'):
                     keep_reading = False
                     break
@@ -138,13 +133,16 @@ class GuppiRaw():
                     val = int(val)
 
                 header_dict[key] = val
+        except UnicodeDecodeError:
+            print("\nInput file does NOT appear to be a guppi raw file!\n")
+            sys.exit(86)
         except ValueError:
-            print("CURRENT LINE: ", line)
+            print("ValueError encountered with raw header line: ", line)
             print("BLOCK START IDX: ", start_idx)
             print("FILE SIZE: ", self.filesize)
             print("NEXT 512 BYTES: \n")
             print(self.file_obj.read(512))
-            raise
+            sys.exit(86)
 
         data_idx = self.file_obj.tell()
 
@@ -207,9 +205,9 @@ class GuppiRaw():
             while True:
                 try:
                     yield gr.generator_read_next_data_block_int8()
-                except EndOfFileError as e:
-                    print("\nFile depleted")
-                    raise StopIteration
+                except EndOfFileError:
+                    print("\nget_data: End of file reached, returning to caller\n")
+                    return
 
     def read_next_data_block_int8(self):
         """
@@ -383,7 +381,7 @@ class GuppiRaw():
         """ Do a (slow) numpy FFT and take power of data
 
         Args:
-            filename (str): Name out output filename. If not set, file will not be saved to disk.
+            filename (str): Name of output filename. If not set, file will not be saved to disk.
             plot_db (bool): If True, will plot in dB scale, otherwise linear.
 
         TODO: Move into plotting/
