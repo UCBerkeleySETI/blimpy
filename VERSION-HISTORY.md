@@ -3,6 +3,7 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2021-11-10 | 2.0.31 | New utility: peek.  |
 | 2021-10-03 | 2.0.30 | Fix issue #243.  |
 | 2021-08-18 | 2.0.29 | Clean up messages when writing files (Issue #241).  |
 | 2021-08-18 | 2.0.28 | Fix utility stax difficulties with the time-axis (Issue #238).  |

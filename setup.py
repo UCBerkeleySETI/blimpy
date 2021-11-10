@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '2.0.30'
+__version__ = '2.0.31'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -24,6 +24,7 @@ entry_points = {
         'rawhdr = blimpy.rawhdr:cmd_tool',
         'stax = blimpy.stax:cmd_tool',
         'stix = blimpy.stix:cmd_tool',
+        'peek = blimpy.peek:cmd_tool',
      ]
 }
 
