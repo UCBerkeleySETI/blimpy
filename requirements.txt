@@ -10,3 +10,4 @@ hdf5plugin
 pandas
 Pillow
 psutil
+pyparsing==2.4.7
