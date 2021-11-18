@@ -63,6 +63,8 @@ After installation, some command line utilities will be installed:
 * `rawhdr`, Display the header fields of a raw guppi file.
 * `stax`, For a collection of .h5 or .fil files sharing the same frequency range, create a vertical stack of waterfall plots as a single PNG file.
 * `stix`, For a single very large .h5 or .fil file, create a horizontal or vertical stack of waterfall plots as a single PNG file.
+* `peek`, Display a selected portion of values from the data matrix.
+* `srcname`, Patch the header source_name field in an HDF5 file.
 
 Use the `-h` flag to any of the above command line utilities to display their available arguments.
 
