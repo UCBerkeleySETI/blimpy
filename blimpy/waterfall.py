@@ -54,9 +54,6 @@ MAX_BLOB_MB = 1024
 class Waterfall():
     """ Class for loading and writing blimpy data (.fil, .h5) """
 
-    """ Get the frequency array for this Waterfall object"""    
-    get_freqs = lambda self: np.arange(0, self.header['nchans'], 1, dtype=float) * self.header['foff'] + self.header['fch1']
-
     def __repr__(self):
         return "Waterfall data: %s" % self.filename
 
@@ -127,6 +124,19 @@ class Waterfall():
         """ Helper for loading data from a container. Should not be called manually. """
 
         self.data = self.container.data
+
+    def get_freqs(self):
+        """
+        Get the frequency array for this Waterfall object.
+
+        Returns
+        -------
+        numpy array
+            Values for all of the fine frequency channels.
+
+        """
+        return np.arange(0, self.header['nchans'], 1, dtype=float) \
+                          * self.header['foff'] + self.header['fch1']
 
     def read_data(self, f_start=None, f_stop=None,t_start=None, t_stop=None):
         """ Reads data selection if small enough.
