@@ -38,6 +38,11 @@ def test_get_freqs():
     freqs = wf.get_freqs()
     sum2 = np.sum(freqs)
     assert sum1 == sum2
+    len_f = len(freqs)
+    first = wf.header["fch1"]
+    last_1 = freqs[-1]
+    last_2 = first + (len_f - 1 ) *  wf.header["foff"]
+    assert np.isclose(last_1, last_2, rtol=0.0001)
 
 def test_cmdline():
     # Plots
