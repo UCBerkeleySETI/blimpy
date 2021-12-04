@@ -1,3 +1,4 @@
+import os
 import blimpy as bl
 import numpy as np
 from pprint import pprint
@@ -7,6 +8,7 @@ from tests.data import voyager_fil, voyager_h5
 from blimpy.plotting import plot_waterfall, plot_spectrum, plot_spectrum_min_max, \
     plot_kurtosis, plot_time_series, plot_all
 
+TEST_DATA_DIR = os.path.dirname(voyager_h5)
 
 def test_plot_waterfall():
     """ Load Voyager dataset and test plotting """
@@ -30,11 +32,11 @@ def test_plot_waterfall():
     plot_time_series(a)
 
     plt.tight_layout()
-    plt.savefig("test_plotting.png")
+    plt.savefig(TEST_DATA_DIR + "/test_plotting.png")
 
     plt.figure("TEST PLOT_ALL", figsize=(10, 8))
     plot_all(a)
-    plt.savefig("test_plotting_plot_all.png")
+    plt.savefig(TEST_DATA_DIR + "/test_plotting_plot_all.png")
 
 
 def test_plot_waterfall_classmethod():
@@ -59,13 +61,14 @@ def test_plot_waterfall_classmethod():
     a.plot_time_series()
     plt.tight_layout()
 
-    plt.savefig("test_plotting_classmethod.png")
+    plt.savefig(TEST_DATA_DIR + "/test_plotting_classmethod.png")
 
     plt.figure("TEST PLOT_ALL CLASS", figsize=(10, 8))
     a.plot_all()
-    plt.savefig("test_plotting_plot_all_classmethod.png")
+    plt.savefig(TEST_DATA_DIR + "/test_plotting_plot_all_classmethod.png")
 
 
 if __name__ == "__main__":
     test_plot_waterfall()
     test_plot_waterfall_classmethod()
+
