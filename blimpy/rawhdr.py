@@ -15,7 +15,7 @@ def get_obsnchan(filepath):
 
 
 def cmd_tool(args=None):
-    p = ArgumentParser(description='Calculate the Waterfall max_load value needed to load the data array for a given file.')
+    p = ArgumentParser(description='Show the individual fields of the header for a given raw file.')
     p.add_argument('filepath', type=str, help='Name of raw guppi file path to access')   
     if args is None:
         args = p.parse_args()
