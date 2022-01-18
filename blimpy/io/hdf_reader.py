@@ -23,13 +23,13 @@ def examine_h5(h5):
     if not classstr in ["FILTERBANK", b"FILTERBANK"]:
         oops("examine_h5: Expected HDF5 CLASS attribute to be 'FILTERBANK' but saw '{}'".format(classstr))
     if "VERSION" in h5.attrs:
-    	verblob = h5.attrs["CLASS"]
+        verblob = h5.attrs["VERSION"]
     else:
         oops("examine_h5: HDF5 VERSION attribute missing")
     try:
-    	version = float(str(verblob))
+        version = float(verblob.decode("utf-8"))
     except:
-     	oops("examine_h5: HDF5 VERSION attribute is corrupted")	
+        oops("examine_h5: HDF5 VERSION attribute is corrupted, saw {}".format(verblob))	
     if not "data" in h5:
         oops("examine_h5: HDF5 data matrix missing")
     if h5["data"].ndim != 3:
@@ -47,7 +47,7 @@ def examine_h5(h5):
     except:
         oops("examine_h5: HDF5 End-diagonal data corruption")
 
-	return version
+    return version
 
 
 class H5Reader(Reader):
