@@ -42,11 +42,11 @@ def examine(filename):
     print("h5diag: header:", read_header(h5file))
     print("h5diag: data shape:", h5file["data"].shape)
     if version >= 1.999:
-		print("Rawspec version:", h5file.attrs["VERSION_RAWSPEC"].decode('utf-8'))
-		print("Librawspec version:", h5file.attrs["VERSION_LIBRAWSPEC"].decode('utf-8'))
-		print("cuFFT version:", h5file.attrs["VERSION_CUFFT"].decode('utf-8'))
-		print("HDF version:", h5file.attrs["VERSION_HDF"].decode('utf-8'))
-		print("Bitshuffle:", h5file.attrs["BITSHUFFLE"].decode('utf-8'))
+        print("Rawspec version:", h5file.attrs["VERSION_RAWSPEC"].decode('utf-8'))
+        print("Librawspec version:", h5file.attrs["VERSION_LIBRAWSPEC"].decode('utf-8'))
+        print("cuFFT version:", h5file.attrs["VERSION_CUFFT"].decode('utf-8'))
+        print("HDF5 library version:", h5file.attrs["VERSION_HDF5"].decode('utf-8'))
+        print("Bitshuffle:", h5file.attrs["BITSHUFFLE"].decode('utf-8'))
 
 
 def cmd_tool(args=None):
