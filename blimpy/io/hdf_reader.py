@@ -26,10 +26,12 @@ def examine_h5(h5):
         verblob = h5.attrs["VERSION"]
     else:
         oops("examine_h5: HDF5 VERSION attribute missing")
-    try:
+    if type(verblob) == str:
+        version = float(verblob)
+    elif type(verblob) == bytes or type(verblob) == np.bytes_:
         version = float(verblob.decode("utf-8"))
-    except:
-        oops("examine_h5: HDF5 VERSION attribute is corrupted, saw {}".format(verblob))	
+    else:
+        oops("examine_h5: HDF5 VERSION attribute is neither str nor bytes, saw {}".format(verblob))
     if not "data" in h5:
         oops("examine_h5: HDF5 data matrix missing")
     if h5["data"].ndim != 3:
