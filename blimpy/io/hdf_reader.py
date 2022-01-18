@@ -19,15 +19,23 @@ def examine_h5(h5):
     if "CLASS" in h5.attrs:
         classstr = h5.attrs["CLASS"]
     else:
-        oops("HDF5 CLASS attribute missing")
+        oops("examine_h5: HDF5 CLASS attribute missing")
     if not classstr in ["FILTERBANK", b"FILTERBANK"]:
-        oops("Expected HDF5 CLASS attribute to be 'FILTERBANK' but saw '{}'".format(classstr))
-    if not "VERSION" in h5.attrs:
-        oops("HDF5 VERSION attribute missing")
+        oops("examine_h5: Expected HDF5 CLASS attribute to be 'FILTERBANK' but saw '{}'".format(classstr))
+    if "VERSION" in h5.attrs:
+        verblob = h5.attrs["VERSION"]
+    else:
+        oops("examine_h5: HDF5 VERSION attribute missing")
+    if type(verblob) == str:
+        version = float(verblob)
+    elif type(verblob) == bytes or type(verblob) == np.bytes_:
+        version = float(verblob.decode("utf-8"))
+    else:
+        oops("examine_h5: HDF5 VERSION attribute is neither str nor bytes, saw {}".format(verblob))
     if not "data" in h5:
-        oops("HDF5 data matrix missing")
+        oops("examine_h5: HDF5 data matrix missing")
     if h5["data"].ndim != 3:
-        oops("Expected HDF5 data.ndim to be 3 but saw '{}'".format(h5["data"].ndim))
+        oops("examine_h5: Expected HDF5 data.ndim to be 3 but saw '{}'".format(h5["data"].ndim))
     try:
         xx = h5["data"][-1][0][0]
     except:
@@ -40,6 +48,8 @@ def examine_h5(h5):
         xx = h5["data"][-1][0][-1]
     except:
         oops("examine_h5: HDF5 End-diagonal data corruption")
+
+    return version
 
 
 class H5Reader(Reader):
@@ -75,7 +85,7 @@ class H5Reader(Reader):
         self.filesize = self.filestat.st_size/(1024.0**2)
         self.load_data = load_data
         self.h5 = h5py.File(self.filename, mode='r')
-        examine_h5(self.h5)
+        _ = examine_h5(self.h5)
         self.read_header()
         self.file_size_bytes = os.path.getsize(self.filename)  # In bytes
         self.n_ints_in_file = self.h5["data"].shape[self.time_axis] #
