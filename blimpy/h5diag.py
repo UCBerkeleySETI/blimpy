@@ -36,10 +36,17 @@ def read_header(h5):
 
 def examine(filename):
     r""" Diagnose the given HDF5 file"""
-    h5 = h5py.File(filename, mode="r")
-    examine_h5(h5)
-    print("h5diag: header:", read_header(h5))
-    print("h5diag: data shape:", h5["data"].shape)
+    h5file = h5py.File(filename, mode="r")
+    version = examine_h5(h5file)
+    print("h5diag: VERSION attribute:", version)
+    print("h5diag: header:", read_header(h5file))
+    print("h5diag: data shape:", h5file["data"].shape)
+    if version >= 1.999:
+		print("Rawspec version:", h5file.attrs["VERSION_RAWSPEC"].decode('utf-8'))
+		print("Librawspec version:", h5file.attrs["VERSION_LIBRAWSPEC"].decode('utf-8'))
+		print("cuFFT version:", h5file.attrs["VERSION_CUFFT"].decode('utf-8'))
+		print("HDF version:", h5file.attrs["VERSION_HDF"].decode('utf-8'))
+		print("Bitshuffle:", h5file.attrs["BITSHUFFLE"].decode('utf-8'))
 
 
 def cmd_tool(args=None):
