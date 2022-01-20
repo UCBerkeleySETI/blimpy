@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '2.0.33'
+__version__ = '2.0.34'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
