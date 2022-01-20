@@ -119,7 +119,7 @@ class Waterfall():
         self.plot_time_series      = six.create_bound_method(plot_time_series, self)
         self.plot_all              = six.create_bound_method(plot_all, self)
         self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
-    
+
     def __load_data(self):
         """ Helper for loading data from a container. Should not be called manually. """
 
@@ -357,7 +357,7 @@ class Waterfall():
                 if chtest < 5:
                     break
                 data[..., ss+mid_chan] = np.median(w_slice)
-        
+
         parse(self.data, n_coarse_chan, n_chan_per_coarse, mid_chan)
 
     def calibrate_band_pass_N1(self):
@@ -370,6 +370,38 @@ class Waterfall():
         band_pass = np.median(self.data.squeeze(),axis=0)
         self.data = self.data/band_pass
 
+    def change_the_ext(self, path, old_ext, new_ext):
+        """
+        Change the file extension of the given path to new_ext.
+
+        If the file path's current extension matches the old_ext,
+        then the new_ext will replace the old_ext.
+        Else, the new_ext will be appended to the argument path.
+
+        In either case, the resulting string is returned to caller.
+
+        E.g. /a/b/fil/d/foo.fil.bar.fil --> /a/b/fil/d/foo.fil.bar.h5
+        E.g. /a/fil/b/foo.bar --> /a/fil/b/foo.bar.h5
+        E.g. /a/fil/b/foo --> /a/fil/b/foo.h5
+
+        Parameters
+        ----------
+        path : str
+            Path of file to change the file extension..
+        old_ext : str
+            Old file extension (E.g. h5, fil, dat, log).
+        new_ext : str
+            New file extension (E.g. h5, fil, dat, log).
+
+        Returns
+        -------
+        New file path, amended as described.
+
+        """
+        split_tuple = os.path.splitext(path)
+        if split_tuple[1] == "." + old_ext:
+            return split_tuple[0] + "." + new_ext
+        return path + "." + new_ext
 
 def cmd_tool(args=None):
     """ Command line tool for plotting and viewing info on blimpy files """

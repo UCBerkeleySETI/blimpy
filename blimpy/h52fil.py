@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    Simple script for quickly making a .fil file from a .h5.
+    Simple script for making a .fil file from a .h5.
 
     ..author: Emilio Enriquez (jeenriquez@gmail.com)
 
@@ -16,8 +16,6 @@ from optparse import OptionParser
 import sys
 import os
 
-#------
-# Logging set up
 import logging
 logger = logging.getLogger(__name__)
 
@@ -31,21 +29,19 @@ else:
     format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
 
 logging.basicConfig(format=format,stream=stream,level = level_log)
-#------
 
 
 def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
     """ Converts file to Sigproc filterbank (.fil) format.  Default saves output in current dir.
     """
 
-    fil_file = Waterfall(filename, max_load = max_load)
+    wf = Waterfall(filename, max_load = max_load)
+
     if not new_filename:
-        new_filename = out_dir+filename.replace('.h5','.fil').split('/')[-1]
+        new_filename = out_dir + wf.change_the_ext(filename, 'h5', 'fil').split('/')[-1]
 
-    if '.fil' not in new_filename:
-        new_filename = new_filename+'.fil'
+    wf.write_to_fil(new_filename)
 
-    fil_file.write_to_fil(new_filename)
 
 def cmd_tool(flags=None):
     """  Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format
