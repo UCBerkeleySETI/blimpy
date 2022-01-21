@@ -11,6 +11,7 @@ import sys
 import os
 import time
 from argparse import ArgumentParser
+from .utils import change_the_ext
 
 # Logging set up
 import logging
@@ -46,7 +47,7 @@ def make_h5_file(filename, out_dir='./', new_filename=None, t_start=None, t_stop
     wf = Waterfall(filename, load_data=False, t_start=t_start, t_stop=t_stop)
 
     if not new_filename:
-        new_filename = out_dir + wf.change_the_ext(filename, 'fil', 'h5').split('/')[-1]
+        new_filename = out_dir + change_the_ext(filename, 'fil', 'h5').split('/')[-1]
 
     t0 = time.time()
     write_to_h5(wf, new_filename)

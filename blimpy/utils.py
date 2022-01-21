@@ -2,8 +2,9 @@
 # utils.py
 useful helper functions for common data manipulation tasks
 """
-import numpy as np
+import os
 import math
+import numpy as np
 
 
 def db(x, offset=0):
@@ -79,15 +80,17 @@ def unpack(data, nbit):
         raise TypeError("unpack: dtype must be 8-bit")
     if nbit == 8:
         return data
-    elif nbit == 4:
+    if nbit == 4:
         data = unpack_4to8(data)
         return data
-    elif nbit == 2:
+    if nbit == 2:
         data = unpack_2to8(data)
         return data
-    elif nbit == 1:
+    if nbit == 1:
         data = unpack_1to8(data)
         return data
+
+    return None ## SHOULD NEVER HAPPEN
 
 
 def unpack_1to8(data):
@@ -169,3 +172,37 @@ def unpack_4to8(data):
     # tmpdata = tmpdata << 4 # Shift into high bits to avoid needing to sign extend
     updata = tmpdata.byteswap()
     return updata.view(data.dtype)
+
+
+def change_the_ext(path, old_ext, new_ext):
+    """
+    Change the file extension of the given path to new_ext.
+
+    If the file path's current extension matches the old_ext,
+    then the new_ext will replace the old_ext.
+    Else, the new_ext will be appended to the argument path.
+
+    In either case, the resulting string is returned to caller.
+
+    E.g. /a/b/fil/d/foo.fil.bar.fil --> /a/b/fil/d/foo.fil.bar.h5
+    E.g. /a/fil/b/foo.bar --> /a/fil/b/foo.bar.h5
+    E.g. /a/fil/b/foo --> /a/fil/b/foo.h5
+
+    Parameters
+    ----------
+    path : str
+        Path of file to change the file extension..
+    old_ext : str
+        Old file extension (E.g. h5, fil, dat, log).
+    new_ext : str
+        New file extension (E.g. h5, fil, dat, log).
+
+    Returns
+    -------
+    New file path, amended as described.
+
+    """
+    split_tuple = os.path.splitext(path)
+    if split_tuple[1] == "." + old_ext:
+        return split_tuple[0] + "." + new_ext
+    return path + "." + new_ext

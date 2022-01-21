@@ -12,9 +12,10 @@ try:
 except:
     from waterfall import Waterfall
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 import sys
 import os
+from .utils import change_the_ext
 
 import logging
 logger = logging.getLogger(__name__)
@@ -23,12 +24,12 @@ level_log = logging.INFO
 
 if level_log == logging.INFO:
     stream = sys.stdout
-    format = '%(name)-15s %(levelname)-8s %(message)s'
+    fmt = '%(name)-15s %(levelname)-8s %(message)s'
 else:
     stream =  sys.stderr
-    format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
+    fmt = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
 
-logging.basicConfig(format=format,stream=stream,level = level_log)
+logging.basicConfig(format=fmt, stream=stream, level = level_log)
 
 
 def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
@@ -38,7 +39,7 @@ def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
     wf = Waterfall(filename, max_load = max_load)
 
     if not new_filename:
-        new_filename = out_dir + wf.change_the_ext(filename, 'h5', 'fil').split('/')[-1]
+        new_filename = out_dir + change_the_ext(filename, 'h5', 'fil').split('/')[-1]
 
     wf.write_to_fil(new_filename)
 
@@ -59,15 +60,14 @@ def cmd_tool(flags=None):
         -l MAX_LOAD           Maximum data limit to load. Default:1GB
     """
 
-    p = OptionParser()
-    p.set_usage('Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
-    p.add_option('-o', '--out_dir', dest='out_dir', type='str', default='./',
+    p = ArgumentParser('Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
+    p.add_argument('-o', '--out_dir', dest='out_dir', type='str', default='./',
                  help='Location for output files. Default: local dir. ')
-    p.add_option('-n', '--new_filename', dest='new_filename', type='str', default='',
+    p.add_argument('-n', '--new_filename', dest='new_filename', type='str', default='',
                  help='New filename. Default: replaces extension to .fil')
-    p.add_option('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
+    p.add_argument('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
                  help='This option deletes the input file after conversion.')
-    p.add_option('-l', action='store', default=None, dest='max_load', type=float,
+    p.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                  help='Maximum data limit to load. Default:1GB')
     if flags is None:
         opts, args = p.parse_args(sys.argv[1:])
