@@ -61,9 +61,9 @@ def cmd_tool(flags=None):
     """
 
     p = ArgumentParser('Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
-    p.add_argument('-o', '--out_dir', dest='out_dir', type='str', default='./',
+    p.add_argument('-o', '--out_dir', dest='out_dir', type=str, default='./',
                  help='Location for output files. Default: local dir. ')
-    p.add_argument('-n', '--new_filename', dest='new_filename', type='str', default='',
+    p.add_argument('-n', '--new_filename', dest='new_filename', type=str, default='',
                  help='New filename. Default: replaces extension to .fil')
     p.add_argument('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
                  help='This option deletes the input file after conversion.')
