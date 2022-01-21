@@ -70,9 +70,9 @@ def cmd_tool(flags=None):
     p.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                  help='Maximum data limit to load. Default:1GB')
     if flags is None:
-        opts, args = p.parse_args(sys.argv[1:])
+        args = p.parse_args(sys.argv[1:])
     else:
-        opts, args = p.parse_args(flags)
+        args = p.parse_args(flags)
 
     if len(args) != 1:
         logger.info('Please specify a file name \nExiting.')
@@ -80,9 +80,9 @@ def cmd_tool(flags=None):
     else:
         filename = args[0]
 
-    make_fil_file(filename, out_dir = opts.out_dir, new_filename=opts.new_filename, max_load = opts.max_load)
+    make_fil_file(filename, out_dir = args.out_dir, new_filename=args.new_filename, max_load = args.max_load)
 
-    if opts.delete_input:
+    if args.delete_input:
         logger.info("'Deleting input file: %s"%(filename))
         os.remove(filename)
 
