@@ -7,14 +7,11 @@
     July 28th 2017
 """
 
-try:
-    from .waterfall import Waterfall
-except:
-    from waterfall import Waterfall
 
 from argparse import ArgumentParser
 import sys
 import os
+from blimpy import Waterfall
 from .utils import change_the_ext
 
 import logging
@@ -44,7 +41,7 @@ def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
     wf.write_to_fil(new_filename)
 
 
-def cmd_tool(flags=None):
+def cmd_tool(args=None):
     """  Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format
 
     Usage:
@@ -60,31 +57,26 @@ def cmd_tool(flags=None):
         -l MAX_LOAD           Maximum data limit to load. Default:1GB
     """
 
-    p = ArgumentParser('Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
-    p.add_argument('-o', '--out_dir', dest='out_dir', type=str, default='./',
+    parser = ArgumentParser('Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
+    parser.add_argument("filepath_in", type=str, help="Path of input HDF5 Filterbank file")
+    parser.add_argument('-o', '--out_dir', dest='out_dir', type=str, default='./',
                  help='Location for output files. Default: local dir. ')
-    p.add_argument('-n', '--new_filename', dest='new_filename', type=str, default='',
+    parser.add_argument('-n', '--new_filename', dest='new_filename', type=str, default='',
                  help='New filename. Default: replaces extension to .fil')
-    p.add_argument('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
+    parser.add_argument('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
                  help='This option deletes the input file after conversion.')
-    p.add_argument('-l', action='store', default=None, dest='max_load', type=float,
+    parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                  help='Maximum data limit to load. Default:1GB')
-    if flags is None:
-        args = p.parse_args(sys.argv[1:])
+    if args is None:
+        args = parser.parse_args()
     else:
-        args = p.parse_args(flags)
+        args = parser.parse_args(args)
 
-    if len(args) != 1:
-        logger.info('Please specify a file name \nExiting.')
-        sys.exit()
-    else:
-        filename = args[0]
-
-    make_fil_file(filename, out_dir = args.out_dir, new_filename=args.new_filename, max_load = args.max_load)
+    make_fil_file(args.filepath_in, out_dir = args.out_dir, new_filename=args.new_filename, max_load = args.max_load)
 
     if args.delete_input:
-        logger.info("'Deleting input file: %s"%(filename))
-        os.remove(filename)
+        logger.info("Deleting input file: {}".format(args.filepath_in))
+        os.remove(args.filepath_in)
 
 if __name__ == "__main__":
 
