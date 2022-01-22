@@ -1,23 +1,19 @@
 #!/usr/bin/env python
 """
-    Simple script for quickly making a .fil file from a .h5.
+    Simple script for making a .fil file from a .h5.
 
     ..author: Emilio Enriquez (jeenriquez@gmail.com)
 
     July 28th 2017
 """
 
-try:
-    from .waterfall import Waterfall
-except:
-    from waterfall import Waterfall
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 import sys
 import os
+from blimpy import Waterfall
+from .utils import change_the_ext
 
-#------
-# Logging set up
 import logging
 logger = logging.getLogger(__name__)
 
@@ -25,29 +21,27 @@ level_log = logging.INFO
 
 if level_log == logging.INFO:
     stream = sys.stdout
-    format = '%(name)-15s %(levelname)-8s %(message)s'
+    fmt = '%(name)-15s %(levelname)-8s %(message)s'
 else:
     stream =  sys.stderr
-    format = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
+    fmt = '%%(relativeCreated)5d (name)-15s %(levelname)-8s %(message)s'
 
-logging.basicConfig(format=format,stream=stream,level = level_log)
-#------
+logging.basicConfig(format=fmt, stream=stream, level = level_log)
 
 
 def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
     """ Converts file to Sigproc filterbank (.fil) format.  Default saves output in current dir.
     """
 
-    fil_file = Waterfall(filename, max_load = max_load)
+    wf = Waterfall(filename, max_load = max_load)
+
     if not new_filename:
-        new_filename = out_dir+filename.replace('.h5','.fil').split('/')[-1]
+        new_filename = out_dir + change_the_ext(filename, 'h5', 'fil').split('/')[-1]
 
-    if '.fil' not in new_filename:
-        new_filename = new_filename+'.fil'
+    wf.write_to_fil(new_filename)
 
-    fil_file.write_to_fil(new_filename)
 
-def cmd_tool(flags=None):
+def cmd_tool(args=None):
     """  Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format
 
     Usage:
@@ -63,32 +57,26 @@ def cmd_tool(flags=None):
         -l MAX_LOAD           Maximum data limit to load. Default:1GB
     """
 
-    p = OptionParser()
-    p.set_usage('Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
-    p.add_option('-o', '--out_dir', dest='out_dir', type='str', default='./',
+    parser = ArgumentParser('Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
+    parser.add_argument("filepath_in", type=str, help="Path of input HDF5 Filterbank file")
+    parser.add_argument('-o', '--out_dir', dest='out_dir', type=str, default='./',
                  help='Location for output files. Default: local dir. ')
-    p.add_option('-n', '--new_filename', dest='new_filename', type='str', default='',
+    parser.add_argument('-n', '--new_filename', dest='new_filename', type=str, default='',
                  help='New filename. Default: replaces extension to .fil')
-    p.add_option('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
+    parser.add_argument('-d', '--delete_input', dest='delete_input', action='store_true', default=False,
                  help='This option deletes the input file after conversion.')
-    p.add_option('-l', action='store', default=None, dest='max_load', type=float,
+    parser.add_argument('-l', action='store', default=None, dest='max_load', type=float,
                  help='Maximum data limit to load. Default:1GB')
-    if flags is None:
-        opts, args = p.parse_args(sys.argv[1:])
+    if args is None:
+        args = parser.parse_args()
     else:
-        opts, args = p.parse_args(flags)
+        args = parser.parse_args(args)
 
-    if len(args) != 1:
-        logger.info('Please specify a file name \nExiting.')
-        sys.exit()
-    else:
-        filename = args[0]
+    make_fil_file(args.filepath_in, out_dir = args.out_dir, new_filename=args.new_filename, max_load = args.max_load)
 
-    make_fil_file(filename, out_dir = opts.out_dir, new_filename=opts.new_filename, max_load = opts.max_load)
-
-    if opts.delete_input:
-        logger.info("'Deleting input file: %s"%(filename))
-        os.remove(filename)
+    if args.delete_input:
+        logger.info("Deleting input file: {}".format(args.filepath_in))
+        os.remove(args.filepath_in)
 
 if __name__ == "__main__":
 

@@ -6,6 +6,7 @@ r"""
 import os
 from argparse import ArgumentParser
 from blimpy.waterfall import Waterfall
+from .utils import change_the_ext
 
 
 def bl_scrunch(in_path, out_dir='./', new_filename='', max_load=None, f_scrunch=None):
@@ -33,9 +34,9 @@ def bl_scrunch(in_path, out_dir='./', new_filename='', max_load=None, f_scrunch=
     wf = Waterfall(in_path, max_load=max_load)
     if new_filename == '':
         if in_ext == '.h5':
-            out_path = out_dir + '/' + in_path.replace('.h5', '.scrunched.h5').split('/')[-1]
+            out_path = out_dir + '/' + change_the_ext(in_path, 'h5', 'scrunched.h5').split('/')[-1]
         else: # .fil
-            out_path = out_dir + '/' + in_path.replace('.fil', '.scrunched.h5').split('/')[-1]
+            out_path = out_dir + '/' + change_the_ext(in_path, 'fil', 'scrunched.h5').split('/')[-1]
     else:
         out_path = out_dir + new_filename
 

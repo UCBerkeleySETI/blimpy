@@ -12,6 +12,7 @@ from .waterfall import Waterfall
 import argparse
 import math
 import sys
+from .utils import change_the_ext
 
 #------
 # Logging set up
@@ -71,20 +72,20 @@ def cmd_tool(args=None):
         if (args.out_format is None) or (args.out_format == 'h5'):
             if args.in_fname[len(args.in_fname)-4:] == '.fil':
                 args.out_fname = args.in_fname
-                args.out_fname = args.out_fname.replace('.fil','_diced.h5')
+                args.out_fname = change_the_ext(args.out_fname, 'fil','_diced.h5')
             elif args.in_fname[len(args.in_fname)-3:] == '.h5':
                 args.out_fname = args.in_fname
-                args.out_fname = args.out_fname.replace('.h5','_diced.h5')
+                args.out_fname = change_the_ext(args.out_fname,'.h5','_diced.h5')
             else:
                 logger.error('Input file not recognized')
                 sys.exit()
         elif args.out_format == 'fil':
             if args.in_fname[len(args.in_fname)-4:] == '.fil':
                 args.out_fname = args.in_fname
-                args.out_fname = args.out_fname.replace('.fil','_diced.fil')
+                args.out_fname = change_the_ext(args.out_fname, 'fil','_diced.fil')
             elif args.in_fname[len(args.in_fname)-3:] == '.h5':
                 args.out_fname = args.in_fname
-                args.out_fname = args.out_fname.replace('.h5','_diced.fil')
+                args.out_fname = change_the_ext(args.out_fname,'.h5','_diced.fil')
             else:
                 logger.error('input file not recognized.')
                 sys.exit()
