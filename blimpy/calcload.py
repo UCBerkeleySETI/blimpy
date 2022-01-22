@@ -1,4 +1,4 @@
-r''' calcload.py - Calculate the Waterfall max_load value needed to load the data array for a given file.'''
+''' calcload.py - Calculate the Waterfall max_load value needed to load the data array for a given file.'''
 
 import sys
 from argparse import ArgumentParser
