@@ -4,7 +4,6 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
 | 2022-01-20 | 2.0.33 | Stop mangled output file names from fil2h5 & h52fil (issue #251).  |
-| | | Dependent on blimpy version >= 2.0.33
 | 2022-01-18 | 2.0.33 | Support rawspec 3.0 FBH5 format reporting (issue #249).  |
 | 2021-11-17 | 2.0.32 | New utility: srcname (issue #246).  |
 | 2021-11-10 | 2.0.31 | New utility: peek.  |
