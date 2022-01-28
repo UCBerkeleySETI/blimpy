@@ -125,7 +125,7 @@ class GuppiRaw():
                 if "'" in val:
                     # Items in quotes are strings
                     val = str(val.strip("'").strip())
-                elif "." in val:
+                elif "." in val or 'e' in val:
                     # Items with periods are floats (if not a string)
                     val = float(val)
                 else:
