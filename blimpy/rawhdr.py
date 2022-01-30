@@ -114,6 +114,7 @@ def examine_header(filepath):
     rc += check_int_field(header, "NBITS", [4, 8, 16])
     rc += check_int_field(header, "BLOCSIZE", None)
     rc += check_int_field(header, "PKTIDX", None)
+    rc += check_int_field(header, "DIRECTIO", None, required=False)
     rc += check_int_field(header, "BEAM_ID", None, required=False)
     rc += check_int_field(header, "NBEAM", None, required=False)
     rc += check_int_field(header, "NANTS", None, required=False)
