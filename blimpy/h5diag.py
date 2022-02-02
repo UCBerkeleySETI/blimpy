@@ -43,7 +43,7 @@ def examine(filename):
     print("header:", header)
     print("data shape:", h5file["data"].shape)
     if version >= 1.999:
-        print("h5diag: nfpc:", header["nfpc"])
+        print("nfpc:", header["nfpc"])
         print("Rawspec version:", h5file.attrs["VERSION_RAWSPEC"].decode('utf-8'))
         print("Librawspec version:", h5file.attrs["VERSION_LIBRAWSPEC"].decode('utf-8'))
         print("cuFFT version:", h5file.attrs["VERSION_CUFFT"].decode('utf-8'))
