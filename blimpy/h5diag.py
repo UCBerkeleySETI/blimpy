@@ -45,7 +45,7 @@ def examine(filename):
     if version >= 1.999:
         print("Number of fine channels:", header["nchans"])
         print("NFPC:", header["nfpc"])
-        print("Number of coarse channels:", header["nchans"] / header["nfpc"])
+        print("Number of coarse channels:", int(header["nchans"] / header["nfpc"]))
         print("Rawspec version:", h5file.attrs["VERSION_RAWSPEC"].decode('utf-8'))
         print("Librawspec version:", h5file.attrs["VERSION_LIBRAWSPEC"].decode('utf-8'))
         print("cuFFT version:", h5file.attrs["VERSION_CUFFT"].decode('utf-8'))
