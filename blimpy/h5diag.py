@@ -9,7 +9,7 @@ from blimpy.io.hdf_reader import examine_h5
 
 
 def oops(msg):
-    print("\n*** h5diag: {}\n".format(msg))
+    print(F"\n*** h5diag: {msg}\n")
     sys.exit(86)
 
 
@@ -38,10 +38,14 @@ def examine(filename):
     r""" Diagnose the given HDF5 file"""
     h5file = h5py.File(filename, mode="r")
     version = examine_h5(h5file)
-    print("h5diag: VERSION attribute:", version)
-    print("h5diag: header:", read_header(h5file))
-    print("h5diag: data shape:", h5file["data"].shape)
+    print("VERSION attribute:", version)
+    header = read_header(h5file)
+    print("header:", header)
+    print("data shape:", h5file["data"].shape)
     if version >= 1.999:
+        print("Number of fine channels:", header["nchans"])
+        print("NFPC:", header["nfpc"])
+        print("Number of coarse channels:", int(header["nchans"] / header["nfpc"]))
         print("Rawspec version:", h5file.attrs["VERSION_RAWSPEC"].decode('utf-8'))
         print("Librawspec version:", h5file.attrs["VERSION_LIBRAWSPEC"].decode('utf-8'))
         print("cuFFT version:", h5file.attrs["VERSION_CUFFT"].decode('utf-8'))
@@ -62,9 +66,8 @@ def cmd_tool(args=None):
     if not h5py.is_hdf5(parse_args.filename):
         oops("Not an HDF5 file: {}".format(parse_args.filename))
 
-    print("h5diag: Begin")
     examine(parse_args.filename)
-    print("h5diag: No errors detected")
+    print("\nNo errors detected")
 
 
 if __name__ == "__main__":
