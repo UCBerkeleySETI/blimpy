@@ -64,9 +64,9 @@ def cmd_tool(args=None):
     if not h5py.is_hdf5(parse_args.filename):
         oops("Not an HDF5 file: {}".format(parse_args.filename))
 
-    print("h5diag: Begin")
+    print("Begin")
     examine(parse_args.filename)
-    print("h5diag: No errors detected")
+    print("\nNo errors detected")
 
 
 if __name__ == "__main__":
