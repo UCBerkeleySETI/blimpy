@@ -3,6 +3,7 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2022-02-02 | 2.0.36 | Enhance h5diag to show frequency channel information.  |
 | 2022-01-28 | 2.0.35 | Revamp rawhdr (issue #253).  |
 | | | Fix misinterpretation of numbers in guppi.py (issue #254). |
 | 2022-01-20 | 2.0.34 | Stop mangled output file names from fil2h5 & h52fil (issue #251).  |
