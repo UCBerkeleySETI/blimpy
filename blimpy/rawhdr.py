@@ -111,7 +111,7 @@ def examine_header(filepath):
     rc = 0
     rc += check_int_field(header, "OBSNCHAN", None)
     rc += check_int_field(header, "NPOL", [1, 2, 4])
-    rc += check_int_field(header, "NBITS", [4, 8, 16])
+    rc += check_int_field(header, "NBITS", [2, 4, 8, 16])
     rc += check_int_field(header, "BLOCSIZE", None)
     rc += check_int_field(header, "PKTIDX", None)
     rc += check_int_field(header, "DIRECTIO", None, required=False)
