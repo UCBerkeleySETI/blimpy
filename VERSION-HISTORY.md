@@ -3,6 +3,7 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2022-03-30 | 2.0.38 | examine_h5 in hdf_reader.py is loading too much data (issue #261). |
 | 2022-02-03 | 2.0.37 | Having trouble with publishing on pypi. Seems to be stuck on blimpy v2.0.35. |
 | 2022-02-02 | 2.0.36 | Enhance h5diag to show frequency channel information.  |
 | 2022-01-28 | 2.0.35 | Revamp rawhdr (issue #253).  |
