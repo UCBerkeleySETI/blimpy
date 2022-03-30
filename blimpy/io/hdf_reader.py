@@ -37,17 +37,13 @@ def examine_h5(h5):
     if h5["data"].ndim != 3:
         oops("examine_h5: Expected HDF5 data.ndim to be 3 but saw '{}'".format(h5["data"].ndim))
     try:
-        xx = h5["data"][-1][0][0]
+        xx = h5["data"][2][0][0]
     except:
         oops("examine_h5: HDF5 Time-dimension data corruption")
     try:
-        xx = h5["data"][0][0][-1]
+        xx = h5["data"][0][0][2]
     except OSError:
         oops("examine_h5: HDF5 Frequency-dimension data corruption")
-    try:
-        xx = h5["data"][-1][0][-1]
-    except:
-        oops("examine_h5: HDF5 End-diagonal data corruption")
 
     return version
 
