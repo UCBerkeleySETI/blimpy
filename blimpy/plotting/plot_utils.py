@@ -1,5 +1,3 @@
-from .config import *
-
 def calc_extent(self, plot_f=None, plot_t=None, MJD_time=False):
     """ Setup plotting edges.
     """

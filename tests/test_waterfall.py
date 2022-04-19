@@ -9,6 +9,7 @@ import pytest
 OUTDIR = os.path.dirname(voyager_h5) + "/"
 
 def test_info():
+    print("\n===== test_info")
     a = bl.Waterfall(voyager_h5)
     print(a)
     a.info()
@@ -26,6 +27,7 @@ def test_info():
     del a
 
 def test_get_freqs():
+    print("\n===== test_get_freqs")
     wf = bl.Waterfall(voyager_h5)
     freqs = wf.container.populate_freqs()
     sum1 = np.sum(freqs)
@@ -45,8 +47,8 @@ def test_get_freqs():
     assert np.isclose(last_1, last_2, rtol=0.0001)
 
 def test_cmdline():
-    # Plots
-    
+    print("\n===== test_cmdline")
+
     args = [voyager_h5, '-S', '-p', 'w', '-s', OUTDIR + 'test.png']
     cmd_tool(args)
 
@@ -101,17 +103,20 @@ def test_cmdline():
         os.remove(OUTDIR + 'test.fil')
 
 def test_cmd_arguments():
+    print("\n===== test_cmd_arguments")
     args = [voyager_h5, '-H', '-F', '-o', OUTDIR + 'test.fil']
     with pytest.raises(ValueError):
         cmd_tool(args)
 
 def test_neg_blank_dc():
+    print("\n===== test_neg_blank_dc")
     wf = bl.Waterfall(voyager_h5)
     wf.blank_dc(0)
     wf.blank_dc(1.1)
     del wf
 
 def test_get_chunk_dimensions():
+    print("\n===== test_get_chunk_dimensions")
     wf = bl.Waterfall(voyager_h5)
     
     wf.header['foff'] = 0.99e-5
@@ -131,12 +136,14 @@ def test_get_chunk_dimensions():
     del wf
 
 def test_neg_info_foff():
+    print("\n===== test_neg_info_foff")
     wf = bl.Waterfall(voyager_h5)
     wf.header['foff'] = -1
     wf.info()
     del wf
 
 def test_no_filename():
+    print("\n===== test_no_filename")
     header = { "banana": "is a fruit" }
     data = np.arange(1, 11)
     class Puddle(bl.Waterfall):

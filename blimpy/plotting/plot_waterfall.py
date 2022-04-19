@@ -13,7 +13,6 @@ def plot_waterfall(wf, f_start=None, f_stop=None, if_id=0, logged=True, cb=True,
         cb (bool): for plotting the colorbar
         kwargs: keyword args to be passed to matplotlib imshow()
     """
-
     plot_f, plot_data = wf.grab_data(f_start, f_stop, if_id)
     
     # imshow does not support int8, so convert to floating point

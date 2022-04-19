@@ -23,8 +23,14 @@ import os
 import numpy as np
 import six
 
+SHOWING_BACKEND = False
+
 from blimpy.io import file_wrapper as fw
-from .plotting import *
+from .plotting.config import *
+from .plotting import plot_all, plot_kurtosis, plot_spectrum_min_max, plot_spectrum, plot_time_series, plot_waterfall
+MPL_BACKEND = get_mpl_backend()
+if SHOWING_BACKEND:
+    print(f"after importing plot_all etc: {MPL_BACKEND}")
 
 from astropy.time import Time
 from astropy import units as u
@@ -377,6 +383,10 @@ def cmd_tool(args=None):
 
     from argparse import ArgumentParser
 
+    set_mpl_backend(MPL_BACKEND)
+    if SHOWING_BACKEND:
+        print_plotting_backend("entered cmd_tool")
+
     parser = ArgumentParser(description="Command line utility for reading and plotting blimpy files.")
 
     parser.add_argument('filename', type=str,
@@ -433,14 +443,14 @@ def cmd_tool(args=None):
 
     # And if we want to plot data, then plot data.
     if not info_only:
-        from .plotting.config import plt
-
-        print('')
 
         if parse_args.blank_dc:
             logger.info("Blanking DC bin")
             n_coarse_chan = fil.calc_n_coarse_chan()
             fil.blank_dc(n_coarse_chan)
+
+        if SHOWING_BACKEND:
+            print_plotting_backend("before plotting")
 
         if parse_args.what_to_plot == "s":
             plt.figure("Spectrum", figsize=(8, 6))
@@ -467,8 +477,10 @@ def cmd_tool(args=None):
         if parse_args.plt_filename != '':
             plt.savefig(parse_args.plt_filename)
 
+        if SHOWING_BACKEND:
+            print_plotting_backend("before plt.show")
         if not parse_args.save_only:
-            if 'DISPLAY' in os.environ.keys():
+            if ok_to_show():
                 plt.show()
             else:
                 logger.warning("No $DISPLAY available.")
