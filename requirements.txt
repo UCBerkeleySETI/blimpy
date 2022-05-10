@@ -3,7 +3,6 @@ numpy>=1.19
 six
 setuptools
 matplotlib
-cython
 h5py
 scipy
 hdf5plugin
