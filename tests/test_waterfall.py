@@ -142,17 +142,20 @@ def test_neg_info_foff():
     wf.info()
     del wf
 
-def test_no_filename():
-    print("\n===== test_no_filename")
-    header = { "banana": "is a fruit" }
-    data = np.arange(1, 11)
-    class Puddle(bl.Waterfall):
-        def _setup_freqs(self):
-            print("Hello from function _setup_freqs")
-    puddle = Puddle(header_dict=header, data_array=data)
-    puddle = Puddle(header_dict=header)
-    del puddle
+def test_bug_no_filename():
+    print("\n===== test_bug_no_filename")
+    with pytest.raises(ValueError):
+        bl.Waterfall()
 
-test_cmdline()
+def test_bug_header_dict():
+    print("\n===== test_bug_header")
+    header_dict = { "banana": "is a fruit" }
+    with pytest.raises(ValueError):
+        bl.Waterfall(voyager_h5, header_dict=header_dict)
 
+def test_bug_data_array():
+    print("\n===== test_bug_data_array")
+    data_array = np.arange(1, 11)
+    with pytest.raises(ValueError):
+        bl.Waterfall(voyager_h5, data_array=data_array)
 

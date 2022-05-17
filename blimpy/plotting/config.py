@@ -1,7 +1,6 @@
 """
 Blimpy Plotting Configuration
 This file is imported by the other plotting source files and blimpy/waterfall.py.
-
 matplotlib backends info:
 https://matplotlib.org/3.5.0/users/explain/backends.html#:~:text=By%20default%2C%20Matplotlib%20should%20automatically,to%20worry%20about%20the%20backend.
 """
@@ -25,16 +24,13 @@ def ok_to_show():
     """
     Tell caller if the DISPLAY environment variable is set
     and therefore if plt.show() can be executed.
-
     Parameters
     ----------
     None.
-
     Returns
     -------
     bool
         Can plt.show() be executed (True/False)?
-
     """
     display = os.environ.get("DISPLAY", "empty")
     if display == "empty":
@@ -57,5 +53,3 @@ def get_mpl_backend():
 def set_mpl_backend(backend):
     matplotlib.use(backend)
 
-
-print_plotting_backend("import config.py definitions")

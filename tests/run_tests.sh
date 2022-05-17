@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export MPLBACKEND=agg
 coverage run --source=blimpy -m pytest
 EXITCODE=$?
 if [ $EXITCODE -ne 0 ]; then

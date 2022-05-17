@@ -26,7 +26,7 @@ import six
 SHOWING_BACKEND = False
 
 from blimpy.io import file_wrapper as fw
-from .plotting.config import *
+from .plotting.config import plt, get_mpl_backend, set_mpl_backend, print_plotting_backend, ok_to_show
 from .plotting import plot_all, plot_kurtosis, plot_spectrum_min_max, plot_spectrum, plot_time_series, plot_waterfall
 MPL_BACKEND = get_mpl_backend()
 if SHOWING_BACKEND:
@@ -74,49 +74,44 @@ class Waterfall():
             fb.data          # blimpy data, as a numpy array
 
         Args:
-            filename (str): filename of blimpy file.
+            filename (str): filename of blimpy file.  REQUIRED.
             f_start (float): start frequency in MHz
             f_stop (float): stop frequency in MHz
             t_start (int): start integration ID
             t_stop (int): stop integration ID
             load_data (bool): load data. If set to False, only header will be read.
             max_load (float): maximum data to load in GB.
-            header_dict (dict): Create blimpy from header dictionary + data array
-            data_array (np.array): Create blimpy from header dict + data array
+            header_dict (dict): *NOT CURRENTLY SUPPORTED*
+            data_array (np.array): *NOT CURRENTLY SUPPORTED*
         """
 
-        if filename:
-            self.filename = filename
-            self.ext = os.path.splitext(filename)[-1].lower()
-            self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
-                                          load_data=load_data, max_load=max_load)
-            self.file_header = self.container.header
-            self.header = self.file_header
-            self.n_ints_in_file = self.container.n_ints_in_file
-            self.file_shape = self.container.file_shape
-            self.file_size_bytes = self.container.file_size_bytes
-            self.selection_shape = self.container.selection_shape
-            self.n_channels_in_file = self.container.n_channels_in_file
+        if (header_dict is not None) or (data_array is not None):
+            raise ValueError("Neither header_dict nor data_array is currently supported.")
 
-            # These values will be modified once code for multi_beam and multi_stokes observations are possible.
-            self.freq_axis = 2
-            self.time_axis = 0
-            self.beam_axis = 1  # Place holder
-            self.stokes_axis = 4  # Place holder
+        if filename is None:
+            raise ValueError("Currently, a value for filename must be supplied.")
 
-            self.logger = logger
+        self.filename = filename
+        self.ext = os.path.splitext(filename)[-1].lower()
+        self.container = fw.open_file(filename, f_start=f_start, f_stop=f_stop, t_start=t_start, t_stop=t_stop,
+                                      load_data=load_data, max_load=max_load)
+        self.file_header = self.container.header
+        self.header = self.file_header
+        self.n_ints_in_file = self.container.n_ints_in_file
+        self.file_shape = self.container.file_shape
+        self.file_size_bytes = self.container.file_size_bytes
+        self.selection_shape = self.container.selection_shape
+        self.n_channels_in_file = self.container.n_channels_in_file
 
-            self.__load_data()
+        # These values will be modified once code for multi_beam and multi_stokes observations are possible.
+        self.freq_axis = 2
+        self.time_axis = 0
+        self.beam_axis = 1  # Place holder # Polarisation?
+        self.stokes_axis = 4  # Place holder
 
-        elif header_dict is not None and data_array is not None:
-            self.filename = ''
-            self.header = header_dict
-            self.data = data_array
-            self.n_ints_in_file = 0
-            self._setup_freqs()
+        self.logger = logger
 
-        else:
-            self.filename = ''
+        self.__load_data()
 
         # Attach methods
         self.plot_spectrum         = six.create_bound_method(plot_spectrum, self)
@@ -125,7 +120,8 @@ class Waterfall():
         self.plot_time_series      = six.create_bound_method(plot_time_series, self)
         self.plot_all              = six.create_bound_method(plot_all, self)
         self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
-    
+
+
     def __load_data(self):
         """ Helper for loading data from a container. Should not be called manually. """
 
@@ -431,23 +427,29 @@ def cmd_tool(args=None):
     # Open blimpy data
     filename = parse_args.filename
     load_data = not parse_args.info_only
-    info_only = parse_args.info_only
     filename_out = parse_args.filename_out
 
-    fil = Waterfall(filename, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t_start=parse_args.t_start, t_stop=parse_args.t_stop, load_data=load_data, max_load=parse_args.max_load)
+    fil = Waterfall(filename,
+                    f_start=parse_args.f_start,
+                    f_stop=parse_args.f_stop,
+                    t_start=parse_args.t_start,
+                    t_stop=parse_args.t_stop,
+                    load_data=load_data,
+                    max_load=parse_args.max_load)
     fil.info()
+    if parse_args.info_only:
+        return
 
-    #Check the size of selection.
-    if fil.container.isheavy() or parse_args.to_hdf5 or parse_args.to_fil:
-        info_only = True
+    # Blank DC.
 
-    # And if we want to plot data, then plot data.
-    if not info_only:
+    if parse_args.blank_dc:
+        logger.info("Blanking DC bin")
+        n_coarse_chan = fil.calc_n_coarse_chan()
+        fil.blank_dc(n_coarse_chan)
 
-        if parse_args.blank_dc:
-            logger.info("Blanking DC bin")
-            n_coarse_chan = fil.calc_n_coarse_chan()
-            fil.blank_dc(n_coarse_chan)
+    # Plotting
+
+    if parse_args.what_to_plot is not None:
 
         if SHOWING_BACKEND:
             print_plotting_backend("before plotting")
@@ -485,31 +487,28 @@ def cmd_tool(args=None):
             else:
                 logger.warning("No $DISPLAY available.")
 
-    else:
+    # Save in specified Filterbank format
 
-        fileroot = os.path.splitext(filename)[0]
+    fileroot = os.path.splitext(filename)[0]
 
-        if parse_args.to_hdf5 and parse_args.to_fil:
-            # If this is the last statement anyway,
-            # and consequently, an output file is not generated,
-            # why do we not raise an error?
-            raise ValueError('Either provide to_hdf5 or to_fil, but not both.')
+    if parse_args.to_hdf5 and parse_args.to_fil:
+        raise ValueError('Either provide to_hdf5 or to_fil, but not both.')
 
-        if parse_args.to_hdf5:
-            if not filename_out:
-                filename_out = fileroot + '.h5'
+    if parse_args.to_hdf5:
+        if not filename_out:
+            filename_out = fileroot + '.h5'
 
-            logger.info('Writing file : %s'% filename_out)
-            fil.write_to_hdf5(filename_out)
-            logger.info('File written.')
+        logger.info(f"Writing FBH5 file : {filename_out}")
+        fil.write_to_hdf5(filename_out)
+        logger.info('File written.')
 
-        elif parse_args.to_fil:
-            if not filename_out:
-                filename_out = fileroot + '.fil'
+    if parse_args.to_fil:
+        if not filename_out:
+            filename_out = fileroot + '.fil'
 
-            logger.info('Writing file : %s'% filename_out)
-            fil.write_to_fil(filename_out)
-            logger.info('File written.')
+        logger.info(f"Writing SIGPROC Filterbank file : {filename_out}")
+        fil.write_to_fil(filename_out)
+        logger.info('File written.')
 
 
 if __name__ == "__main__":
