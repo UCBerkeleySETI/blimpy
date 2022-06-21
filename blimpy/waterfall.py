@@ -471,7 +471,7 @@ def cmd_tool(args=None):
             fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all')
         elif parse_args.what_to_plot == "ank":
             plt.figure("Multiple diagnostic plots", figsize=(12, 9),facecolor='white')
-            fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all',kutosis=False)
+            fil.plot_all(logged=True, f_start=parse_args.f_start, f_stop=parse_args.f_stop, t='all', kurtosis=False)
         else: # parse_args.what_to_plot = "w"
             plt.figure("waterfall", figsize=(8, 6))
             fil.plot_waterfall(f_start=parse_args.f_start, f_stop=parse_args.f_stop)
