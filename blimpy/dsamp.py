@@ -23,17 +23,6 @@ from blimpy import Waterfall
 from blimpy.io.hdf_writer import __write_to_hdf5_heavy as write_to_h5
 
 
-# Global variables:
-DEBUGGING = False
-
-
-def dump_object(label, in_object):
-    temp = vars(in_object)
-    print(f"\n{label}")
-    for item in temp:
-        print("\t", item, ':', temp[item])
-
-
 def downer(in_np_array, in_tsamp, group_size, out_dtype="float32"):
     """
     This is a downsample function.
@@ -139,8 +128,6 @@ def make_h5_file(in_path, out_path, group_size):
 
     # Write output file.
     t0 = time.time()
-    if DEBUGGING:
-        dump_object("DUMP wf", wf)
     wf.header["tsamp"] = out_tsamp
     wf.n_ints_in_file = out_ntints
     wf.selection_shape = (out_ntints, wf.header["nifs"], wf.n_channels_in_file)
@@ -175,7 +162,8 @@ def cmd_tool(args=None):
                       args.out_path,
                       args.group_size)
 
-    sys.exit(rc)
+    if rc != 0:
+        sys.exit(rc)
 
 
 if __name__ == "__main__":
