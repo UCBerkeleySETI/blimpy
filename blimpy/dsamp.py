@@ -57,18 +57,18 @@ def downer(in_np_array, in_tsamp, group_size, out_dtype="float32"):
     # Get input array shape
     in_shape = in_np_array.shape
     if len(in_shape) != 3:
-        LOGGER.error(f"Input array has {len(in_shape)} dimensions but it must have 3 !!")
+        LOGGER.error(f"Input array has {len(in_shape)} dimensions but 3 are required (time, nifs, fine-freqs) !!")
         return None, None, None
     if group_size < 2:
-        LOGGER.error(f"Input group size = {group_size} but it must be at least 2 !!")
+        LOGGER.error(f"Input group size ({group_size}) but it must be at least 2 !!")
         return None, None, None
 
     # Compute the number of sums.
     out_nints = np.floor_divide(in_shape[0], group_size)
     if out_nints < 1:
-        LOGGER.error(f"Input group size is {group_size} is larger than the time dimension of the input data !!")
+        LOGGER.error(f"Input group size ({group_size}) is larger than the time dimension of the input data ({in_shape[0]}) !!")
         return None, None, None
-    LOGGER.info(f"Total input time samples dropped just before EOF = {in_shape[0] % group_size}")
+    LOGGER.info(f"Total input time samples to be dropped just before EOF = {in_shape[0] % group_size}")
 
     # Compute output time sample size.
     out_tsamp = in_tsamp * group_size
@@ -93,6 +93,9 @@ def downer(in_np_array, in_tsamp, group_size, out_dtype="float32"):
 
                     # Increment output element by an input element.
                     out_np_array[mm, jj, kk] += in_np_array[ii2, jj, kk]
+
+        # Log progress.
+        LOGGER.info(f"Completed {mm + 1} of {out_nints} output time samples.")
 
         # Point to the next group.
         ii1 += group_size
@@ -124,16 +127,15 @@ def make_h5_file(in_path, out_path, group_size):
         return 1
     LOGGER.info(f"Down-sampling time: {time.time() - t0 :f}s")
     LOGGER.info(f"Input data shape: {wf.data.shape}")
-    LOGGER.info(f"Output data shape: {out_data.shape}")
 
     # Write output file.
-    t0 = time.time()
     wf.header["tsamp"] = out_tsamp
     wf.n_ints_in_file = out_ntints
     wf.selection_shape = (out_ntints, wf.header["nifs"], wf.n_channels_in_file)
     wf.file_shape =  wf.selection_shape
-    del wf.data
     wf.data = out_data
+    LOGGER.info(f"Output data shape: {wf.data.shape}")
+    t0 = time.time()
     write_to_h5(wf, out_path)
     LOGGER.info(f"Write-output time: {time.time() - t0 :f}s")
     return 0
