@@ -14,6 +14,7 @@ try:
     from . import stax
     from . import stix
     from . import match_fils
+    from . import dsamp
     from blimpy.io import file_wrapper
 except:
     print("Warning: At least one utility could not be imported!")

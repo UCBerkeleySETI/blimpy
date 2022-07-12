@@ -3,7 +3,7 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
-| 2022-06-21 | 2.0.42 | Fixed misspelling in waterfall.py which made ```-p ank``` fail (issue #266) |
+| 2022-07-08 | 2.1.0  | New utility: dsamp (issue #267). |
 | 2022-04-19 | 2.0.40 | Fixed blimpy to show plots when the display supports it (issue #263). |
 | 2022-03-30 | 2.0.39 | examine_h5 in hdf_reader.py is loading too much data (issue #261). |
 | | | Version/Release 2.0.38 cannot be used. |

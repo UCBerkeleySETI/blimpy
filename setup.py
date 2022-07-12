@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '2.0.42'
+__version__ = '2.1.0'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -12,20 +12,21 @@ with open("README.md", "r") as fh:
 # see http://astropy.readthedocs.org/en/latest/development/scripts.html
 entry_points = {
     'console_scripts' : [
-        'watutil = blimpy.waterfall:cmd_tool',
-        'rawutil = blimpy.guppi:cmd_tool',
+        'bldice = blimpy.dice:cmd_tool',
+        'bl_scrunch = blimpy.bl_scrunch:cmd_tool',
+        'calcload = blimpy.calcload:cmd_tool',
+        'dsamp = blimpy.dsamp:cmd_tool',
         'fil2h5 = blimpy.fil2h5:cmd_tool',
         'h52fil = blimpy.h52fil:cmd_tool',
         'h5diag = blimpy.h5diag:cmd_tool',
-        'bl_scrunch = blimpy.bl_scrunch:cmd_tool',
         'matchfils = blimpy.match_fils:cmd_tool',
-        'bldice = blimpy.dice:cmd_tool',
-        'calcload = blimpy.calcload:cmd_tool',
+        'peek = blimpy.peek:cmd_tool',
         'rawhdr = blimpy.rawhdr:cmd_tool',
+        'rawutil = blimpy.guppi:cmd_tool',
+        'srcname = blimpy.srcname:cmd_tool',
         'stax = blimpy.stax:cmd_tool',
         'stix = blimpy.stix:cmd_tool',
-        'peek = blimpy.peek:cmd_tool',
-        'srcname = blimpy.srcname:cmd_tool',
+        'watutil = blimpy.waterfall:cmd_tool',
      ]
 }
 
