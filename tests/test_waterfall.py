@@ -147,15 +147,3 @@ def test_bug_no_filename():
     with pytest.raises(ValueError):
         bl.Waterfall()
 
-def test_bug_header_dict():
-    print("\n===== test_bug_header")
-    header_dict = { "banana": "is a fruit" }
-    with pytest.raises(ValueError):
-        bl.Waterfall(voyager_h5, header_dict=header_dict)
-
-def test_bug_data_array():
-    print("\n===== test_bug_data_array")
-    data_array = np.arange(1, 11)
-    with pytest.raises(ValueError):
-        bl.Waterfall(voyager_h5, data_array=data_array)
-
