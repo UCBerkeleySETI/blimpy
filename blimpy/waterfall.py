@@ -60,8 +60,72 @@ MAX_BLOB_MB = 1024
 class Waterfall():
     """ Class for loading and writing blimpy data (.fil, .h5) """
 
+
     def __repr__(self):
         return "Waterfall data: %s" % self.filename
+
+
+    def _init_alternate(self, header_dict, data, filename=None):
+
+        # Validate parameters.
+        assert filename is None
+        assert isinstance(header_dict, dict)
+        assert "nchans" in header_dict
+        assert "fch1" in header_dict
+        assert data.ndim == 3
+        assert data.shape[1] == 1
+
+        # Set dummy-file Waterfall object properties.
+        self.filename = None
+        self.ext = self.filename
+        self.file_shape = self.filename
+        self.file_size_bytes = 0
+
+        # The Waterfall "container":
+        class Container():
+            n_beams_in_file = 1
+            n_pols_in_file = 1
+            _d_type = np.float32
+            t_begin = 0
+            freq_axis = 2
+            time_axis = 0
+            beam_axis = 1
+        self.container = Container()
+        self.container.n_channels_in_file  = header_dict["nchans"]
+        self.container._n_bytes = int(header_dict["nbits"] / 8)  # number of bytes per digit.
+        if header_dict['foff'] < 0:
+            self.container.f_end  = header_dict['fch1']
+            self.container.f_begin  = self.container.f_end + self.container.n_channels_in_file * header_dict['foff']
+        else:
+            self.container.f_begin  = header_dict['fch1']
+            self.container.f_end  = self.container.f_begin + self.container.n_channels_in_file * header_dict['foff']
+        self.container.f_start = self.container.f_begin
+        self.container.f_stop = self.container.f_end
+        self.container.t_end = data.shape[0]
+
+        # Set Waterfall object properties.
+        self.header = header_dict
+        self.file_header = header_dict
+        self.n_ints_in_file = data.shape[0]
+        self.selection_shape = data.shape
+        self.n_channels_in_file = header_dict["nchans"]
+        self.freq_axis = 2
+        self.time_axis = 0
+        self.beam_axis = 1
+        self.stokes_axis = 4
+        self.logger = logger
+
+        # Attach data matrix.
+        self.data = data
+
+        # Attach plotting methods.
+        self.plot_spectrum         = six.create_bound_method(plot_spectrum, self)
+        self.plot_waterfall        = six.create_bound_method(plot_waterfall, self)
+        self.plot_kurtosis         = six.create_bound_method(plot_kurtosis, self)
+        self.plot_time_series      = six.create_bound_method(plot_time_series, self)
+        self.plot_all              = six.create_bound_method(plot_all, self)
+        self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
+
 
     def __init__(self, filename=None, f_start=None, f_stop=None, t_start=None, t_stop=None,
                  load_data=True, max_load=None, header_dict=None, data_array=None):
@@ -86,7 +150,8 @@ class Waterfall():
         """
 
         if (header_dict is not None) or (data_array is not None):
-            raise ValueError("Neither header_dict nor data_array is currently supported.")
+            self._init_alternate(header_dict, data_array, filename=filename)
+            return
 
         if filename is None:
             raise ValueError("Currently, a value for filename must be supplied.")
@@ -192,10 +257,10 @@ class Waterfall():
         print("%16s : %32s" % ("File shape", self.file_shape))
         print("--- Selection Info ---")
         print("%16s : %32s" % ("Data selection shape", self.selection_shape))
-        if self.header['foff'] < 0:
+        if self.header['foff'] < 0: # descending frequency values
             minfreq = self.container.f_start - self.header['foff']
             maxfreq = self.container.f_stop
-        else:
+        else: # ascending frequency values
             minfreq = self.container.f_start
             maxfreq = self.container.f_stop - self.header['foff']
         print("%16s : %32s" % ("Minimum freq (MHz)", minfreq))
@@ -336,11 +401,11 @@ class Waterfall():
 
         if n_coarse_chan < 1:
             logger.warning('Coarse channel number < 1, unable to blank DC bin.')
-            return None
+            return
 
         if not n_coarse_chan % int(n_coarse_chan) == 0:
             logger.warning('Selection does not contain an integer number of coarse channels, unable to blank DC bin.')
-            return None
+            return
 
         n_coarse_chan = int(n_coarse_chan)
 
