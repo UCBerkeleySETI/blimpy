@@ -41,7 +41,7 @@ def test_waterfall_stream_2():
     wf_voya1 = bl.Waterfall(voyager_h5)
     wf_voya2 = bl.Waterfall(header_dict=wf_voya1.header, data_array=wf_voya1.data)
     wf_voya2.info()
-    wf_voya2.write_to_fil(test_h5)
+    wf_voya2.write_to_h5(test_h5)
     wf_voya2.write_to_fil(test_fil)
 
 
