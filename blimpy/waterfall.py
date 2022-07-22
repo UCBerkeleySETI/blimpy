@@ -82,11 +82,13 @@ class Waterfall():
         self.file_size_bytes = 0
 
         # The Waterfall "container":
-        class Container():
+        from blimpy.io.base_reader import Reader
+        class Container(Reader):
             n_beams_in_file = 1
             n_pols_in_file = 1
             _d_type = np.float32
             t_begin = 0
+            t_start = 0
             freq_axis = 2
             time_axis = 0
             beam_axis = 1
@@ -102,6 +104,10 @@ class Waterfall():
         self.container.f_start = self.container.f_begin
         self.container.f_stop = self.container.f_end
         self.container.t_end = data.shape[0]
+        self.container.t_stop = data.shape[0]
+        self.container.selection_shape = data.shape
+        self.container.n_ints_in_file = data.shape[0]
+        self.container.header = header_dict
 
         # Set Waterfall object properties.
         self.header = header_dict
