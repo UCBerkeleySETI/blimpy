@@ -8,3 +8,4 @@ voyager_raw = path.join(here, 'test_data/blc3_2bit_guppi_57396_VOYAGER1_0006.001
 voyager_block1 = path.join(here, 'test_data/Voyager1_block1.npy')
 test_ifs_fil = path.join(here, 'test_data/test_ifs.fil')
 test_h5 = path.join(here, 'test_data/test.h5')
+test_fil = path.join(here, 'test_data/test.fil')
