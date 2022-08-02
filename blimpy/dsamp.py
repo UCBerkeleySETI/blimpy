@@ -118,7 +118,7 @@ def make_h5_file(in_path, out_path, group_size):
     """
 
     # Load input filterbank .fil or .h5 file.
-    wf = Waterfall(in_path, load_data=True)
+    wf = Waterfall(in_path, max_load=None)
 
     # Down-sample input.
     t0 = time.time()
