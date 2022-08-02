@@ -165,8 +165,8 @@ def cmd_tool(args=None):
         LOGGER.error(f"Input group size = {args.group_size} but it must be at least 2 !!")
         sys.exit(1)
 
-    _, in_ext = pathlib.Path(args.in_path).suffix
-    _, out_ext = pathlib.Path(args.out_path).suffix
+    in_ext = pathlib.Path(args.in_path).suffix
+    out_ext = pathlib.Path(args.out_path).suffix
     if in_ext not in [".fil", ".h5"]:
         LOGGER.error("Input file extension must be .fil or .h5 !!")
         sys.exit(1)
