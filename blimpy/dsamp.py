@@ -6,6 +6,7 @@ to an output .h5 Filterbank file.
 
 # External dependencies:
 import sys
+import pathlib
 import time
 from argparse import ArgumentParser
 import numpy as np
@@ -21,6 +22,7 @@ logging.basicConfig(format=FMT, stream=sys.stdout, level = logging.INFO)
 # Blimpy functions required:
 from blimpy import Waterfall
 from blimpy.io.hdf_writer import __write_to_hdf5_heavy as write_to_h5
+from blimpy.io.fil_writer import write_to_fil
 
 
 def downer(in_np_array, in_tsamp, group_size, out_dtype="float32"):
@@ -104,11 +106,11 @@ def downer(in_np_array, in_tsamp, group_size, out_dtype="float32"):
     return out_np_array, out_tsamp, out_nints
 
 
-def make_h5_file(in_path, out_path, group_size):
+def make_output_file(in_path, out_path, group_size, flag_h5):
     """
     1. Load input filterbank .fil or .h5 file.
     2. Call downer to perform down-sampling.
-    3. Save result to the specified .h5 file.
+    3. Save result to the specified file.
 
     Args:
         in_path (str): Name of filterbank file to load
@@ -136,7 +138,10 @@ def make_h5_file(in_path, out_path, group_size):
     wf.data = out_data
     LOGGER.info(f"Output data shape: {wf.data.shape}")
     t0 = time.time()
-    write_to_h5(wf, out_path)
+    if flag_h5:
+        write_to_h5(wf, out_path)
+    else:
+        write_to_fil(wf, out_path)
     LOGGER.info(f"Write-output time: {time.time() - t0 :f}s")
     return 0
 
@@ -147,7 +152,7 @@ def cmd_tool(args=None):
 
     parser = ArgumentParser(description="Downsample an input Filterbank file (.fil or .h5) to an output .h5 Filterbank file.")
     parser.add_argument("in_path", type=str, help="Path of input Filterbank file (.fil or .h5)")
-    parser.add_argument("out_path", type=str, help="Path of output Filterbank file (.h5 only)")
+    parser.add_argument("out_path", type=str, help="Path of output Filterbank file (.fil or .h5)")
     parser.add_argument("-s", "--group_size", dest="group_size", type=int, required=True,
                         help="Group size for the purpose of summing 2 or more time samples.  Required.")
 
@@ -160,9 +165,20 @@ def cmd_tool(args=None):
         LOGGER.error(f"Input group size = {args.group_size} but it must be at least 2 !!")
         sys.exit(1)
 
-    rc = make_h5_file(args.in_path,
-                      args.out_path,
-                      args.group_size)
+    _, in_ext = pathlib.Path(args.in_path).suffix
+    _, out_ext = pathlib.Path(args.out_path).suffix
+    if in_ext not in [".fil", ".h5"]:
+        LOGGER.error("Input file extension must be .fil or .h5 !!")
+        sys.exit(1)
+    if out_ext not in [".fil", ".h5"]:
+        LOGGER.error("Output file extension must be .fil or .h5 !!")
+        sys.exit(1)
+    flag_h5 = bool(out_ext == ".h5")
+
+    rc = make_output_file(args.in_path,
+                          args.out_path,
+                          args.group_size,
+                          flag_h5)
 
     if rc != 0:
         sys.exit(rc)
