@@ -53,18 +53,19 @@ $ python3 -m pip install --no-binary=h5py h5py
 ### Command line utilities
 
 After installation, some command line utilities will be installed:
-* `watutil`, Read/write/plot an .h5 file or a .fil file.
-* `rawutil`, Plot data in a guppi raw file.
+* `bldice`, Dice a smaller frequency region from (either from/to .h5 or .fil).
+* `calcload`, Calculate the Waterfall max_load value needed to load the data array for a given file.
+* `dsamp`, Down-sample (time dimension only) from a .fil/.h5 file to a .fil/.h5 file.
 * `fil2h5`, Convert a .fil file into .h5 format.
 * `h52fil`, Convert an .h5 file into .fil format.
-* `bldice`, Dice a smaller frequency region from (either from/to .h5 or .fil).
 * `matchfils`, Check if two .fil files are the same.
-* `calcload`, Calculate the Waterfall max_load value needed to load the data array for a given file.
+* `peek`, Display a selected portion of values from the data matrix.
 * `rawhdr`, Display the header fields of a raw guppi file.
+* `rawutil`, Plot data in a guppi raw file.
+* `srcname`, Patch the header source_name field in an HDF5 file.
 * `stax`, For a collection of .h5 or .fil files sharing the same frequency range, create a vertical stack of waterfall plots as a single PNG file.
 * `stix`, For a single very large .h5 or .fil file, create a horizontal or vertical stack of waterfall plots as a single PNG file.
-* `peek`, Display a selected portion of values from the data matrix.
-* `srcname`, Patch the header source_name field in an HDF5 file.
+* `watutil`, Read/write/plot an .h5 file or a .fil file.
 
 Use the `-h` flag to any of the above command line utilities to display their available arguments.
 
