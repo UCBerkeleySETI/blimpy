@@ -69,7 +69,7 @@ Other command line utilities available post-installation:
 * `srcname`, Patch the header source_name field in a .h5 file.
 * `stax`, For a collection of .h5 or .fil files sharing the same frequency range, create a vertical stack of waterfall plots as a single PNG file.
 * `stix`, For a single very large Filterbank file, create a horizontal or vertical stack of waterfall plots as a single PNG file.
-* `watutil`, Read/write/plot utility for Filterbank files.
+* `watutil`, Information/read/write/plot utility for Filterbank files.
 
 Use the `-h` flag to any of the above command line utilities to display their available arguments.
 
