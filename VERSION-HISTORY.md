@@ -3,7 +3,8 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
-| 2022-08-02 | 2.1.2  | Write .fil files as well as .h5 files (issue #272). |
+| 2022-11-16 | 2.1.4  | Make bl_scrunch actually work (issue #276). |
+| 2022-08-02 | 2.1.3  | Write .fil files as well as .h5 files (issue #272). |
 | 2022-07-22 | 2.1.2  | More container fields needed (issue #270). |
 | 2022-07-21 | 2.1.1  | New Waterfall class option, an alternative to file loading (issue #264). |
 | 2022-07-08 | 2.1.0  | New utility: dsamp (issue #267). |
