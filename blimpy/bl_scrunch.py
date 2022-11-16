@@ -49,9 +49,9 @@ def cmd_tool(args=None):
     r"""  Command line utility for scrunching an input HDF5 file or Filterbank file.
     """
 
-    p = ArgumentParser(description='Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
-    p.add_argument('filepath', type=str, help='Name of file path to open (.h5 or .fil).')
-    p.add_argument('-f', '--fscrunch', dest='f_scrunch', type=int,
+    p = ArgumentParser(description='Command line utility for scrunching an HDF5 file (.h5) or a Sigproc Filterbank file (.fil) to an output HDF5 file.')
+    p.add_argument('filepath', type=str, help='Input file path to open (.h5 or .fil).')
+    p.add_argument('-f', '--fscrunch', dest='f_scrunch', type=int, required=True,
                  help='Number of frequency channels to average (scrunch) together.')
     p.add_argument('-o', '--out_dir', dest='out_dir', type=str, default='./',
                  help='Location for output files. Default: current directory.')
@@ -78,3 +78,4 @@ def cmd_tool(args=None):
 if __name__ == "__main__":
 
     cmd_tool()
+
