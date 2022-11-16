@@ -78,6 +78,7 @@ def __write_to_hdf5_heavy(wf, filename_out, f_scrunch=None, *args, **kwargs):
                 dout_shape[-1] //= f_scrunch
                 dout_chunk_dim[-1] //= f_scrunch
                 wf.header['foff'] *= f_scrunch
+                wf.header['nchans'] //= f_scrunch
     
             dset = h5.create_dataset('data',
                                      shape=tuple(dout_shape),
@@ -220,6 +221,7 @@ def __write_to_hdf5_light(wf, filename_out, f_scrunch=None, *args, **kwargs):
             wf.logger.info('Frequency scrunching by %i' % f_scrunch)
             data_out = utils.rebin(wf.data, n_z=f_scrunch)
             wf.header['foff'] *= f_scrunch
+            wf.header['nchans'] //= f_scrunch
 
         dset = h5.create_dataset('data',
                                  data=data_out,
