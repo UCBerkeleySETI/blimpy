@@ -13,7 +13,6 @@ try:
     from . import rawhdr
     from . import stax
     from . import stix
-    from . import match_fils
     from . import dsamp
     from blimpy.io import file_wrapper
 except:
