@@ -19,7 +19,6 @@ entry_points = {
         'fil2h5 = blimpy.fil2h5:cmd_tool',
         'h52fil = blimpy.h52fil:cmd_tool',
         'h5diag = blimpy.h5diag:cmd_tool',
-        'matchfils = blimpy.match_fils:cmd_tool',
         'peek = blimpy.peek:cmd_tool',
         'rawhdr = blimpy.rawhdr:cmd_tool',
         'rawutil = blimpy.guppi:cmd_tool',
