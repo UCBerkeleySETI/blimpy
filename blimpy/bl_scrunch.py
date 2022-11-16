@@ -3,7 +3,7 @@ r"""
     producing a new HDF5 file of Filterbank file.
 """
 
-import os
+import os, sys
 from argparse import ArgumentParser
 from blimpy.waterfall import Waterfall
 from .utils import change_the_ext
@@ -40,6 +40,10 @@ def bl_scrunch(in_path, out_dir='./', new_filename='', max_load=None, f_scrunch=
     else:
         out_path = out_dir + new_filename
 
+    if f_scrunch < 2 or f_scrunch >= wf.header["nchans"] :
+        print("\n*** Number of frequency channels to average together must be > 1 and < the input file header nchans value!!\n")
+        sys.exit(1) 
+
     print("bl_scrunch: Output path: {}".format(out_path))
     wf.write_to_hdf5(out_path, f_scrunch=f_scrunch)
     print("bl_scrunch: End")
@@ -66,7 +70,7 @@ def cmd_tool(args=None):
         args = p.parse_args()
     else:
         args = p.parse_args(args)
-
+        
     bl_scrunch(args.filepath, out_dir=args.out_dir, new_filename=args.new_filename,
                max_load=args.max_load, f_scrunch=args.f_scrunch)
 
