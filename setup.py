@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '2.1.3'
+__version__ = '2.1.4'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -19,7 +19,6 @@ entry_points = {
         'fil2h5 = blimpy.fil2h5:cmd_tool',
         'h52fil = blimpy.h52fil:cmd_tool',
         'h5diag = blimpy.h5diag:cmd_tool',
-        'matchfils = blimpy.match_fils:cmd_tool',
         'peek = blimpy.peek:cmd_tool',
         'rawhdr = blimpy.rawhdr:cmd_tool',
         'rawutil = blimpy.guppi:cmd_tool',

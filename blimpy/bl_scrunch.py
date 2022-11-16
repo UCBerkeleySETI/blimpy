@@ -3,7 +3,7 @@ r"""
     producing a new HDF5 file of Filterbank file.
 """
 
-import os
+import os, sys
 from argparse import ArgumentParser
 from blimpy.waterfall import Waterfall
 from .utils import change_the_ext
@@ -40,6 +40,10 @@ def bl_scrunch(in_path, out_dir='./', new_filename='', max_load=None, f_scrunch=
     else:
         out_path = out_dir + new_filename
 
+    if f_scrunch < 2 or f_scrunch >= wf.header["nchans"] :
+        print("\n*** Number of frequency channels to average together must be > 1 and < the input file header nchans value!!\n")
+        sys.exit(1) 
+
     print("bl_scrunch: Output path: {}".format(out_path))
     wf.write_to_hdf5(out_path, f_scrunch=f_scrunch)
     print("bl_scrunch: End")
@@ -49,9 +53,9 @@ def cmd_tool(args=None):
     r"""  Command line utility for scrunching an input HDF5 file or Filterbank file.
     """
 
-    p = ArgumentParser(description='Command line utility for converting HDF5 (.h5) to Sigproc filterbank (.fil) format \n >>h52fil <FULL_PATH_TO_FIL_FILE> [options]')
-    p.add_argument('filepath', type=str, help='Name of file path to open (.h5 or .fil).')
-    p.add_argument('-f', '--fscrunch', dest='f_scrunch', type=int,
+    p = ArgumentParser(description='Command line utility for scrunching an HDF5 file (.h5) or a Sigproc Filterbank file (.fil) to an output HDF5 file.')
+    p.add_argument('filepath', type=str, help='Input file path to open (.h5 or .fil).')
+    p.add_argument('-f', '--fscrunch', dest='f_scrunch', type=int, required=True,
                  help='Number of frequency channels to average (scrunch) together.')
     p.add_argument('-o', '--out_dir', dest='out_dir', type=str, default='./',
                  help='Location for output files. Default: current directory.')
@@ -66,7 +70,7 @@ def cmd_tool(args=None):
         args = p.parse_args()
     else:
         args = p.parse_args(args)
-
+        
     bl_scrunch(args.filepath, out_dir=args.out_dir, new_filename=args.new_filename,
                max_load=args.max_load, f_scrunch=args.f_scrunch)
 
@@ -78,3 +82,4 @@ def cmd_tool(args=None):
 if __name__ == "__main__":
 
     cmd_tool()
+
