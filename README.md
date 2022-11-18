@@ -57,12 +57,12 @@ After installation, the following command will display the metadata (header) val
 `watutil  -i`
 
 Other command line utilities available post-installation:
+* `bl_scrunch`, Scrunch an HDF5 file (.h5) or a Sigproc Filterbank file (.fil) to an output HDF5 file.
 * `bldice`, Extract a smaller frequency region from a Filterbank file (.fil or .h5 file).
 * `calcload`, Calculate the Waterfall max_load value needed to load the entire data array for a given Filterbank file.
 * `dsamp`, Down-sample (time-dimension only) from one Filterbank file to another.
 * `fil2h5`, Convert a .fil file into .h5 format.
 * `h52fil`, Convert an .h5 file into .fil format.
-* `matchfils`, Check if two .fil files are the same.
 * `peek`, Display a selected portion of values from the data matrix of a Filterbank file.
 * `rawhdr`, Display the header fields of a raw guppi file.
 * `rawutil`, Plot data in a guppi raw file.
