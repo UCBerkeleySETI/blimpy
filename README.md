@@ -57,7 +57,7 @@ After installation, the following command will display the metadata (header) val
 `watutil  -i`
 
 Other command line utilities available post-installation:
-* `bl_scrunch`, Scrunch an HDF5 file (.h5) or a Sigproc Filterbank file (.fil) to an output HDF5 file.
+* `bl_scrunch`, Scrunch an HDF5 file (.h5) or a Sigproc Filterbank file (.fil) to an output HDF5 file. This has the effect of down-sampling adjacent fine frequency cells.
 * `bldice`, Extract a smaller frequency region from a Filterbank file (.fil or .h5 file).
 * `calcload`, Calculate the Waterfall max_load value needed to load the entire data array for a given Filterbank file.
 * `dsamp`, Down-sample (time-dimension only) from one Filterbank file to another.
