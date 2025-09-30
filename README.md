@@ -50,6 +50,20 @@ Note that h5py generally needs to be installed in this way:
 $ python3 -m pip install --no-binary=h5py h5py
 ```
 
+#### Conda
+
+Alternatively, if you prefer working with conda environments, you can install the required dependencies with the following command: 
+
+```
+conda env create -f environment.yml
+```
+
+Then, simply activate the environment with:
+
+```
+conda activate blimpy
+```
+
 ### Command line utilities
 
 After installation, the following command will display the metadata (header) values and some information about the data matrix:
