@@ -19,13 +19,14 @@ jobs:
 
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-verison: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install system dependencies
@@ -34,10 +35,10 @@ jobs:
           cat dependencies.txt | sudo xargs -n 1 apt install -y
       - name: Install dependencies
         run: |
-          python3 -m pip install --user --upgrade pip
-          python3 -m pip install --user -r requirements.txt
-          python3 setup.py install --user
-          python3 -m pip install --user -r requirements_test.txt
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install .
+          python -m pip install -r requirements_test.txt
       - name: Download test files
         run: |
           cd tests
@@ -45,11 +46,10 @@ jobs:
           cd ..
       - name: Run coverage test
         run: |
-          export PATH=/home/runner/.local/bin:$PATH
-          pytest --cov=./ --cov-report=xml
+          python -m pytest --cov=./ --cov-report=xml
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
           name: blimpy-codecov-p${{ matrix.python-version }}
-
