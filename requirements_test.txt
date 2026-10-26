@@ -4,6 +4,5 @@ pyslalib
 pytest
 pytest-cov
 pytest-order
-pytest-runner
 setigen
 
