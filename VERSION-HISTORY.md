@@ -3,6 +3,7 @@ This file is a version history of blimpy amendments, beginning with version 2.0.
 <br>
 |    Date    | Version | Contents |
 | :--: | :--: | :-- |
+| 2026-10-27 | 2.1.5  | Replace deprecated pkg_resources with importlib.metadata (PR #281); fix CI. |
 | 2022-11-16 | 2.1.4  | Make bl_scrunch actually work (issue #276). |
 | 2022-08-02 | 2.1.3  | Write .fil files as well as .h5 files (issue #272). |
 | 2022-07-22 | 2.1.2  | More container fields needed (issue #270). |
