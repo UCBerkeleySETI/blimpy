@@ -29,7 +29,7 @@ The latest release can be installed via pip directly from this repository:
 python3 -m pip install -U git+https://github.com/UCBerkeleySETI/blimpy
 ```
 
-Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `python setup.py install` or `pip install .` (with sudo if required), or by using the following terminal command:
+Or, the latest version of the development code can be installed from the github [repo](https://github.com/UCBerkeleySETI/blimpy) and then run `pip install .` (with sudo if required), or by using the following terminal command:
 
 ```
 python3 -m pip install -U https://github.com/UCBerkeleySETI/blimpy/tarball/master

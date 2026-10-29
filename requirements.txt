@@ -10,3 +10,4 @@ pandas
 Pillow
 psutil
 pyparsing==2.4.7
+importlib_metadata; python_version < "3.8"

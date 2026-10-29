@@ -3,7 +3,7 @@ setup.py -- setup script for use of packages.
 """
 from setuptools import setup, find_packages
 
-__version__ = '2.1.4'
+__version__ = '2.1.5'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -58,11 +58,13 @@ setup(name='blimpy',
           'Natural Language :: English',
           'Operating System :: POSIX :: Linux',
           'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11',
+          'Programming Language :: Python :: 3.12',
           'Intended Audience :: Science/Research',
           'License :: OSI Approved :: BSD License',
           'Topic :: Scientific/Engineering :: Astronomy',
       ],
-      setup_requires=['pytest-runner'],
-      tests_require=['pytest', 'pyslalib'],
-      test_suite="blimpytests",
 )
