@@ -21,7 +21,6 @@ This provides a class, Waterfall(), which can be used to read a blimpy file (.fi
 import sys
 import os
 import numpy as np
-import six
 
 SHOWING_BACKEND = False
 
@@ -58,6 +57,20 @@ MAX_BLOB_MB = 1024
 ###
 
 class Waterfall():
+    """ Class for loading and plotting blimpy data. """
+
+    # Plotting methods. They are plain functions taking the Waterfall as their first argument, so
+    # defining them on the class makes Python bind them on access (wf.plot_spectrum(...) works as
+    # before). Binding them per instance in __init__ (six.create_bound_method(f, self)) made every
+    # Waterfall reference itself: such objects, and the HDF5 file they hold open, are only freed by
+    # the cyclic garbage collector, at an unpredictable later time (issue #177).
+    plot_spectrum         = plot_spectrum
+    plot_waterfall        = plot_waterfall
+    plot_kurtosis         = plot_kurtosis
+    plot_time_series      = plot_time_series
+    plot_all              = plot_all
+    plot_spectrum_min_max = plot_spectrum_min_max
+
     """ Class for loading and writing blimpy data (.fil, .h5) """
 
 
@@ -124,13 +137,6 @@ class Waterfall():
         # Attach data matrix.
         self.data = data
 
-        # Attach plotting methods.
-        self.plot_spectrum         = six.create_bound_method(plot_spectrum, self)
-        self.plot_waterfall        = six.create_bound_method(plot_waterfall, self)
-        self.plot_kurtosis         = six.create_bound_method(plot_kurtosis, self)
-        self.plot_time_series      = six.create_bound_method(plot_time_series, self)
-        self.plot_all              = six.create_bound_method(plot_all, self)
-        self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
 
 
     def __init__(self, filename=None, f_start=None, f_stop=None, t_start=None, t_stop=None,
@@ -184,14 +190,25 @@ class Waterfall():
 
         self.__load_data()
 
-        # Attach methods
-        self.plot_spectrum         = six.create_bound_method(plot_spectrum, self)
-        self.plot_waterfall        = six.create_bound_method(plot_waterfall, self)
-        self.plot_kurtosis         = six.create_bound_method(plot_kurtosis, self)
-        self.plot_time_series      = six.create_bound_method(plot_time_series, self)
-        self.plot_all              = six.create_bound_method(plot_all, self)
-        self.plot_spectrum_min_max = six.create_bound_method(plot_spectrum_min_max, self)
 
+
+    def close(self):
+        """ Close the input file, if one is still open. Safe to call more than once.
+
+        Data already loaded into memory stays usable; reading more data from the file
+        (e.g. grab_data on an unloaded selection) is not possible after closing.
+        Also available as a context manager:  with Waterfall(fn) as wf: ...
+        """
+        container = getattr(self, "container", None)
+        if container is not None and hasattr(container, "close"):
+            container.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+        return False
 
     def __load_data(self):
         """ Helper for loading data from a container. Should not be called manually. """

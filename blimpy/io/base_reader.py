@@ -43,6 +43,10 @@ class Reader(object):
                            .format(float(self.available_memory) / 1e6))
         logger.debug("Reader __init__ max_data_array_size={}".format(self.max_data_array_size))
 
+    def close(self):
+        """ Release the input file, if this reader keeps one open. Default: nothing to release. """
+        pass
+
     def _setup_selection_range(self, f_start=None, f_stop=None, t_start=None, t_stop=None, init=False):
         """Making sure the selection if time and frequency are within the file limits.
 
