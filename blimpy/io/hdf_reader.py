@@ -137,6 +137,15 @@ class H5Reader(Reader):
             self._init_empty_selection()
 
 
+    def close(self):
+        """ Close the HDF5 file opened by the constructor. Safe to call more than once. """
+        h5 = getattr(self, "h5", None)
+        if h5 is not None:
+            try:
+                h5.close()
+            except Exception:       # already closed, or interpreter shutting down
+                pass
+
     def read_header(self):
         """ Read header and return a Python dictionary of key:value pairs
         """
